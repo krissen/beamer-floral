@@ -7,9 +7,9 @@
 % fail later, inside the theme, with an unrelated error.
 \ifcsname floratextblockx\endcsname\else
   \PackageError{beamer-floral}{This package needs the krissen/tikz-flora fork}%
-    {Point TIKZFLORA (or ~/dev/tikz-flora) at the fork's branch beamer-floral,
-     commit 136291b or later. The upstream engine lacks \string\floratextblockx
-     and the beamer tune keys.}%
+    {Point TIKZFLORA at a checkout of the fork's branch beamer-floral, commit
+     136291b or later, or set it in a local .env. The upstream engine lacks
+     \string\floratextblockx and the beamer tune keys.}%
 \fi
 
 % The flora is painted in shipout/background, behind beamer's background

@@ -8,8 +8,9 @@ if (-f '.env') {
     next if /^\s*(?:#|$)/;
     next unless /^\s*([A-Za-z_]\w*)\s*=\s*(.*?)\s*$/;
     my ($key, $value) = ($1, $2);
+    next unless $key eq 'TIKZFLORA';
     $value =~ s/^(['"])(.*)\1$/$2/;
-    $ENV{$key} = $value;
+    $ENV{$key} = $value unless defined $ENV{$key};
   }
   close $fh;
 }
