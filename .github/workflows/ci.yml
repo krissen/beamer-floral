@@ -27,4 +27,5 @@ jobs:
           latexmk_use_lualatex: true
           pre_compile: |
             set -e
+            ln -sfn tikz-flora/lua lua
             (cd tikz-flora && texlua tests/test_layout.lua)
