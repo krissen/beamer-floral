@@ -11,6 +11,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      TIKZFLORA: ${{ github.workspace }}/tikz-flora
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
@@ -18,10 +20,10 @@ jobs:
           repository: krissen/tikz-flora
           ref: beamer-floral
           path: tikz-flora
-      - uses: xu-cheng/texlive-action/full@v2
+      - uses: xu-cheng/latex-action@v3
         with:
-          run: |
+          root_file: test/smoke.tex
+          latexmk_use_lualatex: true
+          pre_compile: |
             set -e
-            export TIKZFLORA="$GITHUB_WORKSPACE/tikz-flora"
-            latexmk -lualatex -interaction=nonstopmode -halt-on-error -outdir=build test/smoke.tex
             (cd tikz-flora && texlua tests/test_layout.lua)
