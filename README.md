@@ -91,7 +91,6 @@ paper coordinates in points, origin at the lower-left corner:
 ## Development
 
 ```sh
-make            # not provided yet; see below
 latexmk -lualatex test/smoke.tex
 ```
 
@@ -102,5 +101,5 @@ siblings.
 
 ## Licence
 
-The vendored dependency is MIT; this package's licence is to be decided
+The engine dependency is MIT; this package's licence is to be decided
 before a CTAN release.
