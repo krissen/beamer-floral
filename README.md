@@ -39,8 +39,8 @@ Without `TIKZFLORA`, an installed `tikzflora` is used.
 ```
 
 The theme paints no header colour of its own; the flora supplies the
-colour there. Block, alert, example and description-label colours come
-from the selected ink palette.
+colour there. Block, example and description-label colours come from the
+selected ink palette; alerts are a fixed violet.
 
 ## Settings
 
@@ -84,7 +84,7 @@ Keep the flora out of a rectangle (a footline, a logo, a caption) with
 paper coordinates in points, origin at the lower-left corner:
 
 ```tex
-\florareserve{0}{0}{\paperwidth}{1cm}
+\florareserve{0}{0}{\paperwidth}{\the\dimexpr 1cm\relax}
 \floraclearreserve
 ```
 
