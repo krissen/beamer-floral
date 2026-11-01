@@ -6,7 +6,10 @@ if (-f '.env') {
   while (<$fh>) {
     chomp;
     next if /^\s*(?:#|$)/;
-    $ENV{$1} = $2 if /^\s*([A-Za-z_]\w*)\s*=\s*(.*?)\s*$/;
+    next unless /^\s*([A-Za-z_]\w*)\s*=\s*(.*?)\s*$/;
+    my ($key, $value) = ($1, $2);
+    $value =~ s/^(['"])(.*)\1$/$2/;
+    $ENV{$key} = $value;
   }
   close $fh;
 }
