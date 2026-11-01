@@ -14,3 +14,5 @@ build/
 *.toc
 *.vrb
 .DS_Store
+
+.env
