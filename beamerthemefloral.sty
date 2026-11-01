@@ -1,0 +1,159 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{beamerthemefloral}[2026/11/01 Floral colour theme for beamer]
+
+% The generic floral theme. It adds no colour of its own to the running
+% head: the flora supplies the colour there. Blocks, alerts, examples and
+% description labels take their inks from the palette chosen with
+% \florapalette, so the page and the flora share one ink family.
+% KAU does not load this theme; its own theme keeps the brand colours.
+
+\RequirePackage{beamer-floral}
+
+% The engine's stock stem is drawn for a larger canvas; at 16:9 it reads as
+% a heavy band. These are the thin, tapered strokes the theme is built on.
+\florasetup{layout=surround,
+  tune={plant={root=0.78, root_width=2.2, tip_width=1.2, stem_brush=0.5,
+    end_taper=0.06, fork_ratio=0.8},
+    gesture={edge=0.10, top_inset=72},
+    compose={hero_shift=21}}}
+
+\makeatletter
+
+% Fixed names; each palette redefines them, and beamer resolves the names
+% when it paints, so no \setbeamercolor has to be repeated per palette.
+\definecolor{floradark}{HTML}{3D2534}
+\definecolor{florastructure}{HTML}{A0003B}
+\definecolor{florablocktitle}{HTML}{A0003B}
+\definecolor{florablockbody}{HTML}{F9EEF6}
+\definecolor{floraalert}{HTML}{6B1BBB}
+\definecolor{floraalertbg}{HTML}{F7EEFC}
+\definecolor{floraexample}{HTML}{6F4D2A}
+\definecolor{floraexamplebg}{HTML}{F9F0EB}
+
+\setbeamercolor{structure}{fg=florastructure}
+\setbeamercolor{normal text}{fg=floradark}
+\setbeamercolor{title}{fg=florastructure}
+\setbeamercolor{subtitle}{fg=florastructure}
+\setbeamercolor{author}{fg=floradark}
+\setbeamercolor{institute}{fg=floradark}
+\setbeamercolor{date}{fg=floradark}
+\setbeamercolor{block title}{bg=florablocktitle, fg=white}
+\setbeamercolor{block body}{bg=florablockbody, fg=floradark}
+\setbeamercolor{block title alerted}{bg=floraalert, fg=white}
+\setbeamercolor{block body alerted}{bg=floraalertbg, fg=floradark}
+\setbeamercolor{block title example}{bg=floraexample, fg=white}
+\setbeamercolor{block body example}{bg=floraexamplebg, fg=floradark}
+\setbeamercolor{alerted text}{fg=floraalert}
+\setbeamercolor{example text}{fg=floraexample}
+\setbeamercolor{description item}{fg=florastructure}
+\setbeamercolor{itemize item}{fg=florastructure}
+\setbeamercolor{itemize subitem}{fg=florastructure}
+\setbeamercolor{itemize subsubitem}{fg=florastructure}
+\setbeamercolor{enumerate item}{fg=florastructure}
+\setbeamercolor{enumerate subitem}{fg=florastructure}
+\setbeamercolor{enumerate subsubitem}{fg=florastructure}
+
+% The head stays unpainted; the flora is the colour there.
+\setbeamercolor{headline}{bg=, fg=}
+\setbeamercolor{frametitle}{bg=, fg=}
+\setbeamercolor{frametitle continuation}{bg=, fg=}
+\setbeamercolor{section in head/foot}{bg=, fg=}
+\setbeamercolor{subsection in head/foot}{bg=, fg=}
+\setbeamercolor{author in head/foot}{bg=, fg=}
+\setbeamercolor{title in head/foot}{bg=, fg=}
+\setbeamercolor{date in head/foot}{bg=, fg=}
+\setbeamercolor{institute in head/foot}{bg=, fg=}
+
+\setbeamerfont{title}{series=\bfseries}
+\setbeamerfont{subtitle}{series=\mdseries}
+
+% The default frametitle starts at the paper edge; align it with the text
+% block instead, so it sits beside the flora rather than under it.
+\setbeamertemplate{frametitle}{%
+  \vspace*{0.7em}%
+  \begin{minipage}{\textwidth}%
+    {\usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}\insertframetitle\par}%
+    \ifx\insertframesubtitle\@empty\else
+      \vskip0.25em
+      {\usebeamerfont{framesubtitle}\usebeamercolor[fg]{framesubtitle}\insertframesubtitle\par}%
+    \fi
+  \end{minipage}\par
+  \vspace*{0.6em}%
+}
+
+% Round bullets, as in the Singapore theme, in the palette's accent.
+\setbeamertemplate{itemize items}[circle]
+
+% The title block is centred in the text block; the flora eats into its left
+% side, so shift it right by half the offset and keep the right edge fixed.
+\newcommand\floratitleoffset{1.8cm}
+\setbeamertemplate{title page}{%
+  \vfill
+  \hspace*{\floratitleoffset}%
+  \begin{minipage}{\dimexpr\textwidth-\floratitleoffset\relax}%
+    \centering
+    {\usebeamerfont{title}\usebeamercolor[fg]{title}\inserttitle\par}%
+    \ifx\insertsubtitle\@empty\else
+      \vskip0.35em
+      {\usebeamerfont{subtitle}\usebeamercolor[fg]{subtitle}\insertsubtitle\par}%
+    \fi
+    \vskip1.6em
+    {\usebeamerfont{author}\usebeamercolor[fg]{author}\insertauthor\par}%
+    \vskip0.6em
+    {\usebeamerfont{institute}\usebeamercolor[fg]{institute}\insertinstitute\par}%
+    \vskip0.6em
+    {\usebeamerfont{date}\usebeamercolor[fg]{date}\insertdate\par}%
+  \end{minipage}%
+  \vfill
+}
+
+% A light navigation line: section names and frame dots, no background.
+\setbeamercolor{section in head/foot}{fg=floradark}
+\setbeamertemplate{headline}{%
+  \begin{beamercolorbox}[wd=\paperwidth,ht=2.5ex,dp=1.2ex,
+    leftskip=\beamer@leftmargin,rightskip=\beamer@rightmargin plus1fil]{section in head/foot}%
+    \usebeamerfont{section in head/foot}%
+    \insertnavigation{\dimexpr\paperwidth-\beamer@leftmargin-\beamer@rightmargin\relax}%
+  \end{beamercolorbox}%
+}
+
+% Per-palette inks. The block and title accent is the palette's main ink;
+% alerts take the violet, examples the foliage, so an alert always reads as
+% an alert even in the green palette.
+\newcommand\floracolors@warm{%
+  \definecolor{florastructure}{HTML}{A0003B}%
+  \definecolor{florablocktitle}{HTML}{A0003B}%
+  \definecolor{florablockbody}{HTML}{F9EEF6}%
+  \definecolor{floraalert}{HTML}{6B1BBB}%
+  \definecolor{floraalertbg}{HTML}{F7EEFC}%
+  \definecolor{floraexample}{HTML}{6F4D2A}%
+  \definecolor{floraexamplebg}{HTML}{F9F0EB}%
+}
+\newcommand\floracolors@blue{%
+  \definecolor{florastructure}{HTML}{004FB0}%
+  \definecolor{florablocktitle}{HTML}{004FB0}%
+  \definecolor{florablockbody}{HTML}{E8F4F7}%
+  \definecolor{floraalert}{HTML}{6B1BBB}%
+  \definecolor{floraalertbg}{HTML}{F7EEFC}%
+  \definecolor{floraexample}{HTML}{065894}%
+  \definecolor{floraexamplebg}{HTML}{E7F4FC}%
+}
+\newcommand\floracolors@green{%
+  \definecolor{florastructure}{HTML}{006548}%
+  \definecolor{florablocktitle}{HTML}{006548}%
+  \definecolor{florablockbody}{HTML}{E4F7F0}%
+  \definecolor{floraalert}{HTML}{6B1BBB}%
+  \definecolor{floraalertbg}{HTML}{F7EEFC}%
+  \definecolor{floraexample}{HTML}{4E5D00}%
+  \definecolor{floraexamplebg}{HTML}{F1F5D6}%
+}
+\expandafter\let\csname floracolors@green-stems\endcsname\floracolors@green
+
+\renewcommand\florapalettehook[1]{\@nameuse{floracolors@#1}}
+
+% Load the generic palette again now that the hook is in place.
+\florapalette{warm}
+
+\makeatother
+
+\endinput

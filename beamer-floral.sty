@@ -1,0 +1,48 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{beamer-floral}[2026/11/01 Generic floral background for beamer]
+
+\RequirePackage{tikzflora}
+
+% The flora is painted in shipout/background, behind beamer's background
+% canvas. Leave that canvas empty so the page's own colour does not cover
+% the flowers; a document that wants a filled canvas can set it again.
+\setbeamertemplate{background canvas}{}
+
+% Named palettes. Each is a set of inks for the engine's parts; pass one of
+% them to \florapalette, or set any part with \florasetup{palette=...}.
+%   warm         gold hero and sprays, warm blooms, earth leaves and stems
+%   blue         gold hero and sprays, blue blooms, leaves and leaflets
+%   green        gold hero and sprays, blue blooms, green leaves and leaflets
+%   green-stems  as green, with green stems
+\makeatletter
+% A beamer colour theme may follow the chosen palette; beamer-floral itself
+% sets only the engine's inks.
+\providecommand\florapalettehook[1]{}
+\newcommand\florapalette[1]{%
+  \@ifundefined{florapalette@#1}%
+    {\PackageError{beamer-floral}{Unknown floral palette `#1'}%
+      {Known palettes: warm, blue, green, green-stems.}}%
+    {\@nameuse{florapalette@#1}}}
+\newcommand\florapalette@warm{%
+  \florasetup{palette={hero=gold, blooms=warm, leaves=earth, leaflets=blue,
+    stems=earth, sprays=gold, ghost=warm}}\florapalettehook{warm}}
+\newcommand\florapalette@blue{%
+  \florasetup{palette={hero=gold, blooms=blue, leaves=blue, leaflets=blue,
+    stems=earth, sprays=gold, ghost=blue}}\florapalettehook{blue}}
+\newcommand\florapalette@green{%
+  \florasetup{palette={hero=gold, blooms=blue, leaves=green, leaflets=green,
+    stems=earth, sprays=gold, ghost=blue}}\florapalettehook{green}}
+\newcommand\florapalette@green@stems{%
+  \florasetup{palette={hero=gold, blooms=blue, leaves=green, leaflets=green,
+    stems=green, sprays=gold, ghost=blue}}\florapalettehook{green-stems}}
+\expandafter\let\csname florapalette@green-stems\endcsname\florapalette@green@stems
+
+% The generic look is the warm palette; a theme may pick another.
+\florapalette{warm}
+
+\AtBeginDocument{%
+  \floratextblockx{\the\beamer@leftmargin}{\the\dimexpr\paperwidth-\beamer@rightmargin\relax}%
+}
+\makeatother
+
+\endinput
