@@ -13,13 +13,12 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TEXINPUTS: "./tikz-flora/tex//:"
-      FLORA_LUA: "./tikz-flora/lua"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
         with:
           repository: krissen/tikz-flora
-          ref: beamer-floral
+          ref: 818e50d2f3a2e70e4ee59d58df772efac190d125
           path: tikz-flora
       - uses: xu-cheng/latex-action@v3
         with:
@@ -27,5 +26,7 @@ jobs:
           latexmk_use_lualatex: true
           pre_compile: |
             set -e
+            # latex-action forwards TEXINPUTS but not FLORA_LUA; the engine's
+            # boot searches ./lua, so expose the fork's modules there.
             ln -sfn tikz-flora/lua lua
             (cd tikz-flora && texlua tests/test_layout.lua)
