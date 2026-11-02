@@ -9,9 +9,9 @@ grows around the content and the margin follows the page.
 
 - LuaLaTeX
 - the [krissen/tikz-flora](https://github.com/krissen/tikz-flora) fork,
-  branch `beamer-floral`, commit `4dd4812` or later. The upstream engine
-  predates the beamer hooks and tune keys this package uses. CI pins
-  `818e50d`.
+  branch `beamer-floral`, commit `2c1fc8e` or later. The upstream engine
+  lacks the header modes and tune keys this package uses. CI pins the same
+  commit.
 
 For a local checkout, point `TIKZFLORA` at it, or put the path in a
 gitignored `.env`:
@@ -90,32 +90,44 @@ Load the stock theme first and beamer-floral after it:
 ```tex
 \usetheme{Madrid}
 \usepackage{beamer-floral}
-\florasetup{layout=surround, seed=3,
-  tune={gesture={top_inset=48}}}
+\florasetup{seed=3, density=1.2}
 ```
 
-The stock theme keeps its own header, block, alert and example colours;
-beamer-floral adds the plants and the palette. Set `gesture.top_inset` so
-the crown starts below the header bar. Themes without a header bar need a
-smaller inset; the default theme works with 28:
+The package defaults to `header=body`: it measures the frame title and
+starts the flora below it, while the stock theme keeps its own header,
+block, alert and example colours. The border and stems are the floral
+package's own.
+
+Use `header=margin` when the theme leaves room in the left margin and you
+want the hero beside the title instead:
 
 ```tex
-\florasetup{tune={gesture={top_inset=28}}}
+\florasetup{header=margin, layout=surround}
 ```
+
+`\usetheme{floral}` selects margin mode itself.
 
 ![Madrid with beamer-floral](docs/img/stock-madrid.png)
 
-*Madrid keeps its blue header and block colours; the flora grows around the
-text block.*
+*Madrid keeps its blue header and block colours; the flora starts below the
+frame title.*
 
 ![Berlin with beamer-floral](docs/img/stock-berlin.png)
 
-*Berlin keeps its headline and footline; the flora fills the side margins.*
+*Berlin keeps its headline and footline; the flora fills the side margins
+below the title.*
 
 ![Default beamer with beamer-floral](docs/img/stock-default.png)
 
-*The default theme with `top_inset=28`: the crown sits between the frame
-title and the first block.*
+*The default theme with body mode: the border starts below the title.*
+
+## Long titles
+
+![A long Linné-inspired title](docs/img/title-long.png)
+
+*Titles wrap inside the title block. The flora is measured against the text
+and grows around it; this deliberately long Linné-inspired title leaves the
+border in the margins.*
 
 ## Settings
 

@@ -1,7 +1,7 @@
 \documentclass[aspectratio=169]{beamer}
 \usetheme{Madrid}
 \usepackage{beamer-floral}
-\florasetup{layout=surround, seed=3, density=1.2, tune={gesture={top_inset=48}}}
+\florasetup{layout=surround, seed=3, density=1.2}
 \setbeamersize{text margin left=2.5cm, text margin right=1cm}
 \title{beamer-floral with Madrid}
 \subtitle{A stock theme keeps its colours}
@@ -9,7 +9,7 @@
 \institute{beamer-floral}
 \date{}
 \begin{document}
-\begin{frame}\titlepage\end{frame}
+\begin{frame}[plain]\titlepage\end{frame}
 \section{Stock themes}\subsection{Madrid}
 \begin{frame}
   \frametitle{Floral with Madrid}
@@ -18,7 +18,7 @@
   \end{block}
   \begin{itemize}
     \item The flora grows around the measured text block.
-    \item Set \texttt{gesture.top\_inset} when the theme has no header bar.
+    \item The package measures the frame title and starts below it.
   \end{itemize}
   \begin{alertblock}{Alert}
     The alert colour comes from the stock theme.
