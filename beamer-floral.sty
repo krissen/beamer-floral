@@ -27,6 +27,11 @@
   {\beamer@frametextheight=\textheight
    \xdef\floratitleheight{\the\dimexpr\ht\beamer@frametitlebox+\dp\beamer@frametitlebox\relax}}
   {}{\PackageWarningNoLine{beamer-floral}{Could not capture the frame title height}}
+\patchcmd{\endbeamer@frameslide}
+  {\beamer@frametextheight=\paperheight}
+  {\beamer@frametextheight=\paperheight
+   \xdef\floratitleheight{\the\dimexpr\ht\beamer@frametitlebox+\dp\beamer@frametitlebox\relax}}
+  {}{\PackageWarningNoLine{beamer-floral}{Could not capture the plain frame title height}}
 \renewcommand\floraframetitlepresent{\ifdim\floratitleheight>0pt 1\else 0\fi}
 \makeatother
 
