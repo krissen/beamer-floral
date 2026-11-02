@@ -68,7 +68,7 @@ frames the page instead of underlining a running head.*
 
 ![Left layout](docs/img/layout-left.png)
 
-*`layout=left`: the flora grows in the left margin and along the foot.*
+*`layout=left`: the flora grows in the left margin and across the top and foot; the right margin is paper.*
 
 ![Surround layout](docs/img/layout-surround.png)
 
@@ -90,12 +90,14 @@ Load the stock theme first and beamer-floral after it:
 ```tex
 \usetheme{Madrid}
 \usepackage{beamer-floral}
-\florasetup{layout=surround, seed=3}
+\florasetup{layout=surround, seed=3,
+  tune={gesture={top_inset=48}}}
 ```
 
 The stock theme keeps its own header, block, alert and example colours;
-beamer-floral adds the plants and the palette. If the theme has no header
-bar, set `gesture.top_inset` so the crown starts below the frame title:
+beamer-floral adds the plants and the palette. Set `gesture.top_inset` so
+the crown starts below the header bar. Themes without a header bar need a
+smaller inset; the default theme works with 28:
 
 ```tex
 \florasetup{tune={gesture={top_inset=28}}}
@@ -138,9 +140,10 @@ Named palettes:
 \florapalette{green-stems}  % as green, with green stems
 ```
 
-`\florapalette` also sets the block title, alert, example and
-description-label colours. Alerts take a deeper ink from the same family:
-yama-budo for warm, murasaki-shikibu for blue, edo-murasaki for green.
+With `\usetheme{floral}`, `\florapalette` also sets the block title,
+alert, example and description-label colours. Alerts take a deeper ink
+from the same family: yama-budo for warm, murasaki-shikibu for blue,
+edo-murasaki for green. A stock theme keeps its own block colours.
 
 ## Reserving space
 
@@ -161,8 +164,8 @@ backs the title-page inset above.
 latexmk -lualatex test/smoke.tex
 ```
 
-CI checks out the pinned engine, runs its layout and reserve tests, and
-builds `test/smoke.tex` with LuaLaTeX. The `tune` keys are validated by the
+CI checks out the pinned engine, runs its layout tests, and builds
+`test/smoke.tex` with LuaLaTeX. The `tune` keys are validated by the
 engine against its tuner index, so a typo names the key and its valid
 siblings.
 
