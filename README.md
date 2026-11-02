@@ -12,8 +12,9 @@ This is the generic package. The KAU adaptation lives in
 
 - LuaLaTeX
 - the [krissen/tikz-flora](https://github.com/krissen/tikz-flora) fork,
-  branch `beamer-floral`, commit `818e50d` or later. The upstream engine
-  lacks the beamer hooks and tune keys this package uses.
+  branch `beamer-floral`, commit `4dd4812` or later. The upstream engine
+  lacks the beamer hooks and tune keys this package uses. CI pins
+  `818e50d`.
 
 For a local checkout, point `TIKZFLORA` at it, or put the path in a
 gitignored `.env`:
@@ -84,7 +85,7 @@ Keep the flora out of a rectangle (a footline, a logo, a caption) with
 paper coordinates in points, origin at the lower-left corner:
 
 ```tex
-\florareserve{0}{0}{\paperwidth}{\the\dimexpr 1cm\relax}
+\florareserve{0}{0}{\the\paperwidth}{\the\dimexpr 1cm\relax}
 \floraclearreserve
 ```
 
