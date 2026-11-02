@@ -70,7 +70,7 @@
 % The default frametitle starts at the paper edge; align it with the text
 % block instead, so it sits beside the flora rather than under it.
 \setbeamertemplate{frametitle}{%
-  \vspace*{0.7em}%
+  \vspace*{1.4em}%
   \begin{minipage}{\textwidth}%
     {\usebeamerfont{frametitle}\usebeamercolor[fg]{frametitle}\insertframetitle\par}%
     \ifx\insertframesubtitle\@empty\else
@@ -83,6 +83,7 @@
 
 % Round bullets, as in the Singapore theme, in the palette's accent.
 \setbeamertemplate{itemize items}[circle]
+\setbeamertemplate{navigation symbols}{}
 
 % The title block is centred in the text block; the flora eats into its left
 % side, so shift it right by half the offset and keep the right edge fixed.
@@ -111,9 +112,9 @@
 \setbeamercolor{section in head/foot}{fg=floradark}
 \setbeamertemplate{headline}{%
   \begin{beamercolorbox}[wd=\paperwidth,ht=2.5ex,dp=1.2ex,
-    leftskip=\beamer@leftmargin,rightskip=\beamer@rightmargin plus1fil]{section in head/foot}%
+    leftskip=.3cm,rightskip=.3cm plus1fil]{section in head/foot}%
     \usebeamerfont{section in head/foot}%
-    \insertnavigation{\dimexpr\paperwidth-\beamer@leftmargin-\beamer@rightmargin\relax}%
+    \insertnavigation{\dimexpr\paperwidth-.6cm\relax}%
   \end{beamercolorbox}%
 }
 
