@@ -11,6 +11,9 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        root_file: [test/smoke.tex, test/stock.tex]
     env:
       TEXINPUTS: "./tikz-flora/tex//:"
     steps:
@@ -18,11 +21,11 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: krissen/tikz-flora
-          ref: 818e50d2f3a2e70e4ee59d58df772efac190d125
+          ref: 1cd6c7b836f3f383d361e03915e56af1b292c304
           path: tikz-flora
       - uses: xu-cheng/latex-action@v3
         with:
-          root_file: test/smoke.tex
+          root_file: ${{ matrix.root_file }}
           latexmk_use_lualatex: true
           pre_compile: |
             set -e

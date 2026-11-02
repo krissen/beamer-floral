@@ -3,14 +3,32 @@
 
 \RequirePackage{tikzflora}
 
-% One symbol from our engine fork; upstream lacks it and would otherwise
-% fail later, inside the theme, with an unrelated error.
-\ifcsname floratextblockx\endcsname\else
+% One symbol from the header-aware engine fork; older checkouts would
+% otherwise fail later with an unrelated error.
+\ifcsname floraframetitlepresent\endcsname\else
   \PackageError{beamer-floral}{This package needs the krissen/tikz-flora fork}%
     {Point TIKZFLORA at a checkout of the fork's branch beamer-floral, commit
-     4dd4812 or later, or set it in a local .env. The upstream engine lacks
-     \string\floratextblockx and the beamer tune keys.}%
+     1cd6c7b or later, or set it in a local .env. The upstream engine lacks
+     the header modes and the beamer tune keys.}%
 \fi
+
+% Thin, tapered stems and a surround border are the package defaults.
+\florasetup{layout=surround, header=body,
+  tune={plant={root=0.78, root_width=2.2, tip_width=1.2, stem_brush=0.5,
+    end_taper=0.06, fork_ratio=0.8},
+    gesture={edge=0.10}}}
+
+% Beamer builds and unboxes the title box inside \beamer@frameslide; catch
+% its dimensions between the two. The box is empty at shipout.
+\makeatletter
+\renewcommand\floratitleheight{0pt}
+\patchcmd{\endbeamer@frameslide}
+  {\beamer@frametextheight=\textheight}
+  {\beamer@frametextheight=\textheight
+   \xdef\floratitleheight{\the\dimexpr\ht\beamer@frametitlebox+\dp\beamer@frametitlebox\relax}}
+  {}{\PackageWarningNoLine{beamer-floral}{Could not capture the frame title height}}
+\renewcommand\floraframetitlepresent{\ifdim\floratitleheight>0pt 1\else 0\fi}
+\makeatother
 
 % The flora is painted in shipout/background, behind beamer's background
 % canvas. Leave that canvas empty so the page's own colour does not cover

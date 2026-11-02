@@ -12,9 +12,9 @@ This is the generic package. The KAU adaptation lives in
 
 - LuaLaTeX
 - the [krissen/tikz-flora](https://github.com/krissen/tikz-flora) fork,
-  branch `beamer-floral`, commit `4dd4812` or later. The upstream engine
-  lacks the beamer hooks and tune keys this package uses. CI pins
-  `818e50d`.
+  branch `beamer-floral`, commit `1cd6c7b` or later. The upstream engine
+  lacks the header modes and beamer tune keys this package uses. CI pins
+  the same commit.
 
 For a local checkout, point `TIKZFLORA` at it, or put the path in a
 gitignored `.env`:
