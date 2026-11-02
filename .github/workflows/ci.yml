@@ -1,35 +1,48 @@
 name: CI
 
+# Pull requests are the gate: a squash merge of a green PR adds nothing to
+# test on main. Docs-only changes do not compile anything.
 on:
-  push:
-    branches: [main]
   pull_request:
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - "**.png"
+      - "**.jpg"
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        root_file: [test/smoke.tex, test/stock.tex, test/titles.tex]
     env:
       TEXINPUTS: "./tikz-flora/tex//:"
     steps:
       - uses: actions/checkout@v4
+      # The engine's own tests run in krissen/tikz-flora; here it is only
+      # a pinned dependency.
       - uses: actions/checkout@v4
         with:
           repository: krissen/tikz-flora
           ref: 2c1fc8e707d4ad5f04d70805da62bc0888923a1f
           path: tikz-flora
+      # One job compiles all test documents, so the TeX Live image is
+      # pulled once per run.
       - uses: xu-cheng/latex-action@v3
         with:
-          root_file: ${{ matrix.root_file }}
+          root_file: |
+            test/smoke.tex
+            test/stock.tex
+            test/titles.tex
           latexmk_use_lualatex: true
           pre_compile: |
             set -e
             # latex-action forwards TEXINPUTS but not FLORA_LUA; the engine's
             # boot searches ./lua, so expose the fork's modules there.
             ln -sfn tikz-flora/lua lua
-            (cd tikz-flora && texlua tests/test_layout.lua)

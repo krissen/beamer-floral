@@ -178,10 +178,11 @@ backs the title-page inset above.
 latexmk -lualatex test/smoke.tex
 ```
 
-CI checks out the pinned engine, runs its layout tests, and builds
-`test/smoke.tex`, `test/stock.tex` and `test/titles.tex` with LuaLaTeX. The
-`tune` keys are validated by the engine against its tuner index, so a typo
-names the key and its valid siblings.
+CI checks out the pinned engine and builds `test/smoke.tex`,
+`test/stock.tex` and `test/titles.tex` with LuaLaTeX, on pull requests
+that touch more than documentation. The engine's own tests run in its
+repository. The `tune` keys are validated by the engine against its tuner
+index, so a typo names the key and its valid siblings.
 
 Most documentation screenshots are built from `docs/src/*.tex` with the same
 commands; the long-title image comes from `test/titles.tex`.
