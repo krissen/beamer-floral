@@ -5,9 +5,6 @@ drawn by [tikz-flora](https://github.com/krissen/tikz-flora). The flowers
 are generated, not an image: each page gets its own plant, and the text
 block is measured so the flora grows around it.
 
-This is the generic package. The KAU adaptation lives in
-[kau-tex](https://github.com/krissen/kau-tex) as `sola-floral`.
-
 ## Requirements
 
 - LuaLaTeX
