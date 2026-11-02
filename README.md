@@ -37,8 +37,9 @@ Without `TIKZFLORA`, an installed `tikzflora` is used.
 ```
 
 `\florasetup{...}` sets the document; `\florathispage{...}` the next page.
-`\floraon` and `\floraoff` switch the flora and its margins before a
-frame, which is how title and section pages keep plain margins.
+`\floraon` and `\floraoff` switch the painting off or on before a frame; a
+theme may also switch margins with them, which is how title and section
+pages keep plain margins.
 
 ## Screenshots
 
@@ -61,8 +62,8 @@ examples chiku-rin.*
 
 ![Title page](docs/img/title.png)
 
-*A title page with the crown held at the top (`top_inset=0`), so the border
-frames the page instead of underlining a running head.*
+*A title page with the left layout: the flora fills the left margin and the
+foot, leaving the right margin paper.*
 
 ### Layout and density
 
@@ -134,6 +135,7 @@ border in the margins.*
 | Key | Values |
 |---|---|
 | `layout` | `left`, `right`, `centered`, `split`, `title`, `surround` |
+| `header` | `body`, `margin` |
 | `seed` | a number, or `random` |
 | `density` | `0`–`10` |
 | `mix` | `{leaves=3, leaflets=2, ...}` |
@@ -177,12 +179,12 @@ latexmk -lualatex test/smoke.tex
 ```
 
 CI checks out the pinned engine, runs its layout tests, and builds
-`test/smoke.tex` with LuaLaTeX. The `tune` keys are validated by the
-engine against its tuner index, so a typo names the key and its valid
-siblings.
+`test/smoke.tex`, `test/stock.tex` and `test/titles.tex` with LuaLaTeX. The
+`tune` keys are validated by the engine against its tuner index, so a typo
+names the key and its valid siblings.
 
-The documentation screenshots are built from `docs/src/*.tex` with the same
-commands.
+Most documentation screenshots are built from `docs/src/*.tex` with the same
+commands; the long-title image comes from `test/titles.tex`.
 
 ## Licence
 
