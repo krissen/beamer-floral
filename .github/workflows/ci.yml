@@ -21,7 +21,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: krissen/tikz-flora
-          ref: 1cd6c7b836f3f383d361e03915e56af1b292c304
+          ref: b25c15ca0197e26724048e1eb77f93c9145e381a
           path: tikz-flora
       - uses: xu-cheng/latex-action@v3
         with:
