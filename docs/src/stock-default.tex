@@ -1,0 +1,30 @@
+\documentclass[aspectratio=169]{beamer}
+% beamer default
+\usepackage{beamer-floral}
+\florasetup{layout=surround, seed=3, density=1.2, tune={gesture={top_inset=28}}}
+\setbeamersize{text margin left=2.5cm, text margin right=1cm}
+\title{beamer-floral with default}
+\subtitle{A stock theme keeps its colours}
+\author{Documentation}
+\institute{beamer-floral}
+\date{}
+\begin{document}
+\begin{frame}\titlepage\end{frame}
+\section{Stock themes}\subsection{default}
+\begin{frame}
+  \frametitle{Floral with default}
+  \begin{block}{The theme's own block}
+    beamer-floral adds the flora; the stock theme keeps its block colours.
+  \end{block}
+  \begin{itemize}
+    \item The flora grows around the measured text block.
+    \item Set \texttt{gesture.top\_inset} when the theme has no header bar.
+  \end{itemize}
+  \begin{alertblock}{Alert}
+    The alert colour comes from the stock theme.
+  \end{alertblock}
+  \begin{exampleblock}{Example}
+    So does the example colour.
+  \end{exampleblock}
+\end{frame}
+\end{document}
