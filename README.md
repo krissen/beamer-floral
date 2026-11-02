@@ -12,7 +12,7 @@ This is the generic package. The KAU adaptation lives in
 
 - LuaLaTeX
 - the [krissen/tikz-flora](https://github.com/krissen/tikz-flora) fork,
-  branch `beamer-floral`, commit `b25c15c` or later. The upstream engine
+  branch `beamer-floral`, commit `2c1fc8e` or later. The upstream engine
   lacks the header modes and beamer tune keys this package uses. CI pins
   the same commit.
 

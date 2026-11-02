@@ -12,7 +12,7 @@
 % The theme keeps the flora in the margin beside the title. The package
 % supplies the thin stems, surround layout and body-mode default.
 \florasetup{header=margin,
-  tune={gesture={top_inset=48, header_clip=1}, compose={hero_shift=21}}}
+  tune={gesture={top_inset=24, header_clip=1, header_gap=12}, compose={hero_shift=21}}}
 
 \makeatletter
 
@@ -108,7 +108,7 @@
 % A light navigation line: section names and frame dots, no background.
 \setbeamercolor{section in head/foot}{fg=floradark}
 \setbeamertemplate{headline}{%
-  \begin{beamercolorbox}[wd=\paperwidth,ht=2.5ex,dp=1.2ex,
+  \begin{beamercolorbox}[wd=\paperwidth,ht=2.5ex,dp=3.5ex,
     leftskip=.3cm,rightskip=.3cm plus1fil]{section in head/foot}%
     \usebeamerfont{section in head/foot}%
     \insertnavigation{\dimexpr\paperwidth-.6cm\relax}%
