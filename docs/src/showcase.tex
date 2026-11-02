@@ -1,0 +1,146 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{floral}
+\florasetup{layout=surround, seed=3, density=1.2}
+\setbeamersize{text margin left=2.5cm, text margin right=1cm}
+
+\title{beamer-floral}
+\subtitle{Procedural watercolour margins}
+\author{Documentation}
+\institute{beamer-floral}
+\date{}
+
+\begin{document}
+
+\florathispage{layout=left, density=2.0, mix={leaves=3, leaflets=3, sprays=3, bloom=3}, tune={gesture={top_inset=0}}}
+\begin{frame}[plain]
+  \titlepage
+\end{frame}
+
+\section{Palettes}
+\subsection{Warm}
+
+\begin{frame}
+  \frametitle{Warm palette}
+  \begin{block}{Gold hero, warm blooms}
+    The warm palette draws a gold hero, warm blooms and earth foliage.
+  \end{block}
+  \begin{itemize}
+    \item The text block is measured.
+    \item The flora grows around it.
+  \end{itemize}
+  \begin{alertblock}{Alert}
+    \alert{Attention} uses yama-budo.
+  \end{alertblock}
+  \begin{exampleblock}{Example}
+    The example uses yama-guri.
+  \end{exampleblock}
+  \begin{description}
+    \item[Label] Description labels use the block accent.
+  \end{description}
+\end{frame}
+
+\florapalette{blue}
+\subsection{Blue}
+
+\begin{frame}
+  \frametitle{Blue palette}
+  \begin{block}{Azure blooms}
+    The blue palette keeps blooms, leaves and leaflets in the iroshizuku blues.
+  \end{block}
+  \begin{itemize}
+    \item Blue blooms and blue foliage share one ink family.
+    \item The gold hero and sprays stay warm.
+  \end{itemize}
+  \begin{alertblock}{Alert}
+    \alert{Attention} uses murasaki-shikibu.
+  \end{alertblock}
+  \begin{exampleblock}{Example}
+    The example uses tsuki-yo.
+  \end{exampleblock}
+  \begin{description}
+    \item[Label] Description labels use kon-peki.
+  \end{description}
+\end{frame}
+
+\florapalette{green}
+\subsection{Green}
+
+\begin{frame}
+  \frametitle{Green palette}
+  \begin{block}{Blue blooms, green leaves}
+    The green palette pairs blue blooms with green foliage.
+  \end{block}
+  \begin{itemize}
+    \item Leaves and leaflets take shin-ryoku and chiku-rin.
+    \item Alerts keep their own violet from edo-murasaki.
+  \end{itemize}
+  \begin{alertblock}{Alert}
+    \alert{Attention} uses edo-murasaki.
+  \end{alertblock}
+  \begin{exampleblock}{Example}
+    The example uses chiku-rin.
+  \end{exampleblock}
+  \begin{description}
+    \item[Label] Description labels use shin-ryoku.
+  \end{description}
+\end{frame}
+
+\florapalette{warm}
+\section{Layout and density}
+\subsection{Layout}
+
+\florathispage{layout=left}
+\begin{frame}
+  \frametitle{Layout: left}
+  \framesubtitle{Floral margin only}
+  \begin{block}{A single margin}
+    The left layout grows the border in the left margin and across the top and foot.
+  \end{block}
+  \begin{itemize}
+    \item The text block stays clear.
+    \item The right margin is paper.
+  \end{itemize}
+\end{frame}
+
+\florathispage{layout=surround}
+\begin{frame}
+  \frametitle{Layout: surround}
+  \framesubtitle{A border around the text}
+  \begin{block}{A closed border}
+    The surround layout draws a crown above the text and a foot below it.
+  \end{block}
+  \begin{itemize}
+    \item The crown stops under the running head.
+    \item The palette supplies the block and alert inks.
+  \end{itemize}
+\end{frame}
+
+\subsection{Density}
+
+\florathispage{density=0.6}
+\begin{frame}
+  \frametitle{Density: 0.6}
+  \framesubtitle{Airier}
+  \begin{block}{Less growth}
+    A lower density leaves more paper between the stems and blooms.
+  \end{block}
+  \begin{itemize}
+    \item Sprays and leaves thin out.
+    \item The same seed keeps the shape.
+  \end{itemize}
+\end{frame}
+
+\florathispage{density=2.0}
+\begin{frame}
+  \frametitle{Density: 2.0}
+  \framesubtitle{Fuller}
+  \begin{block}{More growth}
+    A higher density fills the margin with more stems, leaves and sprays.
+  \end{block}
+  \begin{itemize}
+    \item The layout stays the same.
+    \item The text block stays clear.
+  \end{itemize}
+\end{frame}
+
+\end{document}
