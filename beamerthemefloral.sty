@@ -110,11 +110,13 @@
 
 % A light navigation line: section names and frame dots, no background.
 \setbeamercolor{section in head/foot}{fg=floradark}
+\newlength\floranavskip
+\setlength\floranavskip{.3cm}
 \setbeamertemplate{headline}{%
   \begin{beamercolorbox}[wd=\paperwidth,ht=2.5ex,dp=1.2ex,
-    leftskip=.3cm,rightskip=.3cm plus1fil]{section in head/foot}%
+    leftskip=\floranavskip,rightskip=\floranavskip plus1fil]{section in head/foot}%
     \usebeamerfont{section in head/foot}%
-    \insertnavigation{\dimexpr\paperwidth-.6cm\relax}%
+    \insertnavigation{\dimexpr\paperwidth-2\floranavskip\relax}%
   \end{beamercolorbox}%
 }
 
