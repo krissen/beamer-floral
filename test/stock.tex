@@ -1,0 +1,30 @@
+\documentclass[aspectratio=169]{beamer}
+\usepackage{beamer-floral}
+\florasetup{seed=3, density=1.2}
+\setbeamersize{text margin left=2.5cm, text margin right=1cm}
+
+\title{beamer-floral with a stock theme}
+\subtitle{Header in body mode}
+\author{Test}
+\institute{Test}
+\date{\today}
+
+\begin{document}
+
+\begin{frame}[plain]
+  \titlepage
+\end{frame}
+
+\begin{frame}
+  \frametitle{Floral with the default theme}
+  \framesubtitle{The flora starts below the title}
+  \begin{block}{The theme's own block}
+    beamer-floral adds the flora; the stock theme keeps its block colours.
+  \end{block}
+  \begin{itemize}
+    \item The border begins below the frame title.
+    \item The stems are thin and tapered.
+  \end{itemize}
+\end{frame}
+
+\end{document}

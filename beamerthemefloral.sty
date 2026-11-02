@@ -9,13 +9,10 @@
 
 \RequirePackage{beamer-floral}
 
-% The engine's stock stem is drawn for a larger canvas; at 16:9 it reads as
-% a heavy band. These are the thin, tapered strokes the theme is built on.
-\florasetup{layout=surround,
-  tune={plant={root=0.78, root_width=2.2, tip_width=1.2, stem_brush=0.5,
-    end_taper=0.06, fork_ratio=0.8},
-    gesture={edge=0.10, top_inset=48},
-    compose={hero_shift=21}}}
+% The theme keeps the flora in the margin beside the title. The package
+% supplies the thin stems, surround layout and body-mode default.
+\florasetup{header=margin,
+  tune={gesture={top_inset=48}, compose={hero_shift=21}}}
 
 \makeatletter
 
