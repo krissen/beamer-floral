@@ -8,9 +8,16 @@
 \ifcsname floraframetitlepresent\endcsname\else
   \PackageError{beamer-floral}{This package needs the krissen/tikz-flora fork}%
     {Point TIKZFLORA at a checkout of the fork's branch beamer-floral, commit
-     b25c15c or later, or set it in a local .env. The upstream engine lacks
+     2c1fc8e or later, or set it in a local .env. The upstream engine lacks
      the header modes and the beamer tune keys.}%
 \fi
+\directlua{%
+  local ok, t = pcall(require, "flora.tune")
+  if not ok or not t.gesture or t.gesture.header_gap == nil then
+    tex.error("beamer-floral needs krissen/tikz-flora 2c1fc8e or later "
+      .. "(gesture.header_gap missing)")
+  end
+}
 
 % Thin, tapered stems and a surround border are the package defaults.
 \florasetup{layout=surround, header=body,
