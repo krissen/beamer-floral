@@ -244,6 +244,16 @@ than shrinking an entire sheet onto a presentation slide.
 
 ## Optional list markers and dividers
 
+![Optional floral list markers](docs/img/ornament-lists.png)
+
+*The optional list templates use the same rosette at all three depths.
+The current text size and Beamer item colour determine their appearance.*
+
+![Optional floral divider](docs/img/ornament-divider.png)
+
+*The divider is centred in the text block with a nominal width of half
+the current line width.*
+
 The Floral theme keeps circle markers by default. Select the optional
 ornament templates independently:
 
@@ -270,7 +280,9 @@ names are accepted, but detailed cartouches are unsuitable at bullet size.
 The templates use the engine's isolated seed and do not change frame flora.
 
 These commands belong to `\usetheme{floral}`. The generic package preserves
-stock-theme list templates. For custom stock-theme integrations, the engine
+stock-theme list templates. In particular, kau-tex’s `sola-floral` loads
+only `beamer-floral` and retains its own list markers. For custom
+stock-theme integrations, the engine
 also exposes `\floraornament[width=1em,height=1em,baseline=0pt,seed=1,color=.]{gilt_rosette}`.
 The optional templates require tikz-flora commit `28c394a` or later.
 See the [comparison fixture](test/visual/README.md#optional-ornament-comparison)

@@ -71,3 +71,14 @@ The theme exposes each template independently:
 These are opt-in review candidates; the generic package does not replace
 stock-theme templates. Export comparison images from these PDFs. Inspect
 projected-size readability and diagnostics before adopting the templates.
+
+The optional ornament README screenshots come from pages 2 and 9 of the
+16:9 ornament comparison, after rebuilding with current settings:
+
+```sh
+pdftocairo -f 2 -l 2 -png -singlefile -scale-to 1800 build/ornament-review/169-floral.pdf docs/img/ornament-lists
+pdftocairo -f 9 -l 9 -png -singlefile -scale-to 1800 build/ornament-review/169-floral.pdf docs/img/ornament-divider
+```
+
+These two optional images are exported separately from the main visual
+suite's `--screenshots` matrix.
