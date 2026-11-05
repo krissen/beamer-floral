@@ -288,6 +288,45 @@ The optional templates require tikz-flora commit `28c394a` or later.
 See the [comparison fixture](test/visual/README.md#optional-ornament-comparison)
 for visual review; these candidates do not establish projection readability.
 
+### Alternative forms and colours
+
+![Alternative list markers](docs/img/ornament-options-lists.png)
+
+*Rosettes, trefoils and lozenges at the same nominal size. The lozenge has
+finer strokes and needs particular care at projected size.*
+
+After selecting the floral templates above, choose a shape with
+`\floralornamentsetup{item=gilt_trefoil}` (or `gilt_rosette` or
+`gilt_lozenge`). `item` changes the first depth; `subitem` and
+`subsubitem` independently change the other depths.
+
+![Different shapes by depth](docs/img/ornament-options-depths.png)
+
+```tex
+\floralornamentsetup{item=rosette, subitem=gilt_trefoil,
+  subsubitem=gilt_lozenge, color=blue!70!black}
+```
+
+*The header ornament `rosette` is a pointed form, distinct from the smaller
+four-dot `gilt_rosette`. Explicit colours override the inherited Beamer ink.*
+
+![Alternative dividers](docs/img/ornament-options-dividers.png)
+
+The first divider uses the defaults. The other two use:
+
+```tex
+\floralornamentsetup{divider=swash, divider width=.35\linewidth,
+  divider height=1em, divider color=blue!70!black}
+\floraldivider
+\floralornamentsetup{divider=headpiece, divider width=.7\linewidth,
+  divider height=1.2em, divider color=green!40!black}
+\floraldivider
+```
+
+All three catalogue images come from the executable English
+[configuration catalogue](test/visual/ornament-catalogue.tex).
+Its background flora is disabled to make the individual shapes easy to compare.
+
 ## Reserving space
 
 Keep the flora out of a rectangle with paper coordinates in points, origin

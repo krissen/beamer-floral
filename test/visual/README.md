@@ -82,3 +82,16 @@ pdftocairo -f 9 -l 9 -png -singlefile -scale-to 1800 build/ornament-review/169-f
 
 These two optional images are exported separately from the main visual
 suite's `--screenshots` matrix.
+
+## Configuration catalogue
+
+`ornament-catalogue.tex` supplies the three README option images, showing
+list shapes, per-depth selection and divider styles. Background flora is
+disabled to isolate the ornaments. Build and export from repository root:
+
+```sh
+latexmk -lualatex -outdir=build/ornament-catalogue test/visual/ornament-catalogue.tex
+pdftocairo -f 1 -l 1 -png -singlefile -scale-to 1800 build/ornament-catalogue/ornament-catalogue.pdf docs/img/ornament-options-lists
+pdftocairo -f 2 -l 2 -png -singlefile -scale-to 1800 build/ornament-catalogue/ornament-catalogue.pdf docs/img/ornament-options-depths
+pdftocairo -f 3 -l 3 -png -singlefile -scale-to 1800 build/ornament-catalogue/ornament-catalogue.pdf docs/img/ornament-options-dividers
+```
