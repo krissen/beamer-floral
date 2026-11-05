@@ -1,0 +1,28 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{floral}
+\setbeamersize{text margin left=2.5cm,text margin right=1cm}
+\florasetup{seed=3,density=0.3}
+\begin{document}
+\florathispage{layout=left}
+\begin{frame}{Layout left}\includegraphics[width=2cm]{docs/img/title.png}\par Test content.\end{frame}
+\florathispage{layout=right}
+\begin{frame}{Layout right}\includegraphics[width=2cm]{docs/img/title.png}\par Test content.\end{frame}
+\florathispage{layout=centered}
+\begin{frame}{Layout centered}\includegraphics[width=2cm]{docs/img/title.png}\par Test content.\end{frame}
+\florathispage{layout=split}
+\begin{frame}{Layout split}\includegraphics[width=2cm]{docs/img/title.png}\par Test content.\end{frame}
+\florathispage{layout=title}
+\begin{frame}{Layout title}\includegraphics[width=2cm]{docs/img/title.png}\par Test content.\end{frame}
+\florathispage{layout=surround}
+\begin{frame}{Layout surround}\includegraphics[width=2cm]{docs/img/title.png}\par Test content.\end{frame}
+\florapalette{warm}
+\begin{frame}{Palette warm}\begin{block}{Normal}Text\end{block}\begin{alertblock}{Alert}Text\end{alertblock}\begin{exampleblock}{Example}Text\end{exampleblock}\end{frame}
+\florapalette{blue}
+\begin{frame}{Palette blue}\begin{block}{Normal}Text\end{block}\begin{alertblock}{Alert}Text\end{alertblock}\begin{exampleblock}{Example}Text\end{exampleblock}\end{frame}
+\florapalette{green}
+\begin{frame}{Palette green}\begin{block}{Normal}Text\end{block}\begin{alertblock}{Alert}Text\end{alertblock}\begin{exampleblock}{Example}Text\end{exampleblock}\end{frame}
+\florapalette{green-stems}
+\begin{frame}{Palette green-stems}\begin{block}{Normal}Text\end{block}\begin{alertblock}{Alert}Text\end{alertblock}\begin{exampleblock}{Example}Text\end{exampleblock}\end{frame}
+\begin{frame}{A deliberately long frame title that wraps over multiple lines to verify title clearance}\framesubtitle{Subtitle}Content\end{frame}
+\begin{frame}Untitled after a long title.\end{frame}
+\end{document}

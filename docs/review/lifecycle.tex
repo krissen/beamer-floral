@@ -1,0 +1,32 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{floral}
+\florasetup{seed=3,density=0.3}
+\directlua{
+ local original=flora.page
+ flora.page=function(a)
+ local effective=require('flora.settings').merge(flora.settings,flora.once)
+ texio.write_nl('term and log','FLORAL-STATE page='..a.page..' layout='..tostring(effective.layout)..' density='..tostring(effective.mix.density)..' x0='..a.text_x0..' title='..a.frametitle_height)
+ return original(a)
+ end
+}
+\makeatletter
+% Same direct geometry updates as sola-floral, without requiring its branding.
+\newcommand\reviewmargins[2]{%
+ \beamer@leftmargin=#1\relax\beamer@rightmargin=#2\relax
+ \textwidth=\dimexpr\paperwidth-#1-#2\relax
+ \columnwidth=\textwidth\hsize=\textwidth\linewidth=\textwidth
+ \oddsidemargin=\dimexpr#1-1in\relax\evensidemargin=\oddsidemargin
+ \typeout{FLORAL-MARGIN actual=\the\beamer@leftmargin; snapshot=\floratextblockxa}}
+\makeatother
+\begin{document}
+\florathispage{layout=left,density=0.7}
+\begin{frame}{Local}Page-local settings\end{frame}
+\begin{frame}Defaults restored, no title\end{frame}
+\floraoff
+\florathispage{layout=right}
+\begin{frame}{Off}Pending page settings on a disabled page\end{frame}
+\floraon
+\begin{frame}{On}Pending settings after a disabled page\end{frame}
+\reviewmargins{3cm}{1cm}
+\begin{frame}{Changed margins}Changed content geometry\end{frame}
+\end{document}

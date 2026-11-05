@@ -1,0 +1,33 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{floral}
+\florasetup{seed=3,density=0.3}
+\makeatletter
+\AddToHook{shipout/before}{\typeout{FLORAL-TRACE page=\thepage; frame=\the\c@framenumber; overlay=\beamer@overlaynumber; start=\beamer@framestartpage}}
+\makeatother
+\directlua{
+ if os.getenv('FLORAL_VERIFY_STABLE')=='1' then
+ local compose=require('flora.compose')
+ local original=compose.page
+ local seen={}
+ compose.page=function(spec)
+ local key=tostring(spec.page)
+ local data=require('flora.serial').encode(spec)
+ if seen[key] and seen[key]~=data then tex.error('Overlay spec changed within frame '..key) end
+ seen[key]=data
+ return original(spec)
+ end
+ end
+}
+\begin{document}
+\begin{frame}[label=only]{Only}
+\only<1>{Short text.}
+\only<2>{A longer paragraph appears here.\par\vspace{2cm}A second line near the bottom.}
+\end{frame}
+\begin{frame}{Uncover}
+\uncover<1->{First line.}\par\vspace{2cm}\uncover<2->{Second line.}
+\end{frame}
+\begin{frame}{Pause}First\pause\par Second\end{frame}
+\begin{frame}[noframenumbering]{Unnumbered}First\pause\par Second\end{frame}
+\againframe<2>[relabel=only-replay]{only}
+\begin{frame}[allowframebreaks]{Breaks}First\par\framebreak Second\end{frame}
+\end{document}
