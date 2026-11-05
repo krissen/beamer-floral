@@ -216,6 +216,8 @@ backs the title-page inset above.
 
 ## Development
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution and commit-message conventions.
+
 ```sh
 latexmk -lualatex test/smoke.tex
 ```
