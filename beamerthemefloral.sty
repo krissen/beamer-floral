@@ -83,6 +83,39 @@
 \setbeamertemplate{itemize items}[circle]
 \setbeamertemplate{navigation symbols}{}
 
+% Optional ornament templates. Values are local to the surrounding TeX group.
+\pgfkeys{/floral ornaments/.is family,/floral ornaments,
+  item/.initial=gilt_rosette, subitem/.initial=gilt_rosette,
+  subsubitem/.initial=gilt_rosette,
+  width/.initial=.85em, height/.initial=.85em, baseline/.initial=.18em,
+  seed/.initial=3, color/.initial=.,
+  divider/.initial=fleuron_rule, divider width/.initial=0.5\linewidth,
+  divider height/.initial=1em, divider baseline/.initial=0pt,
+  divider color/.initial=., divider skip/.initial=\medskipamount}
+\newcommand\floralornamentsetup[1]{\pgfkeys{/floral ornaments/.cd,#1}}
+\newcommand\floral@value[1]{\pgfkeysvalueof{/floral ornaments/#1}}
+\newcommand\floral@marker[1]{%
+  \ifcsname floraornament\endcsname
+    \floraornament[width=\floral@value{width},height=\floral@value{height},
+      baseline=\floral@value{baseline},seed=\floral@value{seed},
+      color=\floral@value{color}]{\floral@value{#1}}%
+  \else
+    \PackageError{beamerthemefloral}{Floral markers need the ornament engine API}{Update tikz-flora before selecting the floral templates.}%
+  \fi}
+\defbeamertemplate{itemize item}{floral}{\floral@marker{item}}
+\defbeamertemplate{itemize subitem}{floral}{\floral@marker{subitem}}
+\defbeamertemplate{itemize subsubitem}{floral}{\floral@marker{subsubitem}}
+\newcommand\floraldivider{%
+  \par\vskip\floral@value{divider skip}\noindent\hbox to\linewidth{\hfil
+  \ifcsname floraornament\endcsname
+    \floraornament[width=\floral@value{divider width},height=\floral@value{divider height},
+      baseline=\floral@value{divider baseline},seed=\floral@value{seed},
+      color=\floral@value{divider color}]{\floral@value{divider}}%
+  \else
+    \PackageError{beamerthemefloral}{Floral dividers need the ornament engine API}{Update tikz-flora before using the divider.}%
+  \fi
+  \hfil}\par\vskip\floral@value{divider skip}}
+
 % The title block is centred in the text block; the flora eats into its left
 % side, so shift it right by half the offset and keep the right edge fixed.
 \newcommand\floratitleoffset{1.8cm}

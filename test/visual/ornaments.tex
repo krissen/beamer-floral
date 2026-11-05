@@ -1,0 +1,32 @@
+% Compare with \def\FloralMarkers{1} before input.
+\providecommand\VisualAspect{169}
+\documentclass[aspectratio=\VisualAspect]{beamer}
+\usetheme{floral}
+\florasetup{seed=3,density=.6}
+\ifdefined\FloralMarkers
+\setbeamertemplate{itemize item}[floral]
+\setbeamertemplate{itemize subitem}[floral]
+\setbeamertemplate{itemize subsubitem}[floral]
+\fi
+\newcommand\ListScene{%
+\begin{frame}{Shape and hierarchy}
+\begin{itemize}
+\item A blossom introduces the main idea.
+\begin{itemize}
+\item A supporting shape follows the same ink.
+\begin{itemize}\item A finer point stays clear at a smaller size.\end{itemize}
+\end{itemize}
+\item<2-> A longer sentence wraps onto another line to show how the marker aligns with the text and its continuation.
+\end{itemize}
+\end{frame}}
+\begin{document}
+\ListScene
+\florapalette{blue}\ListScene
+\florapalette{green}\ListScene
+\florapalette{green-stems}\ListScene
+\begin{frame}{A pause in the composition}
+The words leave room for an ornament.
+\ifdefined\FloralMarkers\floraldivider\else\par\medskip\hrule\medskip\fi
+The next idea begins below it.
+\end{frame}
+\end{document}

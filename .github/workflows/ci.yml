@@ -44,6 +44,7 @@ jobs:
             test/frame-settings.tex
             test/frametitle-wrap.tex
             test/headline.tex
+            test/ornament-settings.tex
             test/margins.tex
             docs/src/showcase.tex
             docs/src/stock-default.tex
@@ -66,6 +67,7 @@ jobs:
             set -e
             texlua test/check_boxes.lua frametitle-wrap.log
             texlua test/check_boxes.lua headline.log
+            texlua test/check_boxes.lua ornament-settings.log
             FLORAL_VERIFY_STABLE=1 latexmk -g -lualatex -interaction=nonstopmode -halt-on-error docs/review/overlays.tex
             FLORAL_VERIFY_STABLE=1 latexmk -g -lualatex -interaction=nonstopmode -halt-on-error test/frame-settings.tex
       - uses: actions/upload-artifact@v4

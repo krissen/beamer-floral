@@ -201,6 +201,81 @@ alert, example and description-label colours. Alerts take a deeper ink
 from the same family: yama-budo for warm, murasaki-shikibu for blue,
 edo-murasaki for green. A stock theme keeps its own block colours.
 
+## Choosing the composition
+
+Start with `layout=left` or the package's `surround` default. `right`,
+`centered` and `split` need enough room on each painted side: changing the
+layout does not exchange the package's 2.5 cm left and 1 cm right margins.
+Set deliberate custom margins after loading when exploring these layouts.
+Use the demonstrated left-layout title page before trying `layout=title`;
+that engine layout crowns measured text and is not selected by `\titlepage`.
+
+A quieter, foliage-led composition uses existing engine settings:
+
+```tex
+\florasetup{density=0.6, mix={leaves=2, bloom=0, soft=0, lily=0,
+  ghost=0, umbel=0, cyme=0, gyps=0}}
+```
+
+A custom palette changes the flora; it does not automatically redefine the
+Floral theme's block, alert or text colours. Set those with `\setbeamercolor`
+when designing a custom colour scheme:
+
+```tex
+\florasetup{palette={hero=kon-peki, blooms=warm, leaves=teal}}
+```
+
+`ornaments={...}` adjusts the relative weights of registered ornament kinds,
+not explicit positions. To suppress a whole slot, set every kind in that slot
+to zero. For example, the header slot has four kinds:
+
+```tex
+\florasetup{ornaments={compass=0, rosette=0, sunburst=0, quatrefoil=0}}
+```
+
+Visitors are optional accents. Keep them sparse, for example
+`\florasetup{visitors=0.2, mix={bird=0, snail=0}}`. With a fixed seed,
+`palette={blooms=random}` and `spin=1` explore another ink without moving
+stems or blossoms. Keep settings constant across a frame's overlays.
+
+The engine's `\florasheet{3}` and `\floragallery[1]`, inside a
+`tikzpicture`, are design reference sheets. Inspect them separately rather
+than shrinking an entire sheet onto a presentation slide.
+
+## Optional list markers and dividers
+
+The Floral theme keeps circle markers by default. Select the optional
+ornament templates independently:
+
+```tex
+\setbeamertemplate{itemize item}[floral]
+\setbeamertemplate{itemize subitem}[floral]
+\setbeamertemplate{itemize subsubitem}[floral]
+\floralornamentsetup{item=gilt_rosette, subitem=gilt_rosette,
+  subsubitem=gilt_rosette, width=.85em, height=.85em, baseline=.18em,
+  seed=3, color=., divider=fleuron_rule, divider width=0.5\linewidth,
+  divider height=1em, divider baseline=0pt, divider color=.,
+  divider skip=\medskipamount}
+```
+
+These are the defaults: all three list depths use the same rosette.
+Set `subitem=gilt_trefoil` or `subsubitem=gilt_lozenge`, for example,
+to choose other forms independently. `\floraldivider` inserts a centred ornament with
+space above and below. Dimensions are nominal drawing-box dimensions;
+the engine includes paint reach in the actual TeX box. The baseline is
+measured above the nominal box bottom. `color=.` follows the current text
+colour; explicit xcolor expressions are also accepted. Settings obey TeX
+groups, so a local variant need not change later slides. Registered ornament
+names are accepted, but detailed cartouches are unsuitable at bullet size.
+The templates use the engine's isolated seed and do not change frame flora.
+
+These commands belong to `\usetheme{floral}`. The generic package preserves
+stock-theme list templates. For custom stock-theme integrations, the engine
+also exposes `\floraornament[width=1em,height=1em,baseline=0pt,seed=1,color=.]{gilt_rosette}`.
+The optional templates require tikz-flora commit `28c394a` or later.
+See the [comparison fixture](test/visual/README.md#optional-ornament-comparison)
+for visual review; these candidates do not establish projection readability.
+
 ## Reserving space
 
 Keep the flora out of a rectangle with paper coordinates in points, origin
@@ -211,8 +286,12 @@ at the lower-left corner:
 \floraclearreserve
 ```
 
-This is useful for a footline, a logo or a caption. The same mechanism
-backs the title-page inset above.
+This is useful for a footline, a logo or a caption. Reservations persist
+until `\floraclearreserve`; set and clear them between frames, not between
+overlays. They clip the flora and preserve the underlying background.
+`\florabackground[bottom]{blue!10}{1cm}` adds a band before the flora;
+use height `0pt` to disable it. A reservation protects content over that band.
+Neither command measures a logo automatically.
 
 ## Development
 
