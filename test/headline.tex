@@ -1,0 +1,39 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{Berlin}
+\usepackage{beamer-floral}
+\setbeamersize{text margin left=2.5cm,text margin right=1cm}
+\florasetup{seed=3,density=1.2}
+\directlua{
+  local compose=require('flora.compose')
+  local original=compose.page
+  compose.page=function(spec)
+    local untitled=not spec.frametitle
+    local top=spec.text.y1
+    if spec.page==2 and (not untitled or spec.body_top~=top) then
+      tex.error('Untitled Berlin frame is missing its headline boundary')
+    end
+    if spec.page==3 and spec.body_top then tex.error('Plain frame gained an artificial headline boundary') end
+    local pt=original(spec)
+    if spec.page==2 then
+      if pt.header_clip~=top then tex.error('Untitled Berlin flora is not clipped below headline') end
+      for _,record in ipairs(pt.heroes or {}) do
+        if record.label=='left' then
+          local h=record.hero
+          local _,radius=require('flora.flower').tilt(0,0,h[3],require('flora.tune').hero.tilt)
+          if h[2]+radius>top then tex.error('Hero bloom crosses headline boundary') end
+        end
+      end
+    end
+    return pt
+  end
+}
+\begin{document}
+\section{Content}\subsection{Titles}
+\begin{frame}{A long frame title before the untitled regression case}
+  Text beneath the title.
+\end{frame}
+\begin{frame}
+  \begin{block}{No frame title}The entire hero must sit below the running headline.\end{block}
+\end{frame}
+\begin{frame}[plain]No running headline on this plain frame.\end{frame}
+\end{document}

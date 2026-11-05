@@ -9,9 +9,9 @@ grows around the content and the margin follows the page.
 
 - LuaLaTeX
 - the [krissen/tikz-flora](https://github.com/krissen/tikz-flora) fork,
-  branch `beamer-floral`, commit `2c1fc8e` or later. The upstream engine
-  lacks the header modes and tune keys this package uses. CI pins the same
-  commit.
+  branch `beamer-floral`, commit `a3553bf` or later. The upstream engine
+  lacks the integration hook this package uses. `engine-ref.txt` pins the
+  revision used by CI and standalone bundles.
 
 For a local checkout, point `TIKZFLORA` at it, or put the path in a
 gitignored `.env`:
@@ -36,10 +36,47 @@ Without `TIKZFLORA`, an installed `tikzflora` is used.
 \end{document}
 ```
 
-`\florasetup{...}` sets the document; `\florathispage{...}` the next page.
+`\florasetup{...}` sets the document; `\florathisframe{...}` the next painted
+frame, including all its overlays. `\florathispage` is an alias with the same
+frame semantics in Beamer. The engine's article API keeps its page semantics.
 `\floraon` and `\floraoff` switch the painting off or on before a frame; a
 theme may also switch margins with them, which is how title and section
 pages keep plain margins.
+
+Both `\usetheme{floral}` and `\usepackage{beamer-floral}` reserve 2.5 cm on
+the left and 1 cm on the right by default. These are the package's floral
+margins, not Beamer's narrower inherited margins. The latter give the border
+too little room and should be avoided. To customise the space, call
+`\setbeamersize` after loading the theme or package.
+
+Theme authors that restore a pre-floral layout on undecorated frames should
+capture that layout before requiring `beamer-floral`, since loading it now
+establishes the floral margins.
+
+The flora stays fixed through a frame's overlays. The package collects the
+union of their measured text regions in a `.floral-cache` file beside the
+build outputs. LuaLaTeX requests a rerun when that geometry changes;
+`latexmk` runs the necessary passes. On a first uncached run the decoration
+is provisional. Keep floral settings, reservations, margins and on/off state
+constant within a frame; change them before the next frame. An `againframe`
+replay gets a new garden, and `allowframebreaks` continuations each get their
+own. Split-layout parity follows those logical frame invocations rather than
+the overlay page counter. Settings queued while flora is off remain pending
+until a frame is painted.
+
+## Standalone bundle
+
+Build a self-contained ZIP with its exact engine revision and verify its
+extracted example without local development paths:
+
+```sh
+python3 tools/dist.py --engine /path/to/tikz-flora --test
+```
+
+The output is `build/beamer-floral.zip`. Unzip it, keep the supplied styles,
+`beamer-floral.lua`, engine boot file and `lua/` beside your document, and
+compile with LuaLaTeX. Both packages' licences and engine acknowledgements
+are included. Publishing the archive is a separate step.
 
 ## Screenshots
 
@@ -86,6 +123,12 @@ closes the border.*
 
 ## With a stock theme
 
+Themes with sidebars or other theme content in the page margins, such as
+Berkeley, are **not visually supported**: their margin panels can cover the
+flora. The package warns when a Beamer sidebar is present. Prefer floral or a
+theme with free side margins; alternatively switch the flora off on those
+frames.
+
 Load the stock theme first and beamer-floral after it:
 
 ```tex
@@ -124,11 +167,10 @@ below the title.*
 
 ## Long titles
 
-![A long Linné-inspired title](docs/img/title-long.png)
+![A long title about floral composition](docs/img/title-long.png)
 
-*Titles wrap inside the title block. The flora is measured against the text
-and grows around it; this deliberately long Linné-inspired title leaves the
-border in the margins.*
+*A long title and supporting subtitle share the page with the border. This
+page comes from the same English visual template used for acceptance tests.*
 
 ## Settings
 
@@ -174,20 +216,37 @@ backs the title-page inset above.
 
 ## Development
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for contribution and commit-message conventions.
+
 ```sh
 latexmk -lualatex test/smoke.tex
 ```
 
-CI checks out the pinned engine and builds `test/smoke.tex`,
-`test/stock.tex` and `test/titles.tex` with LuaLaTeX, on pull requests
-that touch more than documentation. The engine's own tests run in its
+CI checks out the pinned engine and builds the test documents, executable
+documentation and integration fixtures with LuaLaTeX. The engine's own tests run in its
 repository. The `tune` keys are validated by the engine against its tuner
 index, so a typo names the key and its valid siblings.
 
-Most documentation screenshots are built from `docs/src/*.tex` with the same
-commands; the long-title image comes from `test/titles.tex`.
+Title, palette and stock-theme screenshots are exported from the visual
+acceptance PDFs. Layout and density scenes come from the executable
+documentation fixture `docs/src/showcase.tex`, which is also compiled in CI.
+
+For visual acceptance across title lengths, themes and aspect ratios, use the
+reusable [visual template](test/visual/README.md):
+
+```sh
+python3 tools/visual_suite.py --engine ../tikz-flora
+```
+
+This produces comparison PDFs, a page guide, contact sheets and build
+diagnostics under `build/visual-review/`. Stock-theme warnings trigger matching
+builds without floral to help identify regressions. Inspect the output before
+approving changes; compilation success alone is insufficient.
+
+Use `--screenshots docs/img` to refresh all documentation screenshots from
+those acceptance and documentation PDFs. All example content is English.
 
 ## Licence
 
-The engine dependency is MIT; this package's licence is to be decided
-before a CTAN release.
+MIT; see [LICENSE](LICENSE). The engine dependency retains its own MIT
+licence and acknowledgements.

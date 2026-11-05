@@ -1,0 +1,98 @@
+% Reusable visual acceptance template. Override these macros before input.
+\providecommand\VisualTheme{floral}
+\providecommand\VisualAspect{169}
+\documentclass[aspectratio=\VisualAspect]{beamer}
+\usetheme{\VisualTheme}
+\ifdefined\VisualBaseline
+  \newcommand\florathisframe[1]{}
+  \newcommand\florapalette[1]{}
+  % Match the package's normal defaults for attribution without the package.
+  \setbeamersize{text margin left=2.5cm,text margin right=1cm}
+\else
+  \usepackage{beamer-floral}
+  \florasetup{seed=3,density=1.2}
+\fi
+\author[Floral]{The Floral Project}
+\institute[Watercolour and type]{Procedural illustration and typography}
+\date{}
+\newcommand\VisualCase[1]{\typeout{VISUAL-CASE: #1}}
+\newcommand\VisualTitle[3]{%
+  \VisualCase{#1}%
+  \title[Floral margins]{#2}\subtitle{#3}%
+  \ifdefstring{\VisualTheme}{floral}{%
+    \florathisframe{layout=left,tune={gesture={top_inset=0}}}%
+  }{}%
+  \begin{frame}[plain]\titlepage\end{frame}}
+\begin{document}
+\VisualTitle{01 short title}{Floral}{Watercolour meets typography}
+\VisualTitle{02 medium title}{A garden around the words: colour, rhythm and space}{Procedural borders for thoughtful presentations}
+\VisualTitle{03 long title}{Drawing botanical borders around a changing text block with procedural watercolour and carefully balanced typography}{Stems, leaves and blossoms share the page with the words}
+\VisualTitle{04 very long title}{The shape of a floral presentation: composing stems, leaves, blossoms and ornaments around titles, paragraphs and figures while preserving space for the ideas within}{}
+\VisualTitle{05 long title and subtitle}{Between the garden and the page: a study of procedural ornament, measured composition and the quiet spaces that bring a presentation into balance}{Following the border from the first blossom to the final flourish, with room for both a longer title and a carefully placed subtitle}
+\section[Composition]{Composition}
+\subsection[Typography]{Typography}
+\VisualCase{06 short frame title}
+\begin{frame}{Room to grow}
+  \framesubtitle{The margin is part of the composition}
+  \begin{itemize}\item The words define the space.\item The border grows around them.\end{itemize}
+\end{frame}
+\VisualCase{07 medium frame title}
+\begin{frame}{Procedural watercolour borders: colour, rhythm and typographic balance}
+  \framesubtitle{A longer heading leaves room for a supporting line}
+  Short paragraphs let the illustration breathe.
+\end{frame}
+\VisualCase{08 very long frame title}
+\begin{frame}{From a single stem to a complete border: arranging botanical details around the changing geometry of a presentation}
+  \framesubtitle{A supporting line beneath an extended heading}
+  The border gives the words a setting.
+\end{frame}
+\VisualCase{09 untitled after long title}
+\begin{frame}
+  \begin{block}{A quieter page}Without a heading, the border follows the space beneath the running head.\end{block}
+\end{frame}
+\subsection[Blocks]{Blocks}
+\VisualCase{10 blocks and lists}
+\begin{frame}{Colour and hierarchy}
+  \begin{block}{Structure}A shared palette connects text and illustration.\end{block}
+  \begin{alertblock}{Emphasis}A deeper ink draws attention.\end{alertblock}
+  \begin{exampleblock}{Example}Foliage supplies a second accent.\end{exampleblock}
+\end{frame}
+\VisualCase{11 columns and table}
+\begin{frame}{Balance across the page}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{.46\textwidth}
+      \begin{block}{Branches of an idea}
+        \begin{itemize}\item A branching idea.\begin{itemize}\item A supporting detail.\begin{itemize}\item A finer point.\end{itemize}\end{itemize}\end{itemize}
+      \end{block}
+    \end{column}
+    \begin{column}{.46\textwidth}
+      \begin{tabular}{lr}Element&Weight\\\hline Leaves&3\\Blossoms&2\\Sprays&1\end{tabular}
+    \end{column}
+  \end{columns}
+\end{frame}
+\subsection[Overlays]{Overlays}
+\VisualCase{12 overlays - two PDF pages}
+\begin{frame}
+  \frametitle{\only<1>{A steady border}\only<2>{A steady border around an unfolding idea: keeping the composition in place}}
+  \only<1>{The first idea takes its place.}
+  \only<2>{A second idea opens up the page.\par\vspace{1cm}The illustration stays still as the words change.}
+\end{frame}
+\VisualCase{13 plain content frame}
+\begin{frame}[plain]{An open canvas}
+  With no running head or footline, the border has the page to itself.
+\end{frame}
+\VisualCase{14 blue palette}
+\florapalette{blue}
+\begin{frame}{Blue palette}
+  \begin{block}{Cool inks}Blue blossoms and foliage share an ink family.\end{block}
+  \begin{alertblock}{Emphasis}Floral uses a deeper violet accent.\end{alertblock}
+  \begin{exampleblock}{Continuity}Stock themes keep their own block colours.\end{exampleblock}
+\end{frame}
+\VisualCase{15 green palette}
+\florapalette{green}
+\begin{frame}{Green palette}
+  \begin{block}{Living colour}Blue blossoms meet green foliage.\end{block}
+  \begin{alertblock}{Emphasis}Floral uses a plum accent.\end{alertblock}
+  \begin{exampleblock}{Continuity}Stock themes keep their own block colours.\end{exampleblock}
+\end{frame}
+\end{document}

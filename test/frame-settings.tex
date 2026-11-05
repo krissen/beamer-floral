@@ -1,0 +1,36 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{floral}
+\florasetup{seed=3,density=0.2}
+\newcount\executions
+\directlua{
+  local page=flora.page
+  flora.page=function(a)
+    a.prepare_spec=function(spec) spec.adapter_callback_chained=true end
+    return page(a)
+  end
+  local compose=require('flora.compose')
+  local original=compose.page
+  local seen={}
+  compose.page=function(spec)
+    if not spec.adapter_callback_chained then tex.error('Existing preparation callback was lost') end
+    if spec.page==1 and spec.layout~='left' then tex.error('Frame override did not persist') end
+    if spec.page==2 and spec.layout~='surround' then tex.error('Frame override leaked') end
+    if os.getenv('FLORAL_VERIFY_STABLE')=='1' then
+      local data=require('flora.serial').encode(spec)
+      if seen[spec.page] and seen[spec.page]~=data then tex.error('Changing-title overlays are not stable') end
+      seen[spec.page]=data
+    end
+    return original(spec)
+  end
+}
+\begin{document}
+\florathisframe{layout=left}
+\begin{frame}
+  \global\advance\executions by1
+  \frametitle{\only<1>{Short}\only<2>{A much longer title that wraps over several lines and changes the protected header geometry}}
+  \only<1>{Short text.}
+  \only<2>{Longer text.\par\vspace{2cm}Content revealed near the bottom.}
+\end{frame}
+\ifnum\executions=2\else\errmessage{Unexpected extra executions of frame body}\fi
+\begin{frame}{Next frame}Document settings restored.\end{frame}
+\end{document}

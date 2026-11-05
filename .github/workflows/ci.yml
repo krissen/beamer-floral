@@ -1,12 +1,11 @@
 name: CI
 
 # Pull requests are the gate: a squash merge of a green PR adds nothing to
-# test on main. Docs-only changes do not compile anything.
+# test on main. Prose-only changes do not compile anything.
 on:
   pull_request:
     paths-ignore:
       - "**.md"
-      - "docs/**"
       - "**.png"
       - "**.jpg"
   workflow_dispatch:
@@ -25,12 +24,14 @@ jobs:
       TEXINPUTS: "./tikz-flora/tex//:"
     steps:
       - uses: actions/checkout@v4
+      - id: engine
+        run: echo "ref=$(cat engine-ref.txt)" >> "$GITHUB_OUTPUT"
       # The engine's own tests run in krissen/tikz-flora; here it is only
       # a pinned dependency.
       - uses: actions/checkout@v4
         with:
           repository: krissen/tikz-flora
-          ref: 2c1fc8e707d4ad5f04d70805da62bc0888923a1f
+          ref: ${{ steps.engine.outputs.ref }}
           path: tikz-flora
       # One job compiles all test documents, so the TeX Live image is
       # pulled once per run.
@@ -40,9 +41,37 @@ jobs:
             test/smoke.tex
             test/stock.tex
             test/titles.tex
+            test/frame-settings.tex
+            test/frametitle-wrap.tex
+            test/headline.tex
+            test/margins.tex
+            docs/src/showcase.tex
+            docs/src/stock-default.tex
+            docs/src/stock-Madrid.tex
+            docs/src/stock-Berlin.tex
+            docs/review/matrix-43.tex
+            docs/review/matrix-169.tex
+            docs/review/coverage.tex
+            docs/review/reserve-background.tex
+            docs/review/overlays.tex
+            docs/review/handout.tex
           latexmk_use_lualatex: true
           pre_compile: |
             set -e
             # latex-action forwards TEXINPUTS but not FLORA_LUA; the engine's
             # boot searches ./lua, so expose the fork's modules there.
             ln -sfn tikz-flora/lua lua
+            texlua test/overlays.lua tikz-flora
+          post_compile: |
+            set -e
+            texlua test/check_boxes.lua frametitle-wrap.log
+            texlua test/check_boxes.lua headline.log
+            FLORAL_VERIFY_STABLE=1 latexmk -g -lualatex -interaction=nonstopmode -halt-on-error docs/review/overlays.tex
+            FLORAL_VERIFY_STABLE=1 latexmk -g -lualatex -interaction=nonstopmode -halt-on-error test/frame-settings.tex
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: latex-diagnostics
+          path: |
+            **/*.log
+            **/*.pdf
