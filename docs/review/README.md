@@ -270,3 +270,11 @@ User visual review selected the same `gilt_rosette` for all three list
 depths and a divider with nominal width `0.5\linewidth`. Both aspect-ratio
 comparisons were rebuilt without diagnostics after these adjustments.
 Each list depth remains independently configurable.
+
+Headpiece follow-up: the user identified crowded end rosettes in the
+configuration catalogue. Engine commit `73c3d6e` separates the band and
+rosettes and handles short proportions within the same nominal box. The
+engine session verified measured bounds/gaps across five aspect ratios and
+five seeds. The Beamer catalogue was rebuilt without diagnostics and its
+divider screenshot regenerated and visually inspected. The engine pin now
+includes this correction.
