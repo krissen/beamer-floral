@@ -1,0 +1,50 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{floral}
+\florasetup{seed=3,density=0.2,growth=overlays}
+\newcount\executions
+\directlua{
+  local adapter=beamer_floral.render_page
+  local seen={}
+  beamer_floral.render_page=function(spec,a)
+    local pt=adapter(spec,a)
+    if os.getenv('FLORAL_VERIFY_STABLE')=='1' then
+      local id=spec.page
+      local k,n=beamer_floral.stage,beamer_floral.stages
+      local expected=({1,2,4,16,64,2,2,2,2,1,1,2,1})[id]
+      if n~=expected then tex.error('Incorrect displayed overlay count for frame '..id..': '..n) end
+      if pt then
+        local body=pt:body()
+        if seen[id]==body then tex.error('Repeated growth stage in frame '..id) end
+        seen[id]=body
+      end
+    end
+    return pt
+  end
+}
+\begin{document}
+\begin{frame}{Single}Finished flora.\end{frame}
+\begin{frame}{Two}First\pause\par Second\end{frame}
+\begin{frame}{Four}\uncover<4->{Four stages.}\end{frame}
+\begin{frame}{Sixteen}\uncover<16->{Sixteen stages.}\end{frame}
+\begin{frame}{Sixty-four}\uncover<64->{Sixty-four stages.}\end{frame}
+\begin{frame}<2,5>[label=selected]{Selected}
+  \global\advance\executions by1
+  \only<2>{First displayed overlay has raw number 2.}
+  \only<5>{Second displayed overlay has raw number 5.}
+\end{frame}
+\ifnum\executions=2\else\errmessage{Frame content executed extra times}\fi
+\begin{frame}[noframenumbering]
+  \frametitle{\only<1>{Short}\only<2>{A much longer title which protects a different area}}
+  \only<1>{Short.}\only<2>{Longer.\par\vspace{2cm}Low text.}
+\end{frame}
+\florareserve{0pt}{0pt}{25pt}{100pt}
+\begin{frame}{Reserved}First\pause\par Second\end{frame}
+\floraclearreserve
+\againframe<2,5>{selected}
+\begin{frame}[allowframebreaks]{Continuation}First\par\framebreak Second\end{frame}
+\begin{frame}
+  \florathisframe{growth=off,layout=left}
+  Whole-frame override inside the body.\pause\par Still off.
+\end{frame}
+\begin{frame}{Restored}Document growth settings restored.\end{frame}
+\end{document}

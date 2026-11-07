@@ -1,0 +1,24 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{floral}
+% Vector playback needs only the usual TeX build.
+% For smoother playback, use [raster] and build with tools/build_animation.py.
+% Only [raster] needs Python and Poppler; manual overlays need neither.
+\usepackage{beamer-floral-animation}
+\florasetup{seed=3,growth=overlays}
+\title{A growing garden}\author{beamer-floral}\date{}
+\begin{document}
+\florathisframe{growth=timed,growth duration=8,growth fps=20}
+\begin{frame}[plain]\titlepage\end{frame}
+\begin{frame}{Growth across overlays}
+  Stems establish the structure.\pause\par
+  Leaves unfurl from their attachments.\pause\par
+  Flowers open into the finished composition.\pause\par
+  The full garden remains on the final overlay.
+\end{frame}
+\florathisframe{growth=timed,growth duration=8,growth fps=20}
+\begin{frame}{Timed intervals}
+  Each click starts the next interval.\pause\par
+  Waiting between clicks does not consume growth time.\par
+  \href{https://github.com/krissen/beamer-floral}{Ordinary links remain clickable.}
+\end{frame}
+\end{document}

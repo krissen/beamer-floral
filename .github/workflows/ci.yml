@@ -41,6 +41,10 @@ jobs:
             test/smoke.tex
             test/stock.tex
             test/titles.tex
+            test/growth.tex
+            test/growth-timed.tex
+            test/growth-poster.tex
+            test/growth-handout.tex
             test/frame-settings.tex
             test/frametitle-wrap.tex
             test/headline.tex
@@ -64,14 +68,26 @@ jobs:
             # boot searches ./lua, so expose the fork's modules there.
             ln -sfn tikz-flora/lua lua
             texlua test/overlays.lua tikz-flora
+            texlua test/growth.lua tikz-flora
+            texlua test/raster-cache.lua tikz-flora
+            texlua test/pdf-startup.lua
           post_compile: |
             set -e
+            FLORAL_VERIFY_STABLE=1 latexmk -g -lualatex -interaction=nonstopmode -halt-on-error test/growth.tex
             texlua test/check_boxes.lua frametitle-wrap.log
             texlua test/check_boxes.lua headline.log
             texlua test/check_boxes.lua ornament-settings.log
             texlua test/check_boxes.lua ornament-catalogue.log
             FLORAL_VERIFY_STABLE=1 latexmk -g -lualatex -interaction=nonstopmode -halt-on-error docs/review/overlays.tex
             FLORAL_VERIFY_STABLE=1 latexmk -g -lualatex -interaction=nonstopmode -halt-on-error test/frame-settings.tex
+      - name: Check emitted PDF playback clocks
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y qpdf
+          python3 tools/check_growth_pdf.py growth-timed.pdf
+          sudo apt-get install -y poppler-utils
+          python3 tools/build_animation.py --engine tikz-flora --outdir build/raster test/growth-raster.tex
+          python3 tools/check_growth_pdf.py build/raster/growth-raster.pdf
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

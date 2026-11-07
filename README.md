@@ -53,9 +53,9 @@ Theme authors that restore a pre-floral layout on undecorated frames should
 capture that layout before requiring `beamer-floral`, since loading it now
 establishes the floral margins.
 
-The flora stays fixed through a frame's overlays. The package collects the
-union of their measured text regions in a `.floral-cache` file beside the
-build outputs. LuaLaTeX requests a rerun when that geometry changes;
+By default, the flora stays fixed through a frame's overlays. The package collects the
+union of their measured text regions and the displayed overlay count in a `.floral-cache` file beside the
+build outputs. LuaLaTeX requests a rerun when the geometry or overlay count changes;
 `latexmk` runs the necessary passes. On a first uncached run the decoration
 is provisional. Keep floral settings, reservations, margins and on/off state
 constant within a frame; change them before the next frame. An `againframe`
@@ -63,6 +63,112 @@ replay gets a new garden, and `allowframebreaks` continuations each get their
 own. Split-layout parity follows those logical frame invocations rather than
 the overlay page counter. Settings queued while flora is off remain pending
 until a frame is painted.
+
+## Growing flora
+
+Opt in to growth across overlays:
+
+```tex
+\florasetup{growth=overlays}
+```
+
+Displayed overlay `k` of `N` shows approximately `k/N` of the finished
+painted area. Leaves and flowers expand as whole shapes from their
+attachments; stems extend before their foliage. A frame with one displayed
+overlay shows its complete decoration. Skipped overlay numbers do not count
+as stages. The final composition, seed and protected text regions stay fixed.
+The first run is provisional; let `latexmk` converge after editing overlays.
+An error reports compositions whose growth resolution cannot support the
+requested number of distinct stages.
+
+**Only playback animation needs a render cache.** `growth=overlays` is a
+manual reveal as you step through slides and requires neither a render cache,
+Python, Poppler nor `animate`. `growth=off` keeps ordinary static flora.
+
+For vector playback (`growth=timed`), load the optional package in the preamble:
+
+```tex
+\usepackage{beamer-floral-animation}
+\florasetup{growth=timed, growth duration=8, growth fps=20}
+% Or select playback for one frame:
+\florathisframe{growth=timed, growth duration=4, growth fps=15}
+```
+
+The default vector path uses ordinary `latexmk` and requires no Python,
+Poppler or render cache. Detailed watercolour vectors can play unevenly in
+Reader even at a requested high fps. Playback follows elapsed active time and
+skips late samples rather than stretching the duration.
+
+For smoother playback, explicitly opt in to raster caching:
+
+```tex
+\usepackage[raster]{beamer-floral-animation}
+```
+
+**Extra build dependencies apply only to this raster playback option.**
+Install Python 3.9 or later and Poppler's `pdftocairo`, in addition to the
+usual LuaLaTeX, `latexmk` and `animate`. They must be on `PATH`. Build with:
+
+```sh
+python3 tools/build_animation.py --outdir build/slides slides.tex
+```
+
+The builder runs LaTeX to measure the document, renders missing background
+samples and builds the final PDF. It reuses existing samples on later builds.
+There is no shell escape. The external tools are needed **when creating or updating
+the cache for raster playback only**; viewing the PDF needs no Python or Poppler.
+With `[raster]`, ordinary `latexmk` reports an error when the cache is
+missing or stale and tells you to run the builder. It never silently uses
+old frames. Only the builder's measurement pass may show provisional static
+interval endpoints before generating the cache. Changing geometry, seeds, engine sources, overlay counts or
+the sample grid invalidates the affected cache.
+
+The cache lives beside the build outputs in `<job>.floral-animation/`; keep
+it with the document when moving to another machine. Cold builds need extra
+time and temporary disk space, and cached samples consume disk space. Moving
+flora is rasterized at 144 dpi by default (`--dpi 36..600` changes this); text,
+links and each interval's final poster remain ordinary vector PDF content.
+Handout mode always uses complete static flora and needs no render cache.
+
+`\usepackage[vector]{beamer-floral-animation}` explicitly selects the default
+vector path. Neither this path nor manual overlay reveals need the external
+raster tools.
+
+Overleaf can compile static flora, manual reveals and vector playback directly.
+For cached timed playback, build the cache locally first and upload it with
+the document; rebuild locally after changes that invalidate it. The external
+raster builder is not part of an ordinary Overleaf LaTeX compile.
+
+Each overlay plays its own growth interval, starts automatically on page
+entry, plays once and stops at its endpoint. Returning to a page restarts
+that interval. Advancing early starts the next page at its nominal starting
+stage. Duration is the total active growth time across the frame, divided
+equally among its displayed overlays; time waiting between clicks is excluded.
+A single title page animates the whole plant. **Text is visible from the start**;
+only the background flora plays an animation.
+
+`growth` accepts `off` (default), `overlays` or `timed`. `growth duration`
+is a positive finite number of seconds (default 8). `growth fps` is an integer
+from 1 to 60 (default 20); the frame count is rounded and the playback rate
+adjusted so each interval contains both endpoints. Playback follows elapsed
+time and skips late samples when a viewer cannot keep up; waiting between
+overlays does not consume the next interval.
+Document settings are inherited; `\florathisframe` applies to the whole frame
+and does not affect the next one. Use `\florathisframe{growth=off}` for a
+complete static decoration.
+
+Animation uses `animate` with `method=ocg` behind ordinary Beamer text,
+links and numbering, with no mouse controls. The interval's final stage is
+the static poster, including in viewers without JavaScript. Handout mode
+always paints complete static flora and needs no animation support package.
+Ordinary documents do not load `animate`.
+
+The [animate manual](https://tug.ctan.org/macros/latex/contrib/animate/animate.pdf)
+documents OCG playback in desktop Acrobat Reader and Okular. Playback in
+these viewers still needs manual acceptance testing for this integration;
+a successful PDF build does not verify playback. The plan and drawing resources are shared. Raster playback adds cached images
+to the PDF, while vector playback shares semantic drawing objects between samples. See [the timed example](docs/src/growth.tex)
+and [the acceptance checklist](docs/review/growth.md).
 
 ## Standalone bundle
 

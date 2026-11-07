@@ -20,3 +20,7 @@ build/
 /lua
 *.floral-cache
 *.floral-cache.tmp
+
+*.floral-animation-manifest
+*.floral-animation-manifest.tmp
+*.floral-animation/

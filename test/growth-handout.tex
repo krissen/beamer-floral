@@ -1,0 +1,16 @@
+\documentclass[handout]{beamer}
+\usepackage{beamer-floral}
+% Handout must work without loading animate, even when growth=timed.
+\florasetup{seed=3,density=0.2,growth=timed}
+\directlua{
+  local compose=require('flora.compose')
+  local original=compose.page
+  compose.page=function(spec)
+    if spec.grow then tex.error('Handout flora must be complete') end
+    if spec._progression then tex.error('Handout must not plan growth') end
+    return original(spec)
+  end
+}
+\begin{document}
+\begin{frame}{Handout}First\pause\par Second\end{frame}
+\end{document}
