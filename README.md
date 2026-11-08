@@ -14,9 +14,7 @@ grows around the content and the margin follows the page.
   revision used by CI and standalone bundles.
 
 The Beamer integration is maintained in our fork for now; the plan is to
-submit those additions upstream. The link in the introduction credits the
-upstream project, while the fork above is the dependency currently needed
-to build this package.
+submit those additions upstream.
 
 For a local checkout, point `TIKZFLORA` at it, or put the path in a
 gitignored `.env`:
@@ -86,7 +84,7 @@ The first run is provisional; let `latexmk` converge after editing overlays.
 An error reports compositions whose growth resolution cannot support the
 requested number of distinct stages.
 
-**Only playback animation needs a render cache.** `growth=overlays` is a
+**Only raster playback needs a render cache.** `growth=overlays` is a
 manual reveal as you step through slides and requires neither a render cache,
 Python, Poppler nor `animate`. `growth=off` keeps ordinary static flora.
 
