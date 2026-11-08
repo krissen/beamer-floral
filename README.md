@@ -208,6 +208,14 @@ examples chiku-rin.*
 *A title page with the left layout: the flora fills the left margin and the
 foot, leaving the right margin paper.*
 
+The floral theme now selects this fuller composition automatically for
+`\titlepage`: `layout=left`, `density=2`, and leaf, leaflet, spray and bloom
+weights of 3. Ordinary frames retain the document's settings. Override the
+title preset with `\florathisframe{layout=...,density=...,mix={...}}` before
+the title frame. This also applies to static titles; animation stays optional.
+See [the full animated title example](docs/src/growth-title.tex), which uses
+the default eight-second duration and the optional raster cache.
+
 ### Layout and density
 
 ![Left layout](docs/img/layout-left.png)

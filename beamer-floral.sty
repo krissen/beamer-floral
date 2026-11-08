@@ -5,6 +5,9 @@
 % A useful floral border needs space, whichever Beamer theme supplies the text.
 % Set document-specific margins after loading this package to override them.
 \setbeamersize{text margin left=2.5cm,text margin right=1cm}
+\newcount\floraltitlepageflag
+% Reset after Beamer has shipped the preceding slide, before this body.
+\AddToHook{cmd/beamer@framenotesbegin/before}{\global\floraltitlepageflag=0\relax}
 
 \directlua{%
   if flora.prepare_spec_version ~= 1 then
@@ -16,6 +19,10 @@
   beamer_floral.init(path)
   local original = flora.page
   flora.page = function(a)
+    local document_settings = flora.settings
+    if tex.count.floraltitlepageflag == 1 and beamer_floral.title_defaults then
+      flora.settings = require("flora.settings").merge(flora.settings, beamer_floral.title_defaults)
+    end
     beamer_floral.active_settings = require("flora.settings").merge(flora.settings, flora.once)
     if beamer_floral.active_settings.growth and beamer_floral.active_settings.growth ~= "off"
         and not beamer_floral.handout and flora.render_page_version ~= 1 then
@@ -36,7 +43,9 @@
       if rendered ~= nil then return rendered end
       if previous_render then return previous_render(spec, args) end
     end
-    return original(a)
+    local result = original(a)
+    flora.settings = document_settings
+    return result
   end
 }
 \makeatletter

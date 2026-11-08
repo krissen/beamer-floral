@@ -61,6 +61,7 @@ First\pause\par Second\pause\par Third\pause\par Finished
         b"usepackage{beamer-floral-animation}", b"usepackage[raster]{beamer-floral-animation}")
     for name in ("build_animation.py", "render_animation.lua"):
         files["tools/" + name] = (ROOT / "tools" / name).read_bytes()
+    files["growth-title.tex"] = (ROOT / "docs/src/growth-title.tex").read_bytes()
     files["latexmkrc"] = b"$pdf_mode = 4;\n"
     files["README.md"] = ("""# beamer-floral standalone bundle
 

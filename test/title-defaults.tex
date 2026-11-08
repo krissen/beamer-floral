@@ -1,0 +1,26 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{floral}
+\florasetup{seed=3,density=0.25}
+\title{A fuller floral title}
+\author{The Floral Project}
+\date{}
+\directlua{
+  local prior=beamer_floral.prepare
+  beamer_floral.prepare=function(spec)
+    prior(spec)
+    local n=beamer_floral.count
+    if n==1 then
+      assert(spec.layout=='left' and spec.mix.density==2 and spec.mix.sprays==3,'full title preset')
+    elseif n==2 then
+      assert(spec.layout=='surround' and spec.mix.density==0.25,'title defaults must not leak')
+    elseif n==3 then
+      assert(spec.layout=='right' and spec.mix.density==0.5,'frame override must win')
+    end
+  end
+}
+\begin{document}
+\begin{frame}[plain]\titlepage\pause\end{frame}
+\begin{frame}{Ordinary frame}Document density is retained.\end{frame}
+\florathisframe{layout=right,density=0.5}
+\begin{frame}[plain]\titlepage\end{frame}
+\end{document}

@@ -41,6 +41,7 @@ jobs:
             test/smoke.tex
             test/stock.tex
             test/titles.tex
+            test/title-defaults.tex
             test/growth.tex
             test/growth-timed.tex
             test/growth-poster.tex

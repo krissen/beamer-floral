@@ -24,3 +24,4 @@ build/
 *.floral-animation-manifest
 *.floral-animation-manifest.tmp
 *.floral-animation/
+__pycache__/
