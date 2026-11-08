@@ -1,7 +1,7 @@
 # beamer-floral
 
 Procedural watercolour flora for [beamer](https://ctan.org/pkg/beamer),
-drawn by [tikz-flora](https://github.com/krissen/tikz-flora). Each slide
+drawn by [tikz-flora](https://github.com/wn-mitch/tikz-flora). Each slide
 gets its own generated plant; the text block is measured so the flora
 grows around the content and the margin follows the page.
 
@@ -12,6 +12,11 @@ grows around the content and the margin follows the page.
   branch `beamer-floral`, commit `a3553bf` or later. The upstream engine
   lacks the integration hook this package uses. `engine-ref.txt` pins the
   revision used by CI and standalone bundles.
+
+The Beamer integration is maintained in our fork for now; the plan is to
+submit those additions upstream. The link in the introduction credits the
+upstream project, while the fork above is the dependency currently needed
+to build this package.
 
 For a local checkout, point `TIKZFLORA` at it, or put the path in a
 gitignored `.env`:
