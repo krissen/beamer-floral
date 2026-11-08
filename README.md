@@ -5,13 +5,32 @@ drawn by [tikz-flora](https://github.com/wn-mitch/tikz-flora). Each slide
 gets its own generated plant; the text block is measured so the flora
 grows around the content and the margin follows the page.
 
+![The flora growing on a title page](docs/img/growth-title.gif)
+
+```tex
+\documentclass{beamer}
+\usetheme{floral}
+\begin{document}
+\begin{frame}{Floral}
+  The border grows around the text.
+\end{frame}
+\end{document}
+```
+
+Compile with `latexmk -lualatex`. The [tour](docs/src/tour.tex) is a complete
+presentation of the package, written with it.
+
 ## Requirements
 
 - LuaLaTeX
 - the [krissen/tikz-flora](https://github.com/krissen/tikz-flora) fork,
-  branch `beamer-floral`, commit `a3553bf` or later. The upstream engine
+  branch `beamer-floral`, commit `ff21877` or later. The upstream engine
   lacks the integration hook this package uses. `engine-ref.txt` pins the
   revision used by CI and standalone bundles.
+
+The [release archive](https://github.com/krissen/beamer-floral/releases)
+includes a matching engine, so you can unzip it beside your document and
+compile.
 
 The Beamer integration is maintained in our fork for now; the plan is to
 submit those additions upstream.
@@ -26,18 +45,6 @@ TIKZFLORA=/path/to/tikz-flora
 Without `TIKZFLORA`, an installed `tikzflora` is used.
 
 ## Use
-
-```tex
-\documentclass{beamer}
-\usetheme{floral}
-
-\begin{document}
-\begin{frame}
-  \frametitle{Floral}
-  The border grows around the text.
-\end{frame}
-\end{document}
-```
 
 `\florasetup{...}` sets the document; `\florathisframe{...}` the next painted
 frame, including all its overlays. `\florathispage` is an alias with the same
@@ -169,11 +176,33 @@ always paints complete static flora and needs no animation support package.
 Ordinary documents do not load `animate`.
 
 The [animate manual](https://tug.ctan.org/macros/latex/contrib/animate/animate.pdf)
-documents OCG playback in desktop Acrobat Reader and Okular. Playback in
-these viewers still needs manual acceptance testing for this integration;
-a successful PDF build does not verify playback. The plan and drawing resources are shared. Raster playback adds cached images
-to the PDF, while vector playback shares semantic drawing objects between samples. See [the timed example](docs/src/growth.tex)
+documents OCG playback in desktop Acrobat Reader and Okular. We have checked
+playback in desktop Acrobat Reader; Okular is untested. Viewers that cannot
+play the animation show the finished flora. See [the timed example](docs/src/growth.tex)
 and [the acceptance checklist](docs/review/growth.md).
+
+## File size
+
+Flora is detailed artwork, so even a static deck is far larger than plain
+Beamer. Overlays of a static frame share one copy of the flora; growing flora
+needs a separate drawing for each stage. These figures come
+from `tools/measure_sizes.py`, which builds `test/size-benchmark.tex` with
+identical content in each variant: a title page and ten frames of two
+overlays, 21 PDF pages in all. Timed variants use the defaults of 8 seconds
+and 20 fps, and raster samples are 144 dpi.
+
+| Variant | PDF size |
+|---|---:|
+| Beamer without floral | 0.05 MB |
+| `growth=off` | 21.5 MB |
+| `growth=overlays` | 46.6 MB |
+| `growth=timed`, vector | 68.4 MB |
+| `growth=timed`, raster | 137.0 MB |
+
+Measured with TeX Live 2025 and tikz-flora `ff21877`. Your own figures will
+depend on the density, layout and number of pages. A raster build also keeps
+its sample cache on disk, 102 MB for this document. Share a talk with
+`\florasetup{growth=off}` if size matters more than the animation.
 
 ## Standalone bundle
 
@@ -250,6 +279,12 @@ flora. The package warns when a Beamer sidebar is present. Prefer floral or a
 theme with free side margins; alternatively switch the flora off on those
 frames.
 
+The package empties the `background canvas` template, since a filled canvas
+would cover the flora. For a coloured page use `\pagecolor`. On a dark page
+combine it with `\florasetup{backdrop=dark}` and light text colours.
+With `show notes on second screen`, the notes panel covers the flora on that
+side. In a `beamerarticle` document the floral commands do nothing.
+
 Load the stock theme first and beamer-floral after it:
 
 ```tex
@@ -303,6 +338,7 @@ page comes from the same English visual template used for acceptance tests.*
 | `density` | `0`–`10` |
 | `mix` | `{leaves=3, leaflets=2, ...}` |
 | `visitors` | weight for bees, butterflies, birds, snails |
+| `colourway` | `spring`, `summer`, `autumn`, `winter`, `ember`, `plum`, `rose`, `original` |
 | `palette` | `{hero=gold, blooms=blue, ...}` |
 | `spin` | re-pick random inks |
 | `ornaments` | `{moon=2, night=0, ...}` |
@@ -401,9 +437,7 @@ names are accepted, but detailed cartouches are unsuitable at bullet size.
 The templates use the engine's isolated seed and do not change frame flora.
 
 These commands belong to `\usetheme{floral}`. The generic package preserves
-stock-theme list templates. In particular, kau-tex’s `sola-floral` loads
-only `beamer-floral` and retains its own list markers. For custom
-stock-theme integrations, the engine
+stock-theme list templates. For custom stock-theme integrations, the engine
 also exposes `\floraornament[width=1em,height=1em,baseline=0pt,seed=1,color=.]{gilt_rosette}`.
 The optional templates require tikz-flora commit `28c394a` or later.
 See the [comparison fixture](test/visual/README.md#optional-ornament-comparison)
@@ -450,11 +484,11 @@ Its background flora is disabled to make the individual shapes easy to compare.
 
 ## Reserving space
 
-Keep the flora out of a rectangle with paper coordinates in points, origin
+Keep the flora out of a rectangle with paper coordinates as dimensions, origin
 at the lower-left corner:
 
 ```tex
-\florareserve{0}{0}{\the\paperwidth}{\the\dimexpr 1cm\relax}
+\florareserve{0pt}{0pt}{\the\paperwidth}{\the\dimexpr 1cm\relax}
 \floraclearreserve
 ```
 
