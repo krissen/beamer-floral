@@ -16,6 +16,8 @@ local first=spec(50);M.prepare(first)
 local second=spec(150);M.prepare(second)
 assert(first.seed==second.seed)
 assert(#M.current[1].geometry.lines==2)
+local transient=spec(150);transient.palette={blooms='blue'};M.prepare(transient)
+assert(M.current[1].overlays==3)
 M.finish();assert(#written==1)
 M.init(path);written={}
 M.context(1,0,true)
@@ -23,7 +25,8 @@ first=spec(50);M.prepare(first)
 second=spec(150);M.prepare(second)
 assert(#first.lines==2 and #second.lines==2)
 assert(require('flora.serial').encode(first)==require('flora.serial').encode(second))
-local transient=spec(150);transient.palette={blooms='blue'};M.prepare(transient)
+transient=spec(150);transient.palette={blooms='blue'};M.prepare(transient)
+assert(M.stage==3 and M.stages==3)
 assert(transient.palette==nil,'nil snapshot fields must be restored')
 M.finish();assert(#written==0,'cache must converge')
 M.context(3,0,true);local nextframe=spec(50);M.prepare(nextframe)
@@ -36,7 +39,7 @@ M.context(5,0,true);M.input_signature='orange';M.prepare(spec(50))
 M.input_signature='blue'
 assert(not pcall(M.prepare,spec(50)),'background changes within a frame must fail')
 assert(not pcall(M._decode,'os.execute("bad")'),'cache cannot execute code')
-assert(not pcall(M._decode,'beamer-floral-cache-1\nS\t1\t61\nG\t1\ttext\t50\t0\t10\t20\n'),
+assert(not pcall(M._decode,'beamer-floral-cache-2\nS\t1\t61\nO\t1\t1\nG\t1\ttext\t50\t0\t10\t20\n'),
   'cache rectangles must have ordered coordinates')
 local f=assert(io.open(path,'w'));f:write('broken cache');f:close()
 M.init(path);assert(next(M.previous)==nil,'corrupt cache must rebuild')
@@ -47,3 +50,38 @@ assert(untitled.body_top==270 and not untitled.frametitle,'untitled frames must 
 M.context(2,0,true,true);local plain=spec(50);plain.header='body';M.prepare(plain)
 assert(plain.body_top==nil,'plain frames must retain the unrestricted canvas')
 print('overlay unit tests passed')
+
+local Settings=require('flora.settings')
+for _,value in ipairs({'off','overlays','timed'}) do
+  assert(Settings.parse('growth='..value).growth==value)
+end
+for _,bad in ipairs({'growth=bad','growth duration=0','growth duration=-1',
+  'growth duration=inf','growth duration=nan','growth fps=0','growth fps=61','growth fps=1.5'}) do
+  assert(not pcall(Settings.parse,bad),bad..' must fail')
+end
+assert(Settings.parse('growth duration=0.25')['growth duration']==0.25)
+M.init(path); M.context(1,0,true,false)
+M.active_settings=Settings.parse('growth=overlays,growth fps=32')
+M.prepare(spec(50))
+assert(M.frame.growth.growth=='overlays' and M.frame.growth['growth fps']==32)
+M.finish()
+M.init(path); M.context(1,0,true,false); M.prepare(spec(50))
+assert(M.stages==1,'changed growth settings must invalidate cached counts')
+M.finish()
+M.init(path); M.context(1,0,true,false); M.prepare(spec(50)); M.prepare(spec(50))
+assert(M.stage==2 and M.stages==2,'new overlays need provisional stages')
+M.finish()
+M.init(path); M.context(1,0,true,false); M.prepare(spec(50))
+assert(M.stage==1 and M.stages==2,'first overlay reuses previous count')
+os.remove(path)
+print('growth settings and overlay-count cache tests passed')
+
+M.init(path);M.context(1,0,true,false)
+local appearance=spec(50)
+appearance.gilt='vector';appearance.gilt_dpi=144;appearance.gilt_env='test'
+appearance.gilt_look='test';appearance.backdrop='dark'
+M.prepare(appearance)
+local restored=spec(50);M.prepare(restored)
+assert(restored.gilt=='vector' and restored.gilt_dpi==144 and restored.gilt_env=='test'
+  and restored.gilt_look=='test' and restored.backdrop=='dark','upstream appearance settings must stay frozen')
+print('upstream appearance snapshot tests passed')

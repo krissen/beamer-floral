@@ -34,10 +34,10 @@ flora. Engine changes were coordinated with the tikz session; the shared
 engine pin is now `a3553bf6e449026a2e2e62b16e10210e82e9c1ad`, available on the
 fork's remote. No upstream PR or announcement was published by this session.
 
-Local verification is described below. External CI has not been run for
-these uncommitted changes. Treat the generated ZIP as a locally tested release
-candidate, rather than claiming a published release or broader TeX-version
-compatibility.
+Local verification is described below. The quality work was merged as PR #16 (`e40656f`), with green CI and
+Codex review. The exact-commit candidate is recorded in
+`build/release-candidate/verification.json`. It remains unpublished; these
+checks do not establish broader TeX-version compatibility.
 
 ## Quality findings and disposition
 
@@ -236,6 +236,45 @@ All stock-theme visual-review PDFs were rebuilt after the untitled-headline fix.
 
 The recommended English template now separates the block/palette scene from the nested-list scene to keep screenshot content clear of the lower border. The screenshot export reuses the block scene directly from the acceptance PDF.
 
-Integration follow-up for downstream themes: margin snapshots taken after requiring beamer-floral now capture floral margins. A theme restoring its original undecorated layout must snapshot before requiring the package. The existing sola-floral integration uses the earlier order and needs that adaptation before its next release; this review has not edited that separate repository.
+Integration follow-up for downstream themes: margin snapshots taken after requiring beamer-floral now capture floral margins. A theme restoring its original undecorated layout must snapshot before requiring the package. The sola-floral integration was adapted in kau-tex PR #11 (`f84b7c3`), as recorded in the handover. This session does not edit that separate repository.
 
 The final recommended English suite passed: 16 PDFs / 256 pages, no diagnostics. PDF text bounds confirm the nested-list column respects the default left margin in every case. All twelve README screenshots were regenerated from the acceptance PDFs and the CI-tested documentation showcase. Margin defaults, post-load custom overrides and converged overlay-spec equality also passed.
+
+## Optional ornament implementation review
+
+The engine pin is now `28c394a80b8a27a71d0ce979ce7b328b34a341cb`,
+coordinated with the tikz session. It supplies a public isolated monochrome
+ornament command. Floral adds optional three-depth list templates and a
+configurable divider; circle markers remain the default.
+
+Local comparison PDFs in `build/ornament-review/` cover 16:9 and 4:3, four
+palettes and two-overlay list frames. All four PDFs compile without box or
+package warnings. Selected list and divider pages were rasterized and
+inspected; projection-size approval remains with the user. The first divider
+render exposed right alignment, corrected before the final comparison.
+
+Final nine-page PDF sizes: 16:9 baseline 9,004,444 bytes, ornaments 9,000,336;
+4:3 baseline 9,413,401, ornaments 9,409,124. Baselines also replace the divider
+with a plain rule; these totals show no material size increase for this
+fixture, not a general size guarantee. End-to-end build timing has not yet
+been controlled for cache state. The earlier isolated Lua microbenchmark
+is not an end-to-end build-time measurement.
+
+A separate handout fixture (`test/ornament-settings.tex`) verifies explicit
+colour and form overrides with background flora disabled. It compiled
+without diagnostics. Adapter overlay unit tests passed against the new
+engine. The release candidate in `build/release-candidate/` remains the old
+exact-merge artifact and must not be mistaken for a bundle of these changes.
+
+User visual review selected the same `gilt_rosette` for all three list
+depths and a divider with nominal width `0.5\linewidth`. Both aspect-ratio
+comparisons were rebuilt without diagnostics after these adjustments.
+Each list depth remains independently configurable.
+
+Headpiece follow-up: the user identified crowded end rosettes in the
+configuration catalogue. Engine commit `73c3d6e` separates the band and
+rosettes and handles short proportions within the same nominal box. The
+engine session verified measured bounds/gaps across five aspect ratios and
+five seeds. The Beamer catalogue was rebuilt without diagnostics and its
+divider screenshot regenerated and visually inspected. The engine pin now
+includes this correction.

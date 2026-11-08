@@ -1,0 +1,55 @@
+% Executable source for the README's configuration catalogue.
+\documentclass[aspectratio=169]{beamer}
+\usetheme{floral}
+\floraoff
+\setbeamertemplate{itemize item}[floral]
+\setbeamertemplate{itemize subitem}[floral]
+\setbeamertemplate{itemize subsubitem}[floral]
+\begin{document}
+\begin{frame}{List markers: one family, three choices}
+  \begin{columns}[T,onlytextwidth]
+    \begin{column}{.31\textwidth}
+      \textbf{Rosettes}\par\smallskip
+      \floralornamentsetup{item=gilt_rosette}
+      \begin{itemize}\item Clear shapes.\item A shared rhythm.\end{itemize}
+      {\scriptsize\texttt{item=gilt\_rosette}}
+    \end{column}
+    \begin{column}{.31\textwidth}
+      \textbf{Trefoils}\par\smallskip
+      \floralornamentsetup{item=gilt_trefoil}
+      \begin{itemize}\item Three petals.\item A softer accent.\end{itemize}
+      {\scriptsize\texttt{item=gilt\_trefoil}}
+    \end{column}
+    \begin{column}{.31\textwidth}
+      \textbf{Lozenges}\par\smallskip
+      \floralornamentsetup{item=gilt_lozenge}
+      \begin{itemize}\item A fine outline.\item A lighter touch.\end{itemize}
+      {\scriptsize\texttt{item=gilt\_lozenge}}
+    \end{column}
+  \end{columns}
+\end{frame}
+\begin{frame}{A different form at each depth}
+  \floralornamentsetup{item=rosette,subitem=gilt_trefoil,
+    subsubitem=gilt_lozenge,color=blue!70!black}
+  \begin{itemize}
+    \item A blue rosette introduces the idea.
+      \begin{itemize}\item A trefoil supports it.
+        \begin{itemize}\item A lozenge marks the finest detail.\end{itemize}
+      \end{itemize}
+  \end{itemize}
+  \medskip
+  {\small Each depth can have its own shape; colour can be explicit.}
+\end{frame}
+\begin{frame}{Dividers: colour, width and character}
+  {\small\textbf{Fleuron rule}\quad Half the line width; current text colour.}
+  \floraldivider
+  {\small\textbf{Pen swash}\quad A shorter blue flourish.}
+  \floralornamentsetup{divider=swash,divider width=.35\linewidth,
+    divider height=1em,divider color=blue!70!black}
+  \floraldivider
+  {\small\textbf{Headpiece}\quad A wider green band.}
+  \floralornamentsetup{divider=headpiece,divider width=.7\linewidth,
+    divider height=1.2em,divider color=green!40!black}
+  \floraldivider
+\end{frame}
+\end{document}

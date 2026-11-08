@@ -1,7 +1,7 @@
 # beamer-floral
 
 Procedural watercolour flora for [beamer](https://ctan.org/pkg/beamer),
-drawn by [tikz-flora](https://github.com/krissen/tikz-flora). Each slide
+drawn by [tikz-flora](https://github.com/wn-mitch/tikz-flora). Each slide
 gets its own generated plant; the text block is measured so the flora
 grows around the content and the margin follows the page.
 
@@ -12,6 +12,9 @@ grows around the content and the margin follows the page.
   branch `beamer-floral`, commit `a3553bf` or later. The upstream engine
   lacks the integration hook this package uses. `engine-ref.txt` pins the
   revision used by CI and standalone bundles.
+
+The Beamer integration is maintained in our fork for now; the plan is to
+submit those additions upstream.
 
 For a local checkout, point `TIKZFLORA` at it, or put the path in a
 gitignored `.env`:
@@ -53,9 +56,9 @@ Theme authors that restore a pre-floral layout on undecorated frames should
 capture that layout before requiring `beamer-floral`, since loading it now
 establishes the floral margins.
 
-The flora stays fixed through a frame's overlays. The package collects the
-union of their measured text regions in a `.floral-cache` file beside the
-build outputs. LuaLaTeX requests a rerun when that geometry changes;
+By default, the flora stays fixed through a frame's overlays. The package collects the
+union of their measured text regions and the displayed overlay count in a `.floral-cache` file beside the
+build outputs. LuaLaTeX requests a rerun when the geometry or overlay count changes;
 `latexmk` runs the necessary passes. On a first uncached run the decoration
 is provisional. Keep floral settings, reservations, margins and on/off state
 constant within a frame; change them before the next frame. An `againframe`
@@ -63,6 +66,114 @@ replay gets a new garden, and `allowframebreaks` continuations each get their
 own. Split-layout parity follows those logical frame invocations rather than
 the overlay page counter. Settings queued while flora is off remain pending
 until a frame is painted.
+
+## Growing flora
+
+Opt in to growth across overlays:
+
+```tex
+\florasetup{growth=overlays}
+```
+
+Displayed overlay `k` of `N` shows approximately `k/N` of the finished
+painted area. Leaves and flowers expand as whole shapes from their
+attachments; stems extend before their foliage. A frame with one displayed
+overlay shows its complete decoration. Skipped overlay numbers do not count
+as stages. The final composition, seed and protected text regions stay fixed.
+The first run is provisional; let `latexmk` converge after editing overlays.
+An error reports compositions whose growth resolution cannot support the
+requested number of distinct stages.
+
+**Only raster playback needs a render cache.** `growth=overlays` is a
+manual reveal as you step through slides and requires neither a render cache,
+Python, Poppler nor `animate`. `growth=off` keeps ordinary static flora.
+
+For vector playback (`growth=timed`), load the optional package in the preamble:
+
+```tex
+\usepackage{beamer-floral-animation}
+\florasetup{growth=timed, growth duration=8, growth fps=20}
+% Or select playback for one frame:
+\florathisframe{growth=timed, growth duration=4, growth fps=15}
+```
+
+The default vector path uses ordinary `latexmk` and requires no Python,
+Poppler or render cache. Detailed watercolour vectors can play unevenly in
+Reader even at a requested high fps. Playback follows elapsed active time and
+skips late samples rather than stretching the duration.
+
+For smoother playback, explicitly opt in to raster caching:
+
+```tex
+\usepackage[raster]{beamer-floral-animation}
+```
+
+**Extra build dependencies apply only to this raster playback option.**
+Install Python 3.9 or later and Poppler's `pdftocairo`, in addition to the
+usual LuaLaTeX, `latexmk` and `animate`. They must be on `PATH`. Build with:
+
+```sh
+python3 tools/build_animation.py --outdir build/slides slides.tex
+```
+
+The builder runs LaTeX to measure the document, renders missing background
+samples and builds the final PDF. It reuses existing samples on later builds.
+There is no shell escape. The external tools are needed **when creating or updating
+the cache for raster playback only**; viewing the PDF needs no Python or Poppler.
+With `[raster]`, ordinary `latexmk` reports an error when the cache is
+missing or stale and tells you to run the builder. It never silently uses
+old frames. Only the builder's measurement pass may show provisional static
+interval endpoints before generating the cache. Changing geometry, seeds, engine sources, overlay counts or
+the sample grid invalidates the affected cache.
+
+The cache lives beside the build outputs in `<job>.floral-animation/`; keep
+it with the document when moving to another machine. Cold builds need extra
+time and temporary disk space, and cached samples consume disk space. Moving
+flora is rasterized at 144 dpi by default (`--dpi 36..600` changes this),
+including interval boundaries and static posters. Text and links remain
+ordinary vector PDF content. The static and printed floral endpoint uses the
+same raster image as playback, avoiding a vector redraw when playback stops.
+Handout mode always uses complete static flora and needs no render cache.
+
+`\usepackage[vector]{beamer-floral-animation}` explicitly selects the default
+vector path. Neither this path nor manual overlay reveals need the external
+raster tools.
+
+Overleaf can compile static flora, manual reveals and vector playback directly.
+For cached timed playback, build the cache locally first and upload it with
+the document; rebuild locally after changes that invalidate it. The external
+raster builder is not part of an ordinary Overleaf LaTeX compile.
+
+Each overlay plays its own growth interval, starts automatically on page
+entry, plays once and stops at its endpoint. Returning to a page restarts
+that interval. Advancing early starts the next page at its nominal starting
+stage. Duration is the total active growth time across the frame, divided
+equally among its displayed overlays; time waiting between clicks is excluded.
+A single title page animates the whole plant. **Text is visible from the start**;
+only the background flora plays an animation.
+
+`growth` accepts `off` (default), `overlays` or `timed`. `growth duration`
+is a positive finite number of seconds (default 8). `growth fps` is an integer
+from 1 to 60 (default 20); the frame count is rounded and the playback rate
+adjusted so each interval contains both endpoints. Playback follows elapsed
+time and skips late samples when a viewer cannot keep up; waiting between
+overlays does not consume the next interval.
+Document settings are inherited; `\florathisframe` applies to the whole frame
+and does not affect the next one. Use `\florathisframe{growth=off}` for a
+complete static decoration.
+
+Animation uses `animate` with `method=ocg` behind ordinary Beamer text,
+links and numbering, with no mouse controls. The interval's final stage is
+the static poster, including in viewers without JavaScript. Handout mode
+always paints complete static flora and needs no animation support package.
+Ordinary documents do not load `animate`.
+
+The [animate manual](https://tug.ctan.org/macros/latex/contrib/animate/animate.pdf)
+documents OCG playback in desktop Acrobat Reader and Okular. Playback in
+these viewers still needs manual acceptance testing for this integration;
+a successful PDF build does not verify playback. The plan and drawing resources are shared. Raster playback adds cached images
+to the PDF, while vector playback shares semantic drawing objects between samples. See [the timed example](docs/src/growth.tex)
+and [the acceptance checklist](docs/review/growth.md).
 
 ## Standalone bundle
 
@@ -101,6 +212,16 @@ examples chiku-rin.*
 
 *A title page with the left layout: the flora fills the left margin and the
 foot, leaving the right margin paper.*
+
+The floral theme now selects this fuller composition automatically for
+`\titlepage`: `layout=left`, `density=2`, and leaf, leaflet, spray and bloom
+weights of 3. Ordinary frames retain the document's settings. Override the
+title preset with `\florathisframe{layout=...,density=...,mix={...}}` before
+the title frame. This also applies to static titles; animation stays optional.
+The first displayed overlay selects the preset for the whole frame: a title
+shown only on a later overlay does not change the composition mid-frame.
+See [the full animated title example](docs/src/growth-title.tex), which uses
+the default eight-second duration and the optional raster cache.
 
 ### Layout and density
 
@@ -201,6 +322,132 @@ alert, example and description-label colours. Alerts take a deeper ink
 from the same family: yama-budo for warm, murasaki-shikibu for blue,
 edo-murasaki for green. A stock theme keeps its own block colours.
 
+## Choosing the composition
+
+Start with `layout=left` or the package's `surround` default. `right`,
+`centered` and `split` need enough room on each painted side: changing the
+layout does not exchange the package's 2.5 cm left and 1 cm right margins.
+Set deliberate custom margins after loading when exploring these layouts.
+Use the demonstrated left-layout title page before trying `layout=title`;
+that engine layout crowns measured text and is not selected by `\titlepage`.
+
+A quieter, foliage-led composition uses existing engine settings:
+
+```tex
+\florasetup{density=0.6, mix={leaves=2, bloom=0, soft=0, lily=0,
+  ghost=0, umbel=0, cyme=0, gyps=0}}
+```
+
+A custom palette changes the flora; it does not automatically redefine the
+Floral theme's block, alert or text colours. Set those with `\setbeamercolor`
+when designing a custom colour scheme:
+
+```tex
+\florasetup{palette={hero=kon-peki, blooms=warm, leaves=teal}}
+```
+
+`ornaments={...}` adjusts the relative weights of registered ornament kinds,
+not explicit positions. To suppress a whole slot, set every kind in that slot
+to zero. For example, the header slot has four kinds:
+
+```tex
+\florasetup{ornaments={compass=0, rosette=0, sunburst=0, quatrefoil=0}}
+```
+
+Visitors are optional accents. Keep them sparse, for example
+`\florasetup{visitors=0.2, mix={bird=0, snail=0}}`. With a fixed seed,
+`palette={blooms=random}` and `spin=1` explore another ink without moving
+stems or blossoms. Keep settings constant across a frame's overlays.
+
+The engine's `\florasheet{3}` and `\floragallery[1]`, inside a
+`tikzpicture`, are design reference sheets. Inspect them separately rather
+than shrinking an entire sheet onto a presentation slide.
+
+## Optional list markers and dividers
+
+![Optional floral list markers](docs/img/ornament-lists.png)
+
+*The optional list templates use the same rosette at all three depths.
+The current text size and Beamer item colour determine their appearance.*
+
+![Optional floral divider](docs/img/ornament-divider.png)
+
+*The divider is centred in the text block with a nominal width of half
+the current line width.*
+
+The Floral theme keeps circle markers by default. Select the optional
+ornament templates independently:
+
+```tex
+\setbeamertemplate{itemize item}[floral]
+\setbeamertemplate{itemize subitem}[floral]
+\setbeamertemplate{itemize subsubitem}[floral]
+\floralornamentsetup{item=gilt_rosette, subitem=gilt_rosette,
+  subsubitem=gilt_rosette, width=.85em, height=.85em, baseline=.18em,
+  seed=3, color=., divider=fleuron_rule, divider width=0.5\linewidth,
+  divider height=1em, divider baseline=0pt, divider color=.,
+  divider skip=\medskipamount}
+```
+
+These are the defaults: all three list depths use the same rosette.
+Set `subitem=gilt_trefoil` or `subsubitem=gilt_lozenge`, for example,
+to choose other forms independently. `\floraldivider` inserts a centred ornament with
+space above and below. Dimensions are nominal drawing-box dimensions;
+the engine includes paint reach in the actual TeX box. The baseline is
+measured above the nominal box bottom. `color=.` follows the current text
+colour; explicit xcolor expressions are also accepted. Settings obey TeX
+groups, so a local variant need not change later slides. Registered ornament
+names are accepted, but detailed cartouches are unsuitable at bullet size.
+The templates use the engine's isolated seed and do not change frame flora.
+
+These commands belong to `\usetheme{floral}`. The generic package preserves
+stock-theme list templates. In particular, kau-tex’s `sola-floral` loads
+only `beamer-floral` and retains its own list markers. For custom
+stock-theme integrations, the engine
+also exposes `\floraornament[width=1em,height=1em,baseline=0pt,seed=1,color=.]{gilt_rosette}`.
+The optional templates require tikz-flora commit `28c394a` or later.
+See the [comparison fixture](test/visual/README.md#optional-ornament-comparison)
+for visual review; these candidates do not establish projection readability.
+
+### Alternative forms and colours
+
+![Alternative list markers](docs/img/ornament-options-lists.png)
+
+*Rosettes, trefoils and lozenges at the same nominal size. The lozenge has
+finer strokes and needs particular care at projected size.*
+
+After selecting the floral templates above, choose a shape with
+`\floralornamentsetup{item=gilt_trefoil}` (or `gilt_rosette` or
+`gilt_lozenge`). `item` changes the first depth; `subitem` and
+`subsubitem` independently change the other depths.
+
+![Different shapes by depth](docs/img/ornament-options-depths.png)
+
+```tex
+\floralornamentsetup{item=rosette, subitem=gilt_trefoil,
+  subsubitem=gilt_lozenge, color=blue!70!black}
+```
+
+*The header ornament `rosette` is a pointed form, distinct from the smaller
+four-dot `gilt_rosette`. Explicit colours override the inherited Beamer ink.*
+
+![Alternative dividers](docs/img/ornament-options-dividers.png)
+
+The first divider uses the defaults. The other two use:
+
+```tex
+\floralornamentsetup{divider=swash, divider width=.35\linewidth,
+  divider height=1em, divider color=blue!70!black}
+\floraldivider
+\floralornamentsetup{divider=headpiece, divider width=.7\linewidth,
+  divider height=1.2em, divider color=green!40!black}
+\floraldivider
+```
+
+All three catalogue images come from the executable English
+[configuration catalogue](test/visual/ornament-catalogue.tex).
+Its background flora is disabled to make the individual shapes easy to compare.
+
 ## Reserving space
 
 Keep the flora out of a rectangle with paper coordinates in points, origin
@@ -211,8 +458,12 @@ at the lower-left corner:
 \floraclearreserve
 ```
 
-This is useful for a footline, a logo or a caption. The same mechanism
-backs the title-page inset above.
+This is useful for a footline, a logo or a caption. Reservations persist
+until `\floraclearreserve`; set and clear them between frames, not between
+overlays. They clip the flora and preserve the underlying background.
+`\florabackground[bottom]{blue!10}{1cm}` adds a band before the flora;
+use height `0pt` to disable it. A reservation protects content over that band.
+Neither command measures a logo automatically.
 
 ## Development
 

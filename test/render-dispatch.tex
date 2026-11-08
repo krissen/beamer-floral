@@ -1,0 +1,48 @@
+\documentclass{beamer}
+\usepackage{tikzflora}
+\directlua{
+  local page=flora.page
+  local custom_calls=0
+  local cache_calls=0
+  local cache=require('flora.cache')
+  local cache_page=cache.page
+  cache.page=function(...)
+    cache_calls=cache_calls+1
+    return cache_page(...)
+  end
+  flora.page=function(a)
+    local count=beamer_floral.count
+    local custom
+    if count==4 then
+      custom=function() custom_calls=custom_calls+1 end
+      a.render_page=custom
+    end
+    local prepare=a.prepare_spec
+    a.prepare_spec=function(spec)
+      prepare(spec)
+      if count==2 then assert(type(a.render_page)=='function','timed override must persist')
+      elseif count==4 then assert(a.render_page==custom,'static custom renderer must be preserved')
+      else assert(a.render_page==nil,'static frames must retain the engine cache path') end
+    end
+    return page(a)
+  end
+  floral_check_custom=function()
+    assert(custom_calls==1,'custom renderer must run once')
+    assert(cache_calls==3,'all three static pages must consult the ordinary cache')
+  end
+}
+\usetheme{floral}
+\usepackage{beamer-floral-animation}
+\AddToHook{enddocument/afterlastpage}{\directlua{floral_check_custom()}}
+\florasetup{density=0.05,seed=3}
+\begin{document}
+\begin{frame}{Static default}Static flora keeps its ordinary cache.\end{frame}
+\florathisframe{growth=timed,growth duration=0.1,growth fps=1}
+\begin{frame}{Timed override}First\pause\par Second\end{frame}
+\florasetup{growth=timed,growth duration=0.1,growth fps=1}
+\florathisframe{growth=off}
+\directlua{flora.render_page_version=0}
+\begin{frame}{Static override}First\pause\par Second\end{frame}
+\florathisframe{growth=off}
+\begin{frame}{Custom static painter}The existing callback is retained.\end{frame}
+\end{document}

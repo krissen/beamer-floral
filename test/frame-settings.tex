@@ -1,6 +1,7 @@
 \documentclass[aspectratio=169]{beamer}
 \usetheme{floral}
-\florasetup{seed=3,density=0.2}
+% Exercise the composition assertions even when an engine cache is warm.
+\florasetup{seed=3,density=0.2,cache=false}
 \newcount\executions
 \directlua{
   local page=flora.page
@@ -14,6 +15,8 @@
   compose.page=function(spec)
     if not spec.adapter_callback_chained then tex.error('Existing preparation callback was lost') end
     if spec.page==1 and spec.layout~='left' then tex.error('Frame override did not persist') end
+    if spec.page==1 and spec.gilt~='vector' then tex.error('Gilt override did not persist') end
+    if spec.page==2 and spec.gilt~=nil then tex.error('Gilt override leaked') end
     if spec.page==2 and spec.layout~='surround' then tex.error('Frame override leaked') end
     if os.getenv('FLORAL_VERIFY_STABLE')=='1' then
       local data=require('flora.serial').encode(spec)
@@ -24,7 +27,7 @@
   end
 }
 \begin{document}
-\florathisframe{layout=left}
+\florathisframe{layout=left,gilt=vector}
 \begin{frame}
   \global\advance\executions by1
   \frametitle{\only<1>{Short}\only<2>{A much longer title that wraps over several lines and changes the protected header geometry}}
