@@ -23,6 +23,9 @@ a.animation_cache=nil
 assert(C.collect(a,spec,2)==nil,'old interior-only caches need their endpoint samples')
 for _,i in ipairs{0,2,4} do write(folder..'/sample-'..i..'.png',png) end
 assert(C.collect(a,spec,2).stage==1,'current cache must be usable')
+os.remove(folder..'/sample-4.png')
+assert(C.collect(a,spec,2)==nil,'the final poster must be cached before playback')
+write(folder..'/sample-4.png',png)
 a.stage=2;assert(C.collect(a,spec,2).stage==2,'display order selects the correct interval')
 spec.seed=2;assert(C.collect(a,spec,2)==nil,'seed changes must invalidate cache')
 spec.seed=1;assert(C.collect(a,spec,3)==nil,'sample-grid changes must invalidate cache')
