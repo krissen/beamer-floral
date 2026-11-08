@@ -36,15 +36,13 @@ function C.collect(adapter,spec,steps)
       or cached.stages~=adapter.stages then return nil end
   if type(cached.dpi)~='number' or cached.dpi<36 or cached.dpi>600 then return nil end
   local prefix=adapter.animation_root..'/'..record.signature..'-'..cached.dpi..'/sample-'
-  -- Check every interior sample before emitting an animation. Endpoints
-  -- remain vector graphics, including the static poster on every overlay.
-  for i=1,steps*adapter.stages-1 do
-    if i%steps~=0 then
+  -- Keep playback, interval boundaries and the static poster on the same
+  -- rendering path; switching to a heavy vector endpoint can flash in Reader.
+  for i=0,steps*adapter.stages do
       local f=io.open(prefix..i..'.png','rb')
       if not f then return nil end
       local signature=f:read(8); f:close()
       if signature~='\137PNG\r\n\26\n' then return nil end
-    end
   end
   return {prefix=prefix,steps=steps,stage=adapter.stage}
 end

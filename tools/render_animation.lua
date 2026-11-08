@@ -27,8 +27,7 @@ for _,id in ipairs(ids) do
   local folder=cache_root..'/'..frame.signature..'-'..dpi
   if not lfs.attributes(folder) then assert(lfs.mkdir(folder)) end
   local plan
-  for i=1,frame.stages*frame.steps-1 do
-    if i%frame.steps~=0 then
+  for i=0,frame.stages*frame.steps do
       local prefix=folder..'/sample-'..i
       local f=io.open(prefix..'.png','rb')
       local exists=f and f:read(8)=='\137PNG\r\n\26\n'
@@ -38,14 +37,13 @@ for _,id in ipairs(ids) do
           Paint.reset_resources();plan=Growth.plan(frame.spec)
           Growth.stages(plan,frame.stages) -- keep the engine's resolution checks
         end
-        local k=i//frame.steps+1
+        local k=math.min(frame.stages,i//frame.steps+1)
         local first=k==1 and 0 or frame.levels[k-1]
-        local t=first+(frame.levels[k]-first)*(i%frame.steps)/frame.steps
+        local t=first+(frame.levels[k]-first)*(i-(k-1)*frame.steps)/frame.steps
         local pdf=scratch..'/frame-'..id..'-sample-'..i..'.pdf'
         Pdf.write(pdf,Growth.render(plan,t),frame.spec.width,frame.spec.height)
         jobs:write(pdf,'\t',prefix,'\n'); count=count+1
       end
-    end
   end
   index.frames[id]={signature=frame.signature,stages=frame.stages,steps=frame.steps,dpi=dpi}
 end

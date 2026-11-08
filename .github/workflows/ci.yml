@@ -63,6 +63,7 @@ jobs:
             docs/review/overlays.tex
             docs/review/handout.tex
           latexmk_use_lualatex: true
+          extra_system_packages: python3 nodejs qpdf poppler-utils
           pre_compile: |
             set -e
             # latex-action forwards TEXINPUTS but not FLORA_LUA; the engine's
@@ -81,14 +82,11 @@ jobs:
             texlua test/check_boxes.lua ornament-catalogue.log
             FLORAL_VERIFY_STABLE=1 latexmk -g -lualatex -interaction=nonstopmode -halt-on-error docs/review/overlays.tex
             FLORAL_VERIFY_STABLE=1 latexmk -g -lualatex -interaction=nonstopmode -halt-on-error test/frame-settings.tex
-      - name: Check emitted PDF playback clocks
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y qpdf
-          python3 tools/check_growth_pdf.py growth-timed.pdf
-          sudo apt-get install -y poppler-utils
-          python3 tools/build_animation.py --engine tikz-flora --outdir build/raster test/growth-raster.tex
-          python3 tools/check_growth_pdf.py build/raster/growth-raster.pdf
+            # Keep these checks in the TeX container: it owns the generated
+            # PDFs and provides the matching LuaLaTeX/latexmk installation.
+            python3 tools/check_growth_pdf.py growth-timed.pdf
+            python3 tools/build_animation.py --engine tikz-flora --outdir build/raster test/growth-raster.tex
+            python3 tools/check_growth_pdf.py build/raster/growth-raster.pdf
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

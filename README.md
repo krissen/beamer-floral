@@ -126,8 +126,10 @@ the sample grid invalidates the affected cache.
 The cache lives beside the build outputs in `<job>.floral-animation/`; keep
 it with the document when moving to another machine. Cold builds need extra
 time and temporary disk space, and cached samples consume disk space. Moving
-flora is rasterized at 144 dpi by default (`--dpi 36..600` changes this); text,
-links and each interval's final poster remain ordinary vector PDF content.
+flora is rasterized at 144 dpi by default (`--dpi 36..600` changes this),
+including interval boundaries and static posters. Text and links remain
+ordinary vector PDF content. The static and printed floral endpoint uses the
+same raster image as playback, avoiding a vector redraw when playback stops.
 Handout mode always uses complete static flora and needs no render cache.
 
 `\usepackage[vector]{beamer-floral-animation}` explicitly selects the default

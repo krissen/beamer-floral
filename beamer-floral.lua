@@ -264,7 +264,7 @@ end
 
 function M.paint_animation(i)
   local animation=assert(M.animation,'missing floral animation')
-  if animation.raster and i>0 and i<animation.steps then
+  if animation.raster then
     return raster_cache().typeset(animation,i)
   end
   local t=animation.first+(animation.last-animation.first)*i/animation.steps

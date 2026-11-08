@@ -44,6 +44,18 @@ for i=1,4 do
   assert(rendered[start+1]==(i-1)/4 and rendered[start+2]==i/4)
 end
 assert(planned==1,'animation must reuse the overlay plan')
+-- A raster interval must not switch back to vectors at either boundary.
+kpse={find_file=function(name)return name end}
+package.loaded['flora.paint']={new=function()
+  return {emit=function(_,s)emitted[#emitted+1]=s end}
+end}
+M.animation.raster={prefix='cache/sample-',stage=2}
+M.animation.steps=2
+local before=#rendered
+M.paint_animation(0);M.paint_animation(2)
+assert(#rendered==before,'raster endpoints must stay on the cached image path')
+assert(emitted[#emitted-1]:find('sample-2.png',1,true),'interval start uses the shared boundary image')
+assert(emitted[#emitted]:find('sample-4.png',1,true),'interval end uses the final cached image')
 M.frame.growth['growth duration']=0.01
 M.render_page(stable,{test=true});assert(M.animation.steps==1,'short interval still needs both endpoints')
 M.animation_support=false

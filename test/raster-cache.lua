@@ -20,6 +20,8 @@ write(root..'/index.floral',Serial.encode{version=1,frames={[1]={signature=signa
 local png='\137PNG\r\n\26\n'..string.rep('\0',64)
 write(folder..'/sample-1.png',png);write(folder..'/sample-3.png',png)
 a.animation_cache=nil
+assert(C.collect(a,spec,2)==nil,'old interior-only caches need their endpoint samples')
+for _,i in ipairs{0,2,4} do write(folder..'/sample-'..i..'.png',png) end
 assert(C.collect(a,spec,2).stage==1,'current cache must be usable')
 a.stage=2;assert(C.collect(a,spec,2).stage==2,'display order selects the correct interval')
 spec.seed=2;assert(C.collect(a,spec,2)==nil,'seed changes must invalidate cache')
@@ -34,5 +36,6 @@ C.finish(a);assert(C.load(root..'-manifest').frames[1].signature==signature)
 write(root..'/index.floral','os.execute("never execute cache data")')
 a.animation_cache=nil;assert(C.collect(a,spec,2)==nil,'cache metadata must not access globals')
 os.remove(root..'/index.floral');os.remove(folder..'/sample-1.png');os.remove(folder..'/sample-3.png')
+for _,i in ipairs{0,2,4} do os.remove(folder..'/sample-'..i..'.png') end
 assert(lfs.rmdir(folder));assert(lfs.rmdir(root));os.remove(root..'-manifest')
 print('raster cache validity tests passed')

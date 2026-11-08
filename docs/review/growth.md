@@ -92,3 +92,24 @@ The user confirmed that `revisit-prepared.pdf` works after the other-family
 preparation fix. Both participants navigated during the recording, so its page
 order is not a controlled playback sequence. Automated emitted-PDF checks pass;
 the complete final regression and standalone sweep remain to be run.
+
+The updated engine (`103185a`) gives the full title an explicit support order.
+The theme now selects the fuller title composition automatically; the title
+regression confirms that frame overrides win and ordinary frames retain their
+document settings. The 100-page growth matrix and stable cache reruns pass,
+and all five vector animation posters match their static references at 72 dpi.
+Extracted standalone static/vector/raster examples build without development
+paths.
+
+The user found one remaining brief white flash exactly at the end of the new
+eight-second title. Raster playback had switched to a heavy vector endpoint.
+All raster samples, including shared interval boundaries and the final poster,
+now stay on the image path. Existing interior images are reused; older caches
+need only their missing boundary images. Text and links remain vector content;
+the floral static/print poster is raster in this explicitly selected mode.
+The user confirmed the new `full-title-raster-endpoint.pdf` has no glitches.
+
+PR #17 and engine PR #7 carry the changes. CI initially compiled all documents
+but its host-side PDF checker could not read the container-owned PDF. PDF and
+raster checks now run inside the TeX container with their system dependencies.
+CI and bot review are pending; no merge has been performed.
