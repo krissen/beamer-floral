@@ -10,6 +10,7 @@ import tempfile
 import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
+(ROOT / "build").mkdir(exist_ok=True)
 PACKAGE = ("beamer-floral.sty", "beamer-floral-animation.sty", "beamerthemefloral.sty",
            "beamer-floral.lua", "beamer-floral-cache.lua", "beamer-floral-pdf.lua", "LICENSE")
 TOOLS = ("tools/build_animation.py", "tools/render_animation.lua")
