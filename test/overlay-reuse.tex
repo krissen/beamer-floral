@@ -1,0 +1,22 @@
+% Overlays of a static frame share one flora form; clips and bands still apply.
+\documentclass[aspectratio=169]{beamer}
+\usetheme{floral}
+\florasetup{seed=3, density=0.6}
+\ifdefined\floralnoreuse
+  \directlua{beamer_floral.render_static=nil}
+\fi
+\begin{document}
+\florareserve{0pt}{0pt}{\the\paperwidth}{\the\dimexpr 1.5cm\relax}
+\florabackground[bottom]{orange!30}{1.5cm}
+\begin{frame}{Reservation and band}
+  First\pause\par Second
+\end{frame}
+\floraclearreserve
+\florabackground[bottom]{white}{0pt}
+\begin{frame}{Plain overlays}
+  First\pause\par Second\pause\par Third
+\end{frame}
+\begin{frame}{One overlay}
+  Only one page.
+\end{frame}
+\end{document}

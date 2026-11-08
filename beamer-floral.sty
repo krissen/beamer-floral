@@ -61,6 +61,9 @@
           if rendered ~= nil then return rendered end
           if previous_render then return previous_render(spec, args) end
         end
+      elseif beamer_floral.stages > 1 and not beamer_floral.handout
+          and not a.render_page and flora.render_page_version == 1 then
+        a.render_page = beamer_floral.render_static
       end
     end
     local result = original(a)

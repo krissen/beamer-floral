@@ -263,6 +263,29 @@ function M.render_page(spec,a)
   return true
 end
 
+-- Overlays of a static frame show the same flora: paint it once as a form
+-- and draw that form on each page. Clips and bands are applied per page.
+function M.render_static(spec)
+  local Paint=require('flora.paint')
+  local frame=M.frame
+  local key=Serial.encode(spec)
+  if frame.static_key~=key then
+    local pt=require('flora.compose').page(copy(spec))
+    local forms,resources=Paint.forms({{chunks={pt:body()}}},spec.width,spec.height)
+    frame.static={pt=pt,forms=forms,resources=resources}
+    frame.static_key=key
+  end
+  local shared=frame.static
+  local painter=Paint.new{backend='pdf'}
+  painter.defs=shared.pt.defs
+  painter.xobjects=shared.forms
+  painter.pdf_resources=shared.resources
+  painter.coverage=shared.pt.coverage
+  painter.count=shared.pt.count
+  painter:emit('/'..shared.forms[1].name..' Do')
+  return painter
+end
+
 function M.paint_animation(i)
   local animation=assert(M.animation,'missing floral animation')
   if animation.raster then
