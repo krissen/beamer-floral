@@ -15,6 +15,10 @@
       assert(spec.layout=='surround' and spec.mix.density==0.25,'title defaults must not leak')
     elseif n==3 then
       assert(spec.layout=='right' and spec.mix.density==0.5,'frame override must win')
+    elseif n==4 then
+      assert(spec.layout=='left' and spec.mix.density==2,'first-overlay title preset must persist')
+    elseif n==5 or n==6 then
+      assert(spec.layout=='surround' and spec.mix.density==0.25,'later titles must retain the first displayed overlay settings')
     end
   end
 }
@@ -23,4 +27,13 @@
 \begin{frame}{Ordinary frame}Document density is retained.\end{frame}
 \florathisframe{layout=right,density=0.5}
 \begin{frame}[plain]\titlepage\end{frame}
+\begin{frame}[plain]
+  \only<1>{\titlepage}
+  \only<2>{Content following the title keeps the same garden.}
+\end{frame}
+\begin{frame}{After a conditional title}Document settings return.\end{frame}
+\begin{frame}[plain]
+  \only<1>{The first displayed overlay selects the frame's preset.}
+  \only<2>{\titlepage}
+\end{frame}
 \end{document}

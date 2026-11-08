@@ -20,7 +20,10 @@
   local original = flora.page
   flora.page = function(a)
     local document_settings = flora.settings
-    if tex.count.floraltitlepageflag == 1 and beamer_floral.title_defaults then
+    local title_page = tex.count.floraltitlepageflag == 1
+    if beamer_floral.frame then title_page = beamer_floral.frame.title_preset end
+    beamer_floral.page_title = title_page
+    if title_page and beamer_floral.title_defaults then
       flora.settings = require("flora.settings").merge(flora.settings, beamer_floral.title_defaults)
     end
     beamer_floral.active_settings = require("flora.settings").merge(flora.settings, flora.once)

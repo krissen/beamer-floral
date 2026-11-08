@@ -220,6 +220,8 @@ The floral theme now selects this fuller composition automatically for
 weights of 3. Ordinary frames retain the document's settings. Override the
 title preset with `\florathisframe{layout=...,density=...,mix={...}}` before
 the title frame. This also applies to static titles; animation stays optional.
+The first displayed overlay selects the preset for the whole frame: a title
+shown only on a later overlay does not change the composition mid-frame.
 See [the full animated title example](docs/src/growth-title.tex), which uses
 the default eight-second duration and the optional raster cache.
 
