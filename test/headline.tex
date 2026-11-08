@@ -2,7 +2,8 @@
 \usetheme{Berlin}
 \usepackage{beamer-floral}
 \setbeamersize{text margin left=2.5cm,text margin right=1cm}
-\florasetup{seed=3,density=1.2}
+% The assertions below inspect composition, including on warm reruns.
+\florasetup{seed=3,density=1.2,cache=false}
 \directlua{
   local compose=require('flora.compose')
   local original=compose.page

@@ -27,10 +27,6 @@
       flora.settings = require("flora.settings").merge(flora.settings, beamer_floral.title_defaults)
     end
     beamer_floral.active_settings = require("flora.settings").merge(flora.settings, flora.once)
-    if beamer_floral.active_settings.growth and beamer_floral.active_settings.growth ~= "off"
-        and not beamer_floral.handout and flora.render_page_version ~= 1 then
-      tex.error("beamer-floral growth needs tikz-flora with render_page_version=1")
-    end
     beamer_floral.pending = flora.once
     beamer_floral.input_signature = require("flora.serial").encode{
       seed=a.seed, background_position=a.background_position,
@@ -39,12 +35,17 @@
     a.prepare_spec = function(spec)
       if previous then previous(spec) end
       beamer_floral.prepare(spec)
-    end
-    local previous_render = a.render_page
-    a.render_page = function(spec, args)
-      local rendered = beamer_floral.render_page(spec, args)
-      if rendered ~= nil then return rendered end
-      if previous_render then return previous_render(spec, args) end
+      if beamer_floral.frame.growth.growth ~= "off" and not beamer_floral.handout then
+        if flora.render_page_version ~= 1 then
+          tex.error("beamer-floral growth needs tikz-flora with render_page_version=1")
+        end
+        local previous_render = a.render_page
+        a.render_page = function(spec, args)
+          local rendered = beamer_floral.render_page(spec, args)
+          if rendered ~= nil then return rendered end
+          if previous_render then return previous_render(spec, args) end
+        end
+      end
     end
     local result = original(a)
     flora.settings = document_settings

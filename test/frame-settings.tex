@@ -1,6 +1,7 @@
 \documentclass[aspectratio=169]{beamer}
 \usetheme{floral}
-\florasetup{seed=3,density=0.2}
+% Exercise the composition assertions even when an engine cache is warm.
+\florasetup{seed=3,density=0.2,cache=false}
 \newcount\executions
 \directlua{
   local page=flora.page
