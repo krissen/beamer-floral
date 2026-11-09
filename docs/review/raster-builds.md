@@ -29,7 +29,7 @@ size (500 ms intervals), including scratch PDFs, cache PNGs and final output.
 These are single local observations, not repeated statistical estimates.
 Other local verification overlapped the first baseline title run (539.4 s
 cold, 28.6 s warm), so the title baseline below is a repeat without that load.
-The optimized slideshow run overlapped other local work at its end.
+The slideshow runs were not isolated from other local work.
 
 ## Results
 
@@ -49,9 +49,10 @@ The optimized slideshow run overlapped other local work at its end.
 | Largest subprocess RSS (MiB) | 877.4 | 871.6 | 1273.8 | 1168.2 |
 | Peak output plus scratch disk (MiB) | 1369.6 | 1346.8 | 4038.1 | 4000.2 |
 
-The adapter does not change export or rasterization code, so the slideshow's
-higher values in those two rows are not attributed to it; those runs were not
-isolated from other local work.
+The adapter does not change export or rasterization code. In the optimized
+slideshow run, export was 7.1% slower and raster jobs were slower throughout;
+the cause was not established. The dense title shows no such difference, and
+the slowdown counts against the slideshow's reported improvement.
 
 The adapter removes most LaTeX planning cost. PDF export is now the largest
 remaining step, about 63% of the cold build for both fixtures; it is separate
