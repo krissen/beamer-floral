@@ -1,0 +1,42 @@
+-- Worker validation and failure publication, without botanical rendering.
+-- texlua test/raster-worker.lua /path/to/tikz-flora
+package.path=arg[1]..'/lua/?.lua;'..package.path
+local Serial=require('flora.serial')
+local lfs=require('lfs')
+local root=os.tmpname();os.remove(root);assert(lfs.mkdir(root))
+assert(lfs.mkdir(root..'/scratch'))
+local signature=string.rep('a',32)
+local folder=root..'/'..signature..'-144';assert(lfs.mkdir(folder))
+local function write(path,data) local f=assert(io.open(path,'wb'));f:write(data);f:close() end
+local frame={signature=signature,stages=2,steps=1,levels={.5,1},spec={width=400,height=300}}
+local plans,renders=0,0
+local fail=false
+package.loaded['flora.paint']={reset_resources=function() end}
+package.loaded['flora.progression']={api_version=1,
+  plan=function() plans=plans+1;return {} end,
+  stages=function() return {.5,1} end,
+  render=function(_,t) assert(not fail,'injected rendering failure');renders=renders+1;return t end}
+package.loaded['flora.pdfout']={write=function(path,t) write(path,tostring(t)) end}
+local function run()
+  write(root..'/manifest',Serial.encode{version=1,frames={frame}})
+  arg={'unused',root..'/manifest',root,root..'/scratch','144'}
+  return pcall(dofile,'tools/render_animation.lua')
+end
+assert(run());assert(plans==1 and renders==3)
+local f=assert(io.open(root..'/scratch/frame-1-sample-1.pdf'));assert(f:read('a')=='0.5');f:close()
+os.remove(root..'/scratch/index.floral')
+frame.levels={.4,1};assert(not run(),'worker must compare API levels')
+assert(not lfs.attributes(root..'/scratch/index.floral'))
+frame.levels={.5,1};fail=true
+assert(not run(),'render failure propagates');assert(not lfs.attributes(root..'/scratch/index.floral'))
+fail=false
+local png='\137PNG\r\n\26\n'
+for i=0,2 do write(folder..'/sample-'..i..'.png',png) end
+local before=plans
+assert(run());assert(plans==before,'warm worker must not plan')
+os.remove(folder..'/sample-1.png')
+assert(run());assert(plans==before+1,'partial cache plans only missing samples')
+for i=0,2 do os.remove(folder..'/sample-'..i..'.png');os.remove(root..'/scratch/frame-1-sample-'..i..'.pdf') end
+os.remove(root..'/scratch/index.floral');os.remove(root..'/scratch/jobs.tsv');os.remove(root..'/manifest')
+assert(lfs.rmdir(folder));assert(lfs.rmdir(root..'/scratch'));assert(lfs.rmdir(root))
+print('raster worker contract tests passed')

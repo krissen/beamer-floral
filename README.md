@@ -158,6 +158,11 @@ The builder runs LaTeX to measure the document, renders missing background
 samples and builds the final PDF. It reuses existing samples on later builds.
 There is no shell escape. The external tools are needed **when creating or updating
 the cache for raster playback only**; viewing the PDF needs no Python or Poppler.
+The builder's measurement PDF is an intermediate product: on cache misses it
+collects geometry and the animation manifest without painting flora. LaTeX
+still runs until cross-overlay geometry and page layout stabilize. The worker
+then validates growth stages and exports missing samples before the final PDF
+is built. Valid raster caches require no growth planning during LaTeX passes.
 With `[raster]`, ordinary `latexmk` reports an error when the cache is
 missing or stale and tells you to run the builder. It never silently uses
 old frames. Only the builder's measurement pass may show provisional static
