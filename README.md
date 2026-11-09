@@ -53,14 +53,14 @@ frame semantics in Beamer. The engine's article API keeps its page semantics.
 theme may also switch margins with them, which is how title and section
 pages keep plain margins.
 
-Both `\usetheme{floral}` and `\usepackage{beamer-floral}` reserve 2.5 cm on
+`\usetheme{floral}` and `\usepackage{beamer-floral}` both reserve 2.5 cm on
 the left and 1 cm on the right by default. These are the package's floral
 margins, not Beamer's narrower inherited margins. The latter give the border
 too little room and should be avoided. To customise the space, call
 `\setbeamersize` after loading the theme or package.
 
 Theme authors that restore a pre-floral layout on undecorated frames should
-capture that layout before requiring `beamer-floral`, since loading it now
+capture that layout before requiring `beamer-floral`, since loading it
 establishes the floral margins.
 
 By default, the flora stays fixed through a frame's overlays. The package collects the
@@ -106,8 +106,7 @@ For vector playback (`growth=timed`), load the optional package in the preamble:
 
 The default vector path uses ordinary `latexmk` and requires no Python,
 Poppler or render cache. Detailed watercolour vectors can play unevenly in
-Reader even at a requested high fps. Playback follows elapsed active time and
-skips late samples rather than stretching the duration.
+Reader even at a requested high fps.
 
 For smoother playback, explicitly opt in to raster caching:
 
@@ -163,8 +162,7 @@ only the background flora plays an animation.
 is a positive finite number of seconds (default 8). `growth fps` is an integer
 from 1 to 60 (default 20); the frame count is rounded and the playback rate
 adjusted so each interval contains both endpoints. Playback follows elapsed
-time and skips late samples when a viewer cannot keep up; waiting between
-overlays does not consume the next interval.
+time and skips late samples when a viewer cannot keep up.
 Document settings are inherited; `\florathisframe` applies to the whole frame
 and does not affect the next one. Use `\florathisframe{growth=off}` for a
 complete static decoration.
@@ -242,7 +240,7 @@ examples chiku-rin.*
 *A title page with the left layout: the flora fills the left margin and the
 foot, leaving the right margin paper.*
 
-The floral theme now selects this fuller composition automatically for
+The floral theme selects this fuller composition automatically for
 `\titlepage`: `layout=left`, `density=2`, and leaf, leaflet, spray and bloom
 weights of 3. Ordinary frames retain the document's settings. Override the
 title preset with `\florathisframe{layout=...,density=...,mix={...}}` before
