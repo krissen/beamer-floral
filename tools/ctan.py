@@ -37,7 +37,7 @@ Version {version}. Procedural watercolour flora for beamer slides. Each frame
 gets its own plant, and the stems grow around the measured text block.
 
 Requires LuaLaTeX and tikz-flora, which is not on CTAN:
-https://github.com/krissen/tikz-flora (branch beamer-floral, revision beb2f3b
+https://github.com/krissen/tikz-flora (branch beamer-floral, revision cc3fb48
 or later). Timed growth also needs animate; raster playback needs Python 3.9
 or later and Poppler when its cache is built.
 
