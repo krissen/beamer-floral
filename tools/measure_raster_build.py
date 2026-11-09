@@ -134,10 +134,11 @@ def main():
     args = parser.parse_args()
     args.engine = args.engine.resolve()
     outdir = args.outdir.resolve()
+    source_path = args.source.resolve() if args.source else None
     os.chdir(ROOT)
     builder = load_builder()
-    if args.source:
-        work = [(args.source.stem, args.source.resolve())]
+    if source_path:
+        work = [(source_path.stem, source_path)]
     else:
         work = [(name, write_fixture(name, outdir / name / "source")) for name in args.fixture or FIXTURES]
     report = {"commit": git_commit(ROOT), "engine": args.engine.name, "dpi": args.dpi, "jobs": args.jobs,
