@@ -20,29 +20,61 @@ grows around the content and the margin follows the page.
 Compile with `latexmk -lualatex`. The [tour](docs/src/tour.tex) is a complete
 presentation of the package, written with it.
 
-## Requirements
+## Getting started
 
-- LuaLaTeX
-- the [krissen/tikz-flora](https://github.com/krissen/tikz-flora) fork,
-  branch `beamer-floral`, commit `ff21877` or later. The upstream engine
-  lacks the integration hook this package uses. `engine-ref.txt` pins the
-  revision used by CI and standalone bundles.
+You need LuaLaTeX and the engine,
+[tikz-flora](https://github.com/krissen/tikz-flora). This package uses
+integration hooks that are not in the upstream engine yet; they are
+[proposed upstream](https://github.com/wn-mitch/tikz-flora/issues/2). Until
+they land, use the `beamer-floral` branch of the fork, commit `ff21877` or
+later. The options below all take care of that.
 
-The [release archive](https://github.com/krissen/beamer-floral/releases)
-includes a matching engine, so you can unzip it beside your document and
-compile.
+### From the release archive
 
-The Beamer integration is maintained in our fork for now; the plan is to
-submit those additions upstream.
-
-For a local checkout, point `TIKZFLORA` at it, or put the path in a
-gitignored `.env`:
+The simplest way. Download `beamer-floral-v0.1.0.zip` from the
+[latest release](https://github.com/krissen/beamer-floral/releases/latest),
+which includes a matching engine. Unzip it, put your document in the
+`beamer-floral` folder and compile:
 
 ```sh
-TIKZFLORA=/path/to/tikz-flora
+latexmk -lualatex slides.tex
 ```
 
-Without `TIKZFLORA`, an installed `tikzflora` is used.
+The folder has working examples: `example.tex` for static flora and
+`growth-example.tex` for growth.
+
+### On Overleaf
+
+Upload the ZIP as a new project, set the compiler to LuaLaTeX and choose your
+main document. Static flora, overlay growth and vector playback compile
+directly. [Raster playback](#growing-flora) needs a cache built locally.
+
+### From a Git checkout
+
+Clone this repository and the engine's `beamer-floral` branch, then point TeX
+at both when you compile:
+
+```sh
+git clone https://github.com/krissen/beamer-floral
+git clone -b beamer-floral https://github.com/krissen/tikz-flora
+TEXINPUTS=$PWD/beamer-floral:$PWD/tikz-flora/tex//: \
+  FLORA_LUA=$PWD/tikz-flora/lua latexmk -lualatex slides.tex
+```
+
+To work on the package itself, put `TIKZFLORA=/path/to/tikz-flora` in a
+gitignored `.env`; the repository's `latexmkrc` reads it.
+
+### Where to go next
+
+- [Settings](#settings): layout, density, seed, mix and palettes
+- [Choosing the composition](#choosing-the-composition): recipes for common looks
+- [Growing flora](#growing-flora): growth across overlays and timed playback
+- [With a stock theme](#with-a-stock-theme): keep Madrid, Berlin or your own theme
+- [Reserving space](#reserving-space): keep flora away from a logo or footline
+- [File size](#file-size): what to expect before you email a PDF
+- The [manual](docs/beamer-floral.tex) and the
+  [tour](https://github.com/krissen/beamer-floral/releases/latest), a
+  presentation of the package written with it
 
 ## Use
 
