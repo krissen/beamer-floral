@@ -54,4 +54,21 @@ with tempfile.TemporaryDirectory() as name:
     assert json.loads((out / "results.json").read_text())["complete"] is True
     assert not (out / "results.json.tmp").exists()
 
+    # A rerun that fails before its first build must not leave the earlier
+    # complete report behind.
+    import sys
+    saved = sys.argv
+    measure.measure = lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("build failed"))
+    frozen_engine = tmp / "frozen"
+    sys.argv = ["measure", "--engine", str(frozen_engine), "--outdir", str(out),
+                "--source", str(ROOT / "test/growth-raster.tex")]
+    try:
+        with contextlib.redirect_stderr(io.StringIO()), contextlib.redirect_stdout(io.StringIO()):
+            measure.main()
+    except RuntimeError:
+        pass
+    finally:
+        sys.argv = saved
+    assert json.loads((out / "results.json").read_text())["complete"] is False
+
 print("measure_raster_build checks passed")

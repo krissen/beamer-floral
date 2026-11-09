@@ -185,6 +185,9 @@ def main():
     report = {"commit": git_commit(ROOT), "commit_dirty": git_dirty(ROOT), "engine": engine,
               "engine_source": engine_source, "dpi": args.dpi, "jobs": args.jobs,
               "platform": platform.platform(), "complete": False, "builds": {}}
+    # Replace any earlier report at once, so a failed first build is never
+    # read as a complete earlier measurement.
+    write_report(outdir, report)
     print(f"{'build':16}{'total':>9}{'latex1':>9}{'export':>9}{'raster+':>9}{'latex2':>9}{'RSS MiB':>9}{'disk MiB':>10}")
     for name, source in work:
         build_dir = outdir / name / "build"
