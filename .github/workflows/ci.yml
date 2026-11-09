@@ -60,12 +60,12 @@ jobs:
             docs/src/stock-default.tex
             docs/src/stock-Madrid.tex
             docs/src/stock-Berlin.tex
-            docs/review/matrix-43.tex
-            docs/review/matrix-169.tex
-            docs/review/coverage.tex
-            docs/review/reserve-background.tex
-            docs/review/overlays.tex
-            docs/review/handout.tex
+            test/acceptance/matrix-43.tex
+            test/acceptance/matrix-169.tex
+            test/acceptance/coverage.tex
+            test/acceptance/reserve-background.tex
+            test/acceptance/overlays.tex
+            test/acceptance/handout.tex
           latexmk_use_lualatex: true
           extra_system_packages: python3 nodejs qpdf poppler-utils
           pre_compile: |
@@ -86,7 +86,7 @@ jobs:
             texlua test/check_boxes.lua headline.log
             texlua test/check_boxes.lua ornament-settings.log
             texlua test/check_boxes.lua ornament-catalogue.log
-            FLORAL_VERIFY_STABLE=1 latexmk -g -lualatex -interaction=nonstopmode -halt-on-error docs/review/overlays.tex
+            FLORAL_VERIFY_STABLE=1 latexmk -g -lualatex -interaction=nonstopmode -halt-on-error test/acceptance/overlays.tex
             FLORAL_VERIFY_STABLE=1 latexmk -g -lualatex -interaction=nonstopmode -halt-on-error test/frame-settings.tex
             # Keep these checks in the TeX container: it owns the generated
             # PDFs and provides the matching LuaLaTeX/latexmk installation.

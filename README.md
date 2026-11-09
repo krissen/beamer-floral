@@ -73,7 +73,7 @@ gitignored `.env`; the repository's `latexmkrc` reads it.
 - [Reserving space](#reserving-space): keep flora away from a logo or footline
 - [File size](#file-size): what to expect before you email a PDF
 - The [manual](docs/beamer-floral.tex) and the
-  [tour](https://github.com/krissen/beamer-floral/releases/latest), a
+  [tour](https://github.com/krissen/beamer-floral/releases/latest/download/beamer-floral-tour.pdf), a
   presentation of the package written with it
 
 ## Use
@@ -213,7 +213,7 @@ The [animate manual](https://tug.ctan.org/macros/latex/contrib/animate/animate.p
 documents OCG playback in desktop Acrobat Reader and Okular. We have checked
 playback in desktop Acrobat Reader; Okular is untested. Viewers that cannot
 play the animation show the finished flora. See [the timed example](docs/src/growth.tex)
-and [the acceptance checklist](docs/review/growth.md).
+and [the acceptance checklist](test/acceptance/growth.md).
 
 ## File size
 
@@ -564,6 +564,17 @@ approving changes; compilation success alone is insufficient.
 
 Use `--screenshots docs/img` to refresh all documentation screenshots from
 those acceptance and documentation PDFs. All example content is English.
+
+To compare raster build cost, freeze an engine tree outside your working
+checkout and run:
+
+```sh
+python3 tools/measure_raster_build.py --engine ../frozen-engine
+```
+
+This builds the dense title and slideshow fixtures cold and then warm, and
+writes step times, memory and disk use to
+`build/raster-measurements/results.json`.
 
 ## Licence
 
