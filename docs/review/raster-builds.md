@@ -27,32 +27,42 @@ Lua/PDF export and rasterization. Each subprocess was wrapped with macOS
 sum of concurrent raster processes. Disk is the maximum sampled output-tree
 size (500 ms intervals), including scratch PDFs, cache PNGs and final output.
 These are single local observations, not repeated statistical estimates.
-Other local verification overlapped part of the baseline title run.
+Other local verification overlapped the first baseline title run (539.4 s
+cold, 28.6 s warm), so the title baseline below is a repeat without that load.
+The optimized slideshow run overlapped other local work at its end.
 
 ## Results
 
-| Fixture / cache | Before (s) | After (s) |
-| --- | ---: | ---: |
-| Dense title, cold | 539.4 | 391.9 |
-| Dense title, warm | 28.6 | 5.4 |
+| Fixture / cache | Before (s) | After (s) | Change |
+| --- | ---: | ---: | ---: |
+| Dense title, cold | 514.3 | 391.9 | -23.8% |
+| Dense title, warm | 27.5 | 5.4 | -80.5% |
+| Slideshow, cold | 1388.9 | 1228.3 | -11.6% |
+| Slideshow, warm | 95.8 | 51.9 | -45.8% |
 
-| Dense title, cold | Before | After |
-| --- | ---: | ---: |
-| Measurement LaTeX (s) | 74.6 | 4.9 |
-| Lua/PDF export (s) | 260.4 | 246.6 |
-| Rasterization and builder overhead (s) | 146.2 | 129.7 |
-| Final LaTeX (s) | 58.2 | 10.7 |
-| Largest subprocess RSS (MiB) | 901.5 | 871.6 |
-| Peak output plus scratch disk (MiB) | 1347.7 | 1346.8 |
+| Cold build | Title before | Title after | Slides before | Slides after |
+| --- | ---: | ---: | ---: | ---: |
+| Measurement LaTeX (s) | 81.3 | 4.9 | 167.2 | 5.9 |
+| Lua/PDF export (s) | 248.6 | 246.6 | 720.7 | 772.2 |
+| Rasterization and builder overhead (s) | 129.7 | 129.7 | 319.9 | 355.6 |
+| Final LaTeX (s) | 54.7 | 10.7 | 181.1 | 94.6 |
+| Largest subprocess RSS (MiB) | 877.4 | 871.6 | 1273.8 | 1168.2 |
+| Peak output plus scratch disk (MiB) | 1369.6 | 1346.8 | 4038.1 | 4000.2 |
+
+The adapter does not change export or rasterization code, so the slideshow's
+higher values in those two rows are not attributed to it; those runs were not
+isolated from other local work.
 
 The adapter removes most LaTeX planning cost. PDF export is now the largest
-remaining step; it is separate motor work and is not changed in this PR.
+remaining step, about 63% of the cold build for both fixtures; it is separate
+motor work and is not changed in this PR.
 The engine pin, cache format, builder CLI and defaults are unchanged.
 
 ## Correctness checks
 
-- The small raster fixture and dense title have identical geometry manifests
-  and byte-identical PNG samples before and after (10 and 161 samples).
+- The small raster fixture, dense title and slideshow have identical geometry
+  manifests and byte-identical PNG samples before and after (10, 161 and 1771
+  samples).
 - Cache hit and measurement miss adapter tests forbid `plan`, `stages` and
   `render`; ordinary builds still reject missing or stale caches.
 - Worker tests cover cold, warm and partial caches, level mismatch and a
