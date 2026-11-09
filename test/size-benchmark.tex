@@ -1,0 +1,38 @@
+% Identical content in every variant; tools/measure_sizes.py selects one.
+\providecommand\floralvariant{static}
+\documentclass[aspectratio=169]{beamer}
+\def\floralnone{none}
+\ifx\floralvariant\floralnone
+  \setbeamersize{text margin left=2.5cm,text margin right=1cm}
+\else
+  \usetheme{floral}
+  \def\floralvector{vector}\def\floralraster{raster}
+  \ifx\floralvariant\floralvector
+    \usepackage[vector]{beamer-floral-animation}
+    \florasetup{growth=timed}
+  \fi
+  \ifx\floralvariant\floralraster
+    \usepackage[raster]{beamer-floral-animation}
+    \florasetup{growth=timed}
+  \fi
+  \def\floraloverlays{overlays}
+  \ifx\floralvariant\floraloverlays
+    \florasetup{growth=overlays}
+  \fi
+  \florasetup{seed=3,growth duration=8,growth fps=20}
+\fi
+\title{Size benchmark}\author{beamer-floral}\date{}
+\newcount\benchmarkframe
+\newcommand\benchmarkframes{%
+  \advance\benchmarkframe by 1
+  \begin{frame}{Frame \the\benchmarkframe}
+    \begin{itemize}
+      \item The first point on this frame.\pause
+      \item The second point on this frame.
+    \end{itemize}
+  \end{frame}
+  \ifnum\benchmarkframe<10 \expandafter\benchmarkframes\fi}
+\begin{document}
+\begin{frame}[plain]\titlepage\end{frame}
+\benchmarkframes
+\end{document}

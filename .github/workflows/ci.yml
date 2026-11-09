@@ -53,6 +53,9 @@ jobs:
             test/ornament-settings.tex
             test/visual/ornament-catalogue.tex
             test/margins.tex
+            test/article-mode.tex
+            test/overlay-reuse.tex
+            docs/src/tour.tex
             docs/src/showcase.tex
             docs/src/stock-default.tex
             docs/src/stock-Madrid.tex

@@ -1,0 +1,15 @@
+% A beamerarticle version of a talk compiles and ignores the floral commands.
+\documentclass{article}
+\usepackage{beamerarticle}
+\usepackage[raster]{beamer-floral-animation}
+\florasetup{seed=3, growth=timed}
+\florapalette{blue}
+\florareserve{0pt}{0pt}{10pt}{10pt}
+\floraclearreserve
+\florabackground[bottom]{white}{0pt}
+\begin{document}
+\florathisframe{layout=left}
+\floraoff
+\begin{frame}{In an article}Body text.\end{frame}
+\floraon
+\end{document}

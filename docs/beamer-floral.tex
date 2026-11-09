@@ -1,0 +1,195 @@
+% The user manual. Build from this directory: latexmk -lualatex beamer-floral.tex
+\documentclass[a4paper,11pt]{article}
+\usepackage{fontspec}
+\usepackage[margin=30mm]{geometry}
+\usepackage{graphicx,booktabs,xcolor}
+\usepackage{listings}
+\usepackage{hyperref}
+\hypersetup{colorlinks,linkcolor=black,urlcolor=blue!50!black,
+  pdftitle={beamer-floral manual},pdfauthor={Kristian Niemi}}
+\lstset{basicstyle=\ttfamily\small,columns=fullflexible,keepspaces,
+  frame=single,framerule=.3pt,rulecolor=\color{black!30},
+  upquote=true,breaklines=true}
+\setlength\parindent{0pt}
+\setlength\parskip{.6em}
+\newcommand\pkg[1]{\textsf{#1}}
+\newcommand\cmd[1]{\texttt{\textbackslash #1}}
+\title{The \pkg{beamer-floral} package\\[.3em]\large Version 0.1.0}
+\author{Kristian Niemi}
+\date{8 November 2026}
+
+\begin{document}
+\maketitle
+
+\pkg{beamer-floral} draws procedural watercolour flora behind \pkg{beamer}
+slides. The drawing comes from \pkg{tikz-flora}. Each frame gets its own
+plant; the package measures the text block, so the stems grow around the
+content.
+
+\begin{center}
+  \includegraphics[width=.72\linewidth]{img/title.png}
+\end{center}
+
+\tableofcontents
+
+\section{Requirements}
+
+The package needs LuaLaTeX, \pkg{beamer} and \pkg{tikz-flora}. It has been
+tested with TeX Live 2025.
+
+\pkg{tikz-flora} is not distributed through CTAN. The integration needs
+revision \texttt{ff21877} or later of the branch \texttt{beamer-floral} at
+\url{https://github.com/krissen/tikz-flora}. The release archive of
+\pkg{beamer-floral} on GitHub includes a matching engine. To use a separate
+checkout, set the environment variable \texttt{TIKZFLORA} to its path.
+
+Timed growth also needs the \pkg{animate} package. Raster playback needs
+Python 3.9 or later and Poppler's \texttt{pdftocairo} when its cache is
+built.
+
+\section{Getting started}
+
+\begin{lstlisting}[language={[LaTeX]TeX}]
+\documentclass{beamer}
+\usetheme{floral}
+\florasetup{seed=3, density=1.2}
+\begin{document}
+\begin{frame}{Floral}
+  The border grows around the text.
+\end{frame}
+\end{document}
+\end{lstlisting}
+
+Compile with \texttt{latexmk -lualatex}. The package stores measurements in a
+\texttt{.floral-cache} file and asks for a rerun when they change.
+
+To keep a stock theme, load it first:
+
+\begin{lstlisting}[language={[LaTeX]TeX}]
+\usetheme{Madrid}
+\usepackage{beamer-floral}
+\end{lstlisting}
+
+The package sets margins of 2.5\,cm on the left and 1\,cm on the right. Call
+\cmd{setbeamersize} after loading it to change them.
+
+\section{Commands}
+
+\begin{description}
+  \item[\cmd{florasetup}\{\emph{keys}\}] Sets the document's options.
+  \item[\cmd{florathisframe}\{\emph{keys}\}] Sets options for the next
+    painted frame, including all its overlays. \cmd{florathispage} is an alias.
+  \item[\cmd{floraon}, \cmd{floraoff}] Switch the flora on or off before a frame.
+  \item[\cmd{florapalette}\{\emph{name}\}] Selects \texttt{warm},
+    \texttt{blue}, \texttt{green} or \texttt{green-stems}. With the floral
+    theme it also sets block, alert and example colours.
+  \item[\cmd{florareserve}\{\emph{x}\}\{\emph{y}\}\{\emph{x$_1$}\}\{\emph{y$_1$}\}]
+    Keeps flora out of a rectangle. Arguments are dimensions from the
+    lower-left corner of the page.
+  \item[\cmd{floraclearreserve}] Removes all reservations.
+  \item[\cmd{florabackground}{[}\emph{position}{]}\{\emph{colour}\}\{\emph{height}\}]
+    Paints a band at the \texttt{top} or \texttt{bottom}. Height \texttt{0pt}
+    removes it.
+\end{description}
+
+The floral theme adds \cmd{floralornamentsetup}, \cmd{floraldivider} and the
+\texttt{floral} templates for \texttt{itemize item}, \texttt{itemize subitem}
+and \texttt{itemize subsubitem}.
+
+\section{Options}
+
+\begin{center}
+\begin{tabular}{@{}lp{.68\linewidth}@{}}
+  \toprule
+  Key & Values \\
+  \midrule
+  \texttt{layout} & \texttt{left}, \texttt{right}, \texttt{centered},
+    \texttt{split}, \texttt{title}, \texttt{surround} \\
+  \texttt{header} & \texttt{body}, \texttt{margin} \\
+  \texttt{seed} & a number, or \texttt{random} \\
+  \texttt{density} & 0 to 10 \\
+  \texttt{mix} & weights such as \texttt{\{leaves=3, leaflets=2\}} \\
+  \texttt{visitors} & weight for bees, butterflies, birds and snails \\
+  \texttt{colourway} & \texttt{spring}, \texttt{summer}, \texttt{autumn},
+    \texttt{winter}, \texttt{ember}, \texttt{plum}, \texttt{rose},
+    \texttt{original} \\
+  \texttt{palette} & inks such as \texttt{\{hero=gold, blooms=blue\}} \\
+  \texttt{spin} & re-picks random inks \\
+  \texttt{ornaments} & weights of registered ornament kinds \\
+  \texttt{tune} & engine overrides \\
+  \texttt{growth} & \texttt{off}, \texttt{overlays}, \texttt{timed} \\
+  \texttt{growth duration} & seconds, default 8 \\
+  \texttt{growth fps} & an integer from 1 to 60, default 20 \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+Keep floral settings, reservations and margins constant within one frame.
+Change them between frames.
+
+\section{Growth}
+
+With \texttt{growth=overlays}, each overlay reveals more of the finished
+plant. With \texttt{growth=timed}, each overlay plays its own interval of the
+animation. Load the optional package in the preamble:
+
+\begin{lstlisting}[language={[LaTeX]TeX}]
+\usepackage{beamer-floral-animation}
+\florasetup{growth=timed, growth duration=8, growth fps=20}
+\end{lstlisting}
+
+Vector playback is the default and uses an ordinary \texttt{latexmk} build.
+Dense flora can play unevenly. Raster playback is smoother. Select it with
+the package option \texttt{raster} and build with the supplied script:
+
+\begin{lstlisting}
+python3 build_animation.py --outdir build slides.tex
+\end{lstlisting}
+
+Playback has been checked in desktop Acrobat Reader. The final stage of each
+interval is the static poster, so viewers that cannot play the animation
+show the finished flora. Handout mode always shows complete static flora.
+
+\section{File size}
+
+The table gives measured sizes for one document with a title page and ten
+frames of two overlays each (21 PDF pages), with identical content in every
+variant.
+
+\begin{center}
+\begin{tabular}{@{}lr@{}}
+  \toprule
+  Variant & PDF size \\
+  \midrule
+  Beamer without floral & 0.05\,MB \\
+  \texttt{growth=off} & 21.5\,MB \\
+  \texttt{growth=overlays} & 46.6\,MB \\
+  \texttt{growth=timed}, vector & 68.4\,MB \\
+  \texttt{growth=timed}, raster & 137.0\,MB \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+Overlays of a static frame share one copy of the flora. Growing flora needs
+a separate drawing for each stage. Sizes depend on density, layout and page
+count.
+
+\section{Limitations}
+
+\begin{itemize}
+  \item Themes with sidebars share the margin with the flora and are not
+    visually supported. The package warns about them.
+  \item The package empties the \texttt{background canvas} template, since the
+    canvas would otherwise cover the flora. For a coloured page use
+    \cmd{pagecolor}.
+  \item With \texttt{show notes on second screen}, the notes panel covers the
+    flora on that side of the page.
+  \item In a \pkg{beamerarticle} document, the floral commands do nothing.
+\end{itemize}
+
+\section{Licence}
+
+\pkg{beamer-floral} is released under the MIT licence. \pkg{tikz-flora} keeps
+its own MIT licence and acknowledgements.
+
+\end{document}

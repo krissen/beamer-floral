@@ -1,6 +1,10 @@
 \NeedsTeXFormat{LaTeX2e}
-\ProvidesPackage{beamer-floral-animation}[2026/11/07 Optional floral growth animation]
+\ProvidesPackage{beamer-floral-animation}[2026/11/08 v0.1.0 Optional floral growth animation]
 \RequirePackage{beamer-floral}
+\@ifclassloaded{beamer}{}{%
+  \DeclareOption*{}\ProcessOptions\relax
+  \expandafter\endinput
+}
 \RequirePackage{animate}[2024/10/14]
 \directlua{beamer_floral.animation_support=true; beamer_floral.raster_cache=false}
 \DeclareOption{vector}{\directlua{beamer_floral.raster_cache=false}}
