@@ -14,6 +14,7 @@ local function load(path)
 end
 local manifest=assert(load(manifest_path),'missing animation manifest')
 assert(manifest.version==1 and type(manifest.frames)=='table','unsupported animation manifest')
+assert(Growth.api_version==1,'unsupported progression API (need version 1)')
 local index={version=1,frames={}}
 local jobs=assert(io.open(scratch..'/jobs.tsv','w'))
 local count=0
@@ -35,7 +36,10 @@ for _,id in ipairs(ids) do
       if not exists then
         if not plan then
           Paint.reset_resources();plan=Growth.plan(frame.spec)
-          Growth.stages(plan,frame.stages) -- keep the engine's resolution checks
+          local levels=Growth.stages(plan,frame.stages)
+          for k=1,frame.stages do
+            assert(frame.levels[k]==levels[k],'manifest stage levels disagree with progression API')
+          end
         end
         local k=math.min(frame.stages,i//frame.steps+1)
         local first=k==1 and 0 or frame.levels[k-1]

@@ -23,6 +23,29 @@ a.animation_cache=nil
 assert(C.collect(a,spec,2)==nil,'old interior-only caches need their endpoint samples')
 for _,i in ipairs{0,2,4} do write(folder..'/sample-'..i..'.png',png) end
 assert(C.collect(a,spec,2).stage==1,'current cache must be usable')
+-- Exercise the adapter itself with every expensive progression operation forbidden.
+local function forbidden() error('raster path must not plan, validate or render in LaTeX') end
+package.loaded['flora.progression']={api_version=1,plan=forbidden,stages=forbidden,render=forbidden}
+local oldkpse=kpse
+kpse={find_file=function(name) return name end}
+tex={error=function(message) error(message) end,sprint=function() end}
+flora={render_page_version=1,typeset_page=function() end}
+local M=dofile('beamer-floral.lua')
+M.frame={growth={growth='timed',['growth duration']=1,['growth fps']=4}}
+M.stage=1;M.stages=2;M.count=1;M.animation_root=root;M.animation_manifest={}
+M.animation_support=true;M.raster_cache=true
+assert(M.render_page(spec,{})==true,'cache hit bypasses all growth operations')
+assert(M.animation.raster and not M.animation.plan)
+local getenv=os.getenv
+os.getenv=function(name) if name=='FLORAL_ANIMATION_PREPARE' then return '1' end return getenv(name) end
+local missing={width=400,height=300,seed=2,text=spec.text}
+assert(M.render_page(missing,{})==true,'measurement miss bypasses painting and fallback')
+assert(M.animation_manifest[1].levels[1]==.5)
+os.getenv=function(name) if name=='FLORAL_ANIMATION_PREPARE' then return nil end return getenv(name) end
+assert(not pcall(M.render_page,missing,{}),'ordinary builds reject stale cache before planning')
+M.frame.growth['growth duration']=1e300
+assert(not pcall(M.render_page,spec,{}),'cache hit still checks duration limits')
+os.getenv=getenv;kpse=oldkpse
 os.remove(folder..'/sample-4.png')
 assert(C.collect(a,spec,2)==nil,'the final poster must be cached before playback')
 write(folder..'/sample-4.png',png)

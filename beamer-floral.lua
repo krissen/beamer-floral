@@ -120,7 +120,7 @@ function M.init(path)
   M.path=path; M.old=nil; M.previous={}; M.current={}; M.count=0; M.context_key=nil
   M.frame=nil; M.pending=nil; M.active_settings=nil; M.animation=nil
   M.animation_root=path:gsub('%.floral%-cache$','.floral-animation')
-  M.animation_manifest={}; M.animation_cache=nil; M.cache_warning=false; M.pdf_actions=nil
+  M.animation_manifest={}; M.animation_cache=nil; M.pdf_actions=nil
   if kpse and kpse.record_input_file then kpse.record_input_file(path) end
   local f=io.open(path,'r')
   if f then
@@ -215,39 +215,41 @@ function M.render_page(spec,a)
     return nil
   end
   local frame=M.frame
-  local key=Serial.encode(spec)
-  if frame.plan_key~=key then
-    frame.plan=Progression.plan(copy(spec)); frame.plan_key=key
-    frame.stage_count=nil
-  end
-  if frame.stage_count~=M.stages then
-    frame.levels=Progression.stages(frame.plan,M.stages)
-    frame.stage_count=M.stages
-  end
-  local last=frame.levels[M.stage]
-  if growth.growth=='overlays' then return Progression.render(frame.plan,last) end
-  local first=M.stage==1 and 0 or frame.levels[M.stage-1]
-  local seconds=growth['growth duration']/M.stages
-  local samples=seconds*growth['growth fps']
-  if seconds==0 or samples>2147483646 or 1/seconds==math.huge then
-    tex.error('beamer-floral: growth duration exceeds animation numeric limits')
-    return nil
-  end
-  local steps=math.max(1,math.floor(samples+0.5))
-  local raster
-  if M.raster_cache then
-    raster=raster_cache().collect(M,copy(spec),steps)
-    if not raster then
-      if os.getenv('FLORAL_ANIMATION_PREPARE')~='1' then
-        tex.error('beamer-floral: raster animation cache missing or stale; run python3 tools/build_animation.py for this document, or select [vector]')
-        return nil
-      end
-      if not M.cache_warning then
-        tex.sprint('\\PackageWarningNoLine{beamer-floral-animation}{Raster cache missing or stale. Run python3 tools/build_animation.py for this document. Showing static interval endpoints}')
-        M.cache_warning=true
-      end
-      return Progression.render(frame.plan,last)
+  local steps,seconds,raster,first,last
+  if growth.growth=='timed' then
+    seconds=growth['growth duration']/M.stages
+    local samples=seconds*growth['growth fps']
+    if seconds==0 or samples>2147483646 or 1/seconds==math.huge then
+      tex.error('beamer-floral: growth duration exceeds animation numeric limits')
+      return nil
     end
+    steps=math.max(1,math.floor(samples+0.5))
+    if M.raster_cache then
+      raster=raster_cache().collect(M,copy(spec),steps)
+      if not raster then
+        if os.getenv('FLORAL_ANIMATION_PREPARE')~='1' then
+          tex.error('beamer-floral: raster animation cache missing or stale; run python3 tools/build_animation.py for this document, or select [vector]')
+          return nil
+        end
+        -- Geometry was collected by prepare; this PDF is only a measurement
+        -- intermediate. Returning true also suppresses the static fallback.
+        return true
+      end
+    end
+  end
+  if not raster then
+    local key=Serial.encode(spec)
+    if frame.plan_key~=key then
+      frame.plan=Progression.plan(copy(spec)); frame.plan_key=key
+      frame.stage_count=nil
+    end
+    if frame.stage_count~=M.stages then
+      frame.levels=Progression.stages(frame.plan,M.stages)
+      frame.stage_count=M.stages
+    end
+    last=frame.levels[M.stage]
+    if growth.growth=='overlays' then return Progression.render(frame.plan,last) end
+    first=M.stage==1 and 0 or frame.levels[M.stage-1]
   end
   M.animation={plan=frame.plan,spec=copy(spec),args=copy(a),first=first,last=last,steps=steps,raster=raster}
   -- N intervals have N+1 samples, including their exact endpoints.

@@ -1,0 +1,26 @@
+% The builder must stabilize layout and play cached images without planning.
+\documentclass[aspectratio=169]{beamer}
+\usetheme{floral}
+\usepackage[raster]{beamer-floral-animation}
+\florasetup{seed=3,density=0.2,growth=timed,growth duration=0.4,growth fps=10}
+\title{Raster geometry}\author{Adapter regression}\date{}
+\florareserve{0pt}{220pt}{60pt}{250pt}
+\AtBeginDocument{\directlua{
+  local growth=require('flora.progression')
+  local function forbidden() error('LaTeX raster pass must not plan or render growth') end
+  growth.plan=forbidden;growth.stages=forbidden;growth.render=forbidden
+}}
+\AtEndDocument{\directlua{
+  if os.getenv('FLORAL_VERIFY_STABLE')=='1' then
+    local m=beamer_floral
+    assert(m.old==m._encode(m.current),'raster geometry did not converge')
+  end
+}}
+\begin{document}
+\begin{frame}[plain]\titlepage\end{frame}
+\begin{frame}{A changing title\only<2->{ on the second overlay}}
+First\pause\par Second\pause\par Third
+\end{frame}
+\floraclearreserve
+\begin{frame}{Reservation cleared}Final page.\end{frame}
+\end{document}

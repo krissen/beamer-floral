@@ -23,7 +23,11 @@ local function signature(record)
     'cannot identify engine sources for raster playback')
 end
 function C.collect(adapter,spec,steps)
-  local record={spec=spec,stages=adapter.stages,steps=steps,levels=adapter.frame.levels}
+  -- Progression API v1 defines equal-area levels as k/n. Plan-dependent
+  -- resolution checks belong to the export worker, only on a cache miss.
+  local levels={}
+  for k=1,adapter.stages do levels[k]=k/adapter.stages end
+  local record={spec=spec,stages=adapter.stages,steps=steps,levels=levels}
   record.signature=signature(record)
   adapter.animation_manifest[adapter.count]=record
   if not adapter.animation_cache then

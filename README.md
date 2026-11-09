@@ -158,11 +158,15 @@ The builder runs LaTeX to measure the document, renders missing background
 samples and builds the final PDF. It reuses existing samples on later builds.
 There is no shell escape. The external tools are needed **when creating or updating
 the cache for raster playback only**; viewing the PDF needs no Python or Poppler.
+The builder's measurement PDF is an intermediate product: on cache misses it
+collects geometry and the animation manifest without painting flora. LaTeX
+still runs until cross-overlay geometry and page layout stabilize. The worker
+then validates growth stages and exports missing samples before the final PDF
+is built. Valid raster caches require no growth planning during LaTeX passes.
 With `[raster]`, ordinary `latexmk` reports an error when the cache is
 missing or stale and tells you to run the builder. It never silently uses
-old frames. Only the builder's measurement pass may show provisional static
-interval endpoints before generating the cache. Changing geometry, seeds, engine sources, overlay counts or
-the sample grid invalidates the affected cache.
+old frames. Changing geometry, seeds, engine sources, overlay counts or the
+sample grid invalidates the affected cache.
 
 The cache lives beside the build outputs in `<job>.floral-animation/`; keep
 it with the document when moving to another machine. Cold builds need extra

@@ -76,6 +76,8 @@ jobs:
             texlua test/overlays.lua tikz-flora
             texlua test/growth.lua tikz-flora
             texlua test/raster-cache.lua tikz-flora
+            texlua test/raster-worker.lua tikz-flora
+            python3 test/raster-publication.py
             texlua test/pdf-startup.lua
           post_compile: |
             set -e
@@ -91,6 +93,9 @@ jobs:
             python3 tools/check_growth_pdf.py growth-timed.pdf
             python3 tools/build_animation.py --engine tikz-flora --outdir build/raster test/growth-raster.tex
             python3 tools/check_growth_pdf.py build/raster/growth-raster.pdf
+            python3 tools/build_animation.py --engine tikz-flora --outdir build/raster-geometry test/raster-geometry.tex
+            FLORAL_VERIFY_STABLE=1 python3 tools/build_animation.py --engine tikz-flora --outdir build/raster-geometry test/raster-geometry.tex
+            python3 tools/check_growth_pdf.py build/raster-geometry/raster-geometry.pdf
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
