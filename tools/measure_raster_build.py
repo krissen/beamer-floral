@@ -1,4 +1,8 @@
-"""Measure cold and warm raster builds with per-step time, memory and disk."""
+"""Measure cold and warm raster builds with per-step time, memory and disk.
+
+RSS is the largest single subprocess, not the sum of concurrent raster jobs.
+Disk is the largest sampled size of the output tree, every 500 ms.
+"""
 
 import argparse
 import importlib.util
