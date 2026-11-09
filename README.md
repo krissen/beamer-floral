@@ -165,9 +165,8 @@ then validates growth stages and exports missing samples before the final PDF
 is built. Valid raster caches require no growth planning during LaTeX passes.
 With `[raster]`, ordinary `latexmk` reports an error when the cache is
 missing or stale and tells you to run the builder. It never silently uses
-old frames. Only the builder's measurement pass may show provisional static
-interval endpoints before generating the cache. Changing geometry, seeds, engine sources, overlay counts or
-the sample grid invalidates the affected cache.
+old frames. Changing geometry, seeds, engine sources, overlay counts or the
+sample grid invalidates the affected cache.
 
 The cache lives beside the build outputs in `<job>.floral-animation/`; keep
 it with the document when moving to another machine. Cold builds need extra
