@@ -22,8 +22,13 @@
 % Set document-specific margins after loading this package to override them.
 \setbeamersize{text margin left=2.5cm,text margin right=1cm}
 \newcount\floraltitlepageflag
+% The page's class for reuse: 0 content, 1 title, 2 section. Hooks on
+% Beamer's own commands see every theme's title and section pages.
+\newcount\floralpageclass
 % Reset after Beamer has shipped the preceding slide, before this body.
-\AddToHook{cmd/beamer@framenotesbegin/before}{\global\floraltitlepageflag=0\relax}
+\AddToHook{cmd/beamer@framenotesbegin/before}{\global\floraltitlepageflag=0\relax\global\floralpageclass=0\relax}
+\AddToHook{cmd/titlepage/before}{\global\floralpageclass=1\relax}
+\AddToHook{cmd/sectionpage/before}{\global\floralpageclass=2\relax}
 
 \directlua{%
   if flora.prepare_spec_version ~= 1 then
@@ -61,6 +66,8 @@
           if rendered ~= nil then return rendered end
           if previous_render then return previous_render(spec, args) end
         end
+      elseif beamer_floral.frame.reuse and flora.render_page_version == 1 then
+        a.render_page = beamer_floral.render_reused
       elseif beamer_floral.stages > 1 and not beamer_floral.handout
           and not a.render_page and flora.render_page_version == 1 then
         a.render_page = beamer_floral.render_static

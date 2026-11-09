@@ -1,0 +1,25 @@
+% reuse: one drawing per class and title state (untitled, one-line, two-line),
+% with reservations, opt-outs and growth keeping their own drawings. test/check_reuse.lua counts the drawings.
+\documentclass[aspectratio=169]{beamer}
+\usetheme{floral}
+\florasetup{seed=3, density=0.6, reuse=all}
+\AtBeginSection[]{\begin{frame}[plain]\sectionpage\end{frame}}
+\title{Reuse}\author{beamer-floral}\date{}
+\begin{document}
+\begin{frame}[plain]\titlepage\end{frame}
+\section{First}
+\begin{frame}{Two overlays}First\pause\par Second\end{frame}
+\begin{frame}{A short frame with the same drawing}Text\end{frame}
+\begin{frame}A frame without a title\end{frame}
+\section{Second}
+\florareserve{0pt}{0pt}{\the\paperwidth}{\the\dimexpr 1.5cm\relax}
+\begin{frame}{Reserved strip gets its own drawing}Text\end{frame}
+\begin{frame}{Reserved strip reuses it}Text\end{frame}
+\floraclearreserve
+\florathisframe{reuse=none}
+\begin{frame}{Opted out: adapts to its content}Text\end{frame}
+\florathisframe{growth=overlays}
+\begin{frame}{Growing: keeps its own drawing}First\pause\par Second\end{frame}
+\begin{frame}{Back to the reused drawing}Text\end{frame}
+\begin{frame}{A frame title so long that it has to wrap onto a second line of the frame title block}Text\end{frame}
+\end{document}
