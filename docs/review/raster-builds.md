@@ -21,6 +21,11 @@ Each cold run uses a new output directory; its warm run reuses that directory.
 Commands use `python3 tools/build_animation.py --engine <frozen-engine>
 --outdir <output> <source>` with the default dpi and jobs.
 
+Rerun with `python3 tools/measure_raster_build.py --engine <frozen-engine>`,
+which builds both fixtures cold and then warm and writes `results.json` in
+its output directory, by default `build/raster-measurements`. The figures
+below predate the tool but use the same wrapper method.
+
 Wall times cover the complete builder, including both LaTeX invocations,
 Lua/PDF export and rasterization. Each subprocess was wrapped with macOS
 `/usr/bin/time -l`; RSS is the largest individual subprocess maximum, not the
