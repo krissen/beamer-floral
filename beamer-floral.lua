@@ -224,8 +224,12 @@ function M.render_page(spec,a)
       return nil
     end
     steps=math.max(1,math.floor(samples+0.5))
+    if M.gif_playback and not M.raster_cache then
+      tex.error('beamer-floral: GIF playback needs the raster cache')
+      return nil
+    end
     if M.raster_cache then
-      raster=raster_cache().collect(M,copy(spec),steps)
+      raster=raster_cache().collect(M,copy(spec),steps,seconds)
       if not raster then
         if os.getenv('FLORAL_ANIMATION_PREPARE')~='1' then
           tex.error('beamer-floral: raster animation cache missing or stale; run python3 tools/build_animation.py for this document, or select [vector]')
@@ -251,7 +255,12 @@ function M.render_page(spec,a)
     if growth.growth=='overlays' then return Progression.render(frame.plan,last) end
     first=M.stage==1 and 0 or frame.levels[M.stage-1]
   end
-  M.animation={plan=frame.plan,spec=copy(spec),args=copy(a),first=first,last=last,steps=steps,raster=raster}
+  M.animation={plan=frame.plan,spec=copy(spec),args=copy(a),first=first,last=last,steps=steps,raster=raster,count=M.count}
+  if raster and raster.gif then
+    -- No animate environment and no JavaScript: the viewer plays the GIF.
+    raster_cache().typeset_gif(M.animation)
+    return true
+  end
   -- N intervals have N+1 samples, including their exact endpoints.
   -- The final frame has no playback dwell; animate stops on that frame.
   tex.sprint(string.format(
@@ -296,6 +305,15 @@ function M.paint_animation(i)
   local t=animation.first+(animation.last-animation.first)*i/animation.steps
   local pt=require('flora.progression').render(animation.plan,t)
   flora.typeset_page(pt,animation.spec,animation.args)
+end
+
+-- \floralgifmatte: the page colour the GIF frames are composited against.
+function M.check_matte(value)
+  if not value:match('^%x%x%x%x%x%x$') then
+    tex.error('beamer-floral: \\floralgifmatte needs six hexadecimal digits, as in FFFFFF')
+    return M.gif_matte
+  end
+  return value:upper()
 end
 
 function M.note_animation(id)

@@ -58,6 +58,54 @@ os.remove(folder..'/sample-3.png')
 assert(C.collect(a,spec,2)==nil,'missing samples must invalidate playback')
 write(folder..'/sample-3.png','broken')
 assert(C.collect(a,spec,2)==nil,'broken sample headers must invalidate playback')
+-- GIF playback: the same samples plus the interval's GIF.
+for _,i in ipairs{1,3} do write(folder..'/sample-'..i..'.png',png) end
+a.gif_playback=true;a.gif_matte='FFFFFF';a.animation_cache=nil;a.stage=1
+assert(C.collect(a,spec,2,1)==nil,'GIF mode must reject a cache without the GIF')
+assert(a.animation_manifest[1].gif.rate_milli==2000 and a.animation_manifest[1].gif.matte=='FFFFFF')
+assert(a.animation_manifest[1].signature==signature,'GIF info must not change the cache signature')
+local gif=folder..'/interval-1-r2000-mFFFFFF.gif'
+write(gif,'broken');assert(C.collect(a,spec,2,1)==nil,'GIF mode must reject a file that is no GIF')
+write(gif,'GIF89a'..string.rep('\0',32))
+local hit=assert(C.collect(a,spec,2,1),'GIF mode must accept a cache with the GIF')
+assert(hit.gif==gif and hit.gif_relative==root:match('[^/]+$')..'/'..signature..'-144/interval-1-r2000-mFFFFFF.gif')
+assert(C.collect(a,spec,2,0.5)==nil,'another rate needs another GIF')
+a.gif_matte='102030';assert(C.collect(a,spec,2,1)==nil,'another matte needs another GIF')
+a.gif_matte='FFFFFF';a.stage=2;assert(C.collect(a,spec,2,1)==nil,'each interval has its own GIF')
+a.gif_playback=false;a.stage=1;os.remove(gif)
+assert(C.collect(a,spec,2).gif==nil,'raster mode ignores GIFs')
+-- Emission: one image and one full-page Movie annotation, no animate.
+a.gif_playback=true;write(gif,'GIF89a'..string.rep('\0',32))
+local emitted,page={}
+tex.sprint=function(s) emitted[#emitted+1]=s end
+local previous=package.loaded['flora.paint']
+package.loaded['flora.paint']={new=function() return {emit=function(_,s) page=(page or '')..s end} end}
+flora.typeset_page=function() end
+local animation={spec=spec,args={},steps=2,count=7,raster=C.collect(a,spec,2,1)}
+C.typeset_gif(animation)
+assert(page:find('sample-0.png',1,true),'the start sample is the static image')
+assert(page:find('/Subtype /Movie',1,true) and page:find('/T (floral-7-1)',1,true))
+assert(page:find('/Mode /Once /ShowControls false',1,true))
+assert(page:find('width 400.00000000pt height 300.00000000pt',1,true),'the annotation covers the page')
+local target=page:match('/Movie << /F %(\\detokenize{(.-)}%)')
+assert(target==root:match('[^/]+$')..'/'..signature..'-144/interval-1-r2000-mFFFFFF.gif','relative path, no directories above the cache')
+for _,bad in ipairs{'a(b','a)b','a\\b','a%b'} do
+  animation.raster.gif_relative=bad..'/x.gif';assert(not pcall(C.typeset_gif,animation),bad)
+end
+package.loaded['flora.paint']=previous;tex.sprint=function() end
+os.remove(gif);a.gif_playback=false
+-- Through the adapter: a GIF interval emits no animate environment.
+local sprinted=0
+tex.sprint=function() sprinted=sprinted+1 end
+M.frame.growth['growth duration']=1;M.gif_playback=true;M.stage=1;M.animation_cache=nil;M.animation_manifest={}
+local viagif=folder..'/interval-1-r4000-mFFFFFF.gif'
+os.getenv=function(name) if name=='FLORAL_ANIMATION_PREPARE' then return nil end return getenv(name) end
+assert(not pcall(M.render_page,spec,{}),'GIF mode without the GIF is a missing cache')
+write(viagif,'GIF89a'..string.rep('\0',32))
+local lines={};package.loaded['flora.paint']={new=function() return {emit=function(_,t) lines[#lines+1]=t end} end}
+assert(M.render_page(spec,{})==true);assert(#lines==2 and lines[2]:find('/Subtype /Movie',1,true))
+assert(M.animation.raster.gif==viagif);assert(sprinted==0,'no animate environment for GIF intervals')
+package.loaded['flora.paint']=nil;os.getenv=getenv;os.remove(viagif);M.gif_playback=false
 C.finish(a);assert(C.load(root..'-manifest').frames[1].signature==signature)
 write(root..'/index.floral','os.execute("never execute cache data")')
 a.animation_cache=nil;assert(C.collect(a,spec,2)==nil,'cache metadata must not access globals')

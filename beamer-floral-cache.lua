@@ -22,13 +22,26 @@ local function signature(record)
   return assert(engine.key({raster_cache_version=C.version,frame=record}),
     'cannot identify engine sources for raster playback')
 end
-function C.collect(adapter,spec,steps)
+function C.gif_name(stage,rate_milli,matte)
+  return string.format('interval-%d-r%d-m%s.gif',stage,rate_milli,matte)
+end
+-- seconds is one interval's duration; only GIF playback needs it.
+function C.collect(adapter,spec,steps,seconds)
   -- Progression API v1 defines equal-area levels as k/n. Plan-dependent
   -- resolution checks belong to the export worker, only on a cache miss.
   local levels={}
   for k=1,adapter.stages do levels[k]=k/adapter.stages end
   local record={spec=spec,stages=adapter.stages,steps=steps,levels=levels}
   record.signature=signature(record)
+  -- Set after the signature: the GIF description names a file inside the
+  -- sample folder and must not change the folder's name.
+  local gif
+  if adapter.gif_playback then
+    assert(type(seconds)=='number' and seconds>0,'GIF playback needs the interval duration')
+    gif={rate_milli=math.floor(steps/seconds*1000+0.5),matte=adapter.gif_matte or 'FFFFFF'}
+    assert(gif.rate_milli>=1,'GIF playback rate is too low')
+    record.gif=gif
+  end
   adapter.animation_manifest[adapter.count]=record
   if not adapter.animation_cache then
     local path=adapter.animation_root..'/index.floral'
@@ -39,7 +52,8 @@ function C.collect(adapter,spec,steps)
   if not cached or cached.signature~=record.signature or cached.steps~=steps
       or cached.stages~=adapter.stages then return nil end
   if type(cached.dpi)~='number' or cached.dpi<36 or cached.dpi>600 then return nil end
-  local prefix=adapter.animation_root..'/'..record.signature..'-'..cached.dpi..'/sample-'
+  local directory=record.signature..'-'..cached.dpi..'/'
+  local prefix=adapter.animation_root..'/'..directory..'sample-'
   -- Keep playback, interval boundaries and the static poster on the same
   -- rendering path; switching to a heavy vector endpoint can flash in Reader.
   for i=0,steps*adapter.stages do
@@ -48,20 +62,50 @@ function C.collect(adapter,spec,steps)
       local signature=f:read(8); f:close()
       if signature~='\137PNG\r\n\26\n' then return nil end
   end
-  return {prefix=prefix,steps=steps,stage=adapter.stage}
+  local result={prefix=prefix,steps=steps,stage=adapter.stage}
+  if gif then
+    local name=C.gif_name(adapter.stage,gif.rate_milli,gif.matte)
+    local path=adapter.animation_root..'/'..directory..name
+    local f=io.open(path,'rb')
+    if not f then return nil end
+    local head=f:read(4); f:close()
+    if head~='GIF8' then return nil end
+    result.gif=path
+    -- Viewers resolve the movie file against the directory of the PDF.
+    result.gif_relative=adapter.animation_root:match('[^/\\]+$')..'/'..directory..name
+  end
+  return result
 end
 function C.finish(adapter)
   local path=adapter.animation_root..'-manifest'
   if kpse and kpse.record_output_file then kpse.record_output_file(path) end
   write(path,{version=C.version,frames=adapter.animation_manifest})
 end
-function C.typeset(animation,i)
+local function image(animation,i)
   local path=animation.raster.prefix..((animation.raster.stage-1)*animation.steps+i)..'.png'
   path=path:gsub('\\','/')
   assert(not path:find('[%%{}\r\n]'),'unsupported TeX characters in animation cache path')
+  return string.format('\\pgftext[left,bottom,at=\\pgfpointorigin]{\\includegraphics[width=%.8fpt,height=%.8fpt]{\\detokenize{%s}}}',
+    animation.spec.width,animation.spec.height,path)
+end
+function C.typeset(animation,i)
   local pt=require('flora.paint').new({backend='pgf'})
-  pt:emit(string.format('\\pgftext[left,bottom,at=\\pgfpointorigin]{\\includegraphics[width=%.8fpt,height=%.8fpt]{\\detokenize{%s}}}',
-    animation.spec.width,animation.spec.height,path))
+  pt:emit(image(animation,i))
+  flora.typeset_page(pt,animation.spec,animation.args)
+end
+-- The interval's start sample as a static image, and over it one Movie
+-- annotation that covers the page and plays the interval's GIF once.
+function C.typeset_gif(animation)
+  local raster=animation.raster
+  local path=assert(raster.gif_relative,'missing GIF playback file')
+  assert(not path:find('[()\\%%{}#^\r\n]'),
+    'unsupported characters in GIF playback path; rename the document or its output directory')
+  local pt=require('flora.paint').new({backend='pgf'})
+  pt:emit(image(animation,0))
+  pt:emit(string.format('\\pgftext[left,bottom,at=\\pgfpointorigin]{\\pdfextension annot width %.8fpt height %.8fpt depth 0pt{'
+    ..'/Subtype /Movie /Border [0 0 0] /T (floral-%d-%d) /Movie << /F (\\detokenize{%s}) >> '
+    ..'/A << /Mode /Once /ShowControls false >>}}',
+    animation.spec.width,animation.spec.height,animation.count,raster.stage,path))
   flora.typeset_page(pt,animation.spec,animation.args)
 end
 return C
