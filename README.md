@@ -69,6 +69,7 @@ gitignored `.env`; the repository's `latexmkrc` reads it.
 - [Settings](#settings): layout, density, seed, mix and palettes
 - [Choosing the composition](#choosing-the-composition): recipes for common looks
 - [Growing flora](#growing-flora): growth across overlays and timed playback
+- [Reusing one drawing](#reusing-one-drawing): faster builds and smaller PDFs for long decks
 - [With a stock theme](#with-a-stock-theme): keep Madrid, Berlin or your own theme
 - [Reserving space](#reserving-space): keep flora away from a logo or footline
 - [File size](#file-size): what to expect before you email a PDF
@@ -214,6 +215,58 @@ documents OCG playback in desktop Acrobat Reader and Okular. We have checked
 playback in desktop Acrobat Reader; Okular is untested. Viewers that cannot
 play the animation show the finished flora. See [the timed example](docs/src/growth.tex)
 and [the acceptance checklist](test/acceptance/growth.md).
+
+## Reusing one drawing
+
+Flora normally adapts to each frame: it grows into the room the text leaves
+and around the frame title, so every frame gets its own drawing. For a long
+deck, `reuse` draws one picture per page class instead and puts it on every
+page of that class:
+
+```tex
+\florasetup{reuse=content}            % ordinary frames share one drawing
+\florasetup{reuse=all}                % title, section and content pages
+\florasetup{reuse={title, section}}   % any combination
+\florathisframe{reuse=none}           % this frame adapts as usual
+```
+
+Title pages are those that call `\titlepage`, and section pages those that
+call `\sectionpage`, in any theme. A reused drawing keeps the whole text
+block clear and does not measure the content. Frames with a title share one
+drawing per title height (one line, two lines), and frames without one share
+another. A different reservation, `\florathisframe` setting or page geometry
+gives that frame its own drawing, which later frames with the same settings
+reuse. Growing frames keep their own drawings, and so does a frame that an
+integration draws with its own `render_page` callback. The drawing is cached with the
+other flora, so later compiles do not draw it again.
+
+What you give up:
+
+- Flora no longer fills the empty space inside short frames; it stays in the
+  margins.
+- Every page of a class looks the same.
+- On titled frames the top edge carries no flora, since the title's width is
+  not measured.
+- With `title` in the list, the title page is much plainer than its usual
+  full composition. `reuse=content` leaves title pages as they are.
+
+Measured with `tools/measure_reuse.py` on `test/reuse-benchmark.tex`
+(16:9, floral theme). A warm build is a second full `latexmk` compile of the
+unchanged document with the flora caches kept; a cold build starts from an
+empty output directory.
+
+| Deck | Adaptive | `reuse=content` | `reuse=all` |
+|---|---:|---:|---:|
+| Title and 10 frames of two overlays, 21 pages | 19.4-19.8 s, 21.5 MB | | 3.8-3.9 s, 3.3 MB |
+| Title and 40 one-overlay frames, 41 pages | 4.7-5.1 s, 62.2 MB | 4.4-6.1 s, 8.6 MB | 4.2-4.3 s, 3.4 MB |
+| Title and 30 frames of three overlays, 91 pages | 60.3 s, 48.9 MB | | 5.5-5.6 s, 3.4 MB |
+| As above with 6 section pages, 97 pages | 92.6-95.5 s, 57.0 MB | 12.8-13.0 s, 16.6 MB | 12.7-12.8 s, 4.7 MB |
+
+Warm builds; cold builds take 30-34 s, 38-49 s, 77 s and 121-125 s adaptive
+against 5.5-5.6 s, 6.2-6.4 s, 7.5-7.8 s and 15.2-15.5 s with `reuse=all`. Beamer
+without floral takes 3.2-3.6 s on the 21-page deck, and the 97-page deck
+takes about 12 s with flora off.
+Measured with TeX Live 2025 and tikz-flora `cc3fb48`.
 
 ## File size
 
@@ -377,6 +430,7 @@ page comes from the same English visual template used for acceptance tests.*
 | `spin` | re-pick random inks |
 | `ornaments` | `{moon=2, night=0, ...}` |
 | `tune` | engine overrides, e.g. `{compose={hero=0.295}}` |
+| `reuse` | `none`, `all`, or a list of `title`, `section`, `content` |
 
 Named palettes:
 

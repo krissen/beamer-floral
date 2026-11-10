@@ -1,0 +1,33 @@
+% Bench deck for reuse; tools/measure_reuse.py sets the macros.
+% \floralvariant: none (no theme), off (theme, flora off) or adaptive;
+% \floralreuse: a reuse value; \benchN frames, \benchK overlays,
+% a section page every \benchS frames (0: none).
+\providecommand\floralvariant{adaptive}\providecommand\benchN{10}\providecommand\benchK{2}
+\documentclass[aspectratio=169]{beamer}
+\def\floralnone{none}\providecommand\floralreuse{}\providecommand\benchS{0}
+\ifx\floralvariant\floralnone
+  \setbeamersize{text margin left=2.5cm,text margin right=1cm}
+\else
+  \usetheme{floral}
+  \florasetup{seed=3}
+  \ifx\floralreuse\empty\else \edef\next{\noexpand\florasetup{reuse={\floralreuse}}}\next\fi
+\fi
+\title{Bench}\author{beamer-floral}\date{}
+\newcount\bi
+\newcommand\benchframes{%
+  \advance\bi by 1
+  \ifnum\benchS>0 \ifnum\numexpr\bi-1-(\bi-1)/\benchS*\benchS\relax=0 \section{Part \the\bi}\fi\fi
+  \begin{frame}{Frame \the\bi}
+    \begin{itemize}
+      \item<1-> The first point on this frame.
+      \ifnum\benchK>1 \item<2-> The second point on this frame.\fi
+      \ifnum\benchK>2 \item<3-> The third point on this frame.\fi
+    \end{itemize}
+  \end{frame}
+  \ifnum\bi<\benchN \expandafter\benchframes\fi}
+\AtBeginSection[]{\begin{frame}[plain]\sectionpage\end{frame}}
+\def\floralvariantoff{off}\ifx\floralvariant\floralvariantoff \AtBeginDocument{\floraoff}\fi
+\begin{document}
+\begin{frame}[plain]\titlepage\end{frame}
+\benchframes
+\end{document}

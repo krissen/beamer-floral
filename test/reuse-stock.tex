@@ -1,0 +1,13 @@
+% reuse under a stock theme: the \titlepage hook alone marks the title page.
+% test/check_reuse.lua compares the per-frame decisions.
+\documentclass[aspectratio=169]{beamer}
+\usetheme{Madrid}
+\usepackage{beamer-floral}
+\florasetup{seed=3, density=0.6, reuse=title}
+\AtBeginSection[]{\begin{frame}\sectionpage\end{frame}}
+\title{Reuse under Madrid}\author{beamer-floral}\date{}
+\begin{document}
+\begin{frame}\titlepage\end{frame}
+\section{First}
+\begin{frame}{Content}Text\end{frame}
+\end{document}

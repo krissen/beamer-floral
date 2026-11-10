@@ -120,6 +120,8 @@ and \texttt{itemize subsubitem}.
   \texttt{growth} & \texttt{off}, \texttt{overlays}, \texttt{timed} \\
   \texttt{growth duration} & seconds, default 8 \\
   \texttt{growth fps} & an integer from 1 to 60, default 20 \\
+  \texttt{reuse} & \texttt{none}, \texttt{all}, or a list of \texttt{title},
+    \texttt{section}, \texttt{content} \\
   \bottomrule
 \end{tabular}
 \end{center}
@@ -149,6 +151,45 @@ python3 build_animation.py --outdir build slides.tex
 Playback has been checked in desktop Acrobat Reader. The final stage of each
 interval is the static poster, so viewers that cannot play the animation
 show the finished flora. Handout mode always shows complete static flora.
+
+\section{Reusing one drawing}
+
+Flora normally adapts to each frame, so every frame gets its own drawing.
+For a long deck, \texttt{reuse} draws one picture per page class and puts it
+on every page of that class:
+
+\begin{lstlisting}[language={[LaTeX]TeX}]
+\florasetup{reuse=content}           % ordinary frames
+\florasetup{reuse=all}               % title, section and content pages
+\florasetup{reuse={title, section}}  % any combination
+\florathisframe{reuse=none}          % this frame adapts as usual
+\end{lstlisting}
+
+Title pages are those that call \verb|\titlepage|, and section pages those
+that call \verb|\sectionpage|, in any theme. Frames with a title share one
+drawing per title height; frames without one share another. A different
+reservation, frame setting or page geometry gives that frame its own drawing,
+which later frames with the same settings reuse. Growing frames keep their
+own drawings, and so does a frame that an integration draws with its own
+\texttt{render\_page} callback. The drawing is cached with the other flora.
+
+On a deck of a title page and 30 frames of three overlays (91 pages), a
+second full compile with the flora cache in place takes about 5.5\,s with
+\texttt{reuse=all} against about 60\,s, and the PDF is 3.4\,MB against
+48.9\,MB.
+
+What you give up:
+
+\begin{itemize}
+  \item Flora no longer fills the empty space inside short frames; it stays
+    in the margins.
+  \item Every page of a class looks the same.
+  \item On titled frames the top edge carries no flora, since the title's
+    width is not measured.
+  \item With \texttt{title} in the list, the title page is much plainer than
+    its usual full composition. \texttt{reuse=content} leaves title pages as
+    they are.
+\end{itemize}
 
 \section{File size}
 

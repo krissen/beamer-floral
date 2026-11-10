@@ -17,6 +17,31 @@ Settings.define('growth fps', function(v)
   if n and n>=1 and n<=60 and n%1==0 then return n end
   return nil, 'growth fps must be an integer from 1 to 60'
 end)
+-- Page classes that reuse one drawing per document instead of adapting.
+local page_classes={title=1,section=2,content=3}
+-- The value is a canonical string, not a table: settings merge tables key
+-- by key, so a later reuse=none or a narrower list must replace it whole.
+Settings.define('reuse', function(v)
+  v=tostring(v):gsub('^%s*{',''):gsub('}%s*$','')
+  local out={}
+  for name in v:gmatch('[^,%s]+') do
+    if name=='all' then for class in pairs(page_classes) do out[class]=true end
+    elseif name=='none' then out={}
+    elseif page_classes[name] then out[name]=true
+    else return nil,'reuse must be none, all, or a list of title, section and content' end
+  end
+  local names={}
+  for class in pairs(out) do names[#names+1]=class end
+  table.sort(names)
+  return #names>0 and table.concat(names,',') or 'none'
+end)
+local function reuse_set(value)
+  local out={}
+  for name in tostring(value or 'none'):gmatch('[^,]+') do
+    if page_classes[name] then out[name]=true end
+  end
+  return out
+end
 local setting_fields={'layout','mix','ornaments','palette','spin','tune','header','doc_seed','reserve',
   'gilt','gilt_dpi','gilt_env','gilt_look','backdrop'}
 local growth_defaults={growth='off', ['growth duration']=8, ['growth fps']=20}
@@ -160,8 +185,20 @@ function M.prepare(spec)
       M.frame.growth[k]=active[k] or v
     end
     M.frame.seed=flora.seed(spec.doc_seed,M.count)
+    local mark=(tex.count or {}).floralpageclass or 0
+    M.frame.class=(M.page_title or mark==1) and 'title' or mark==2 and 'section' or 'content'
+    -- A growing frame needs its own stages, and a frame with a caller's own
+    -- renderer is drawn by it, so both keep their own drawings.
+    local listed=reuse_set(active['reuse'])[M.frame.class]
+    local growing=M.frame.growth.growth~='off' and not M.handout
+    M.frame.reuse=listed and not growing and not M.custom_render or false
+    -- One decision per frame, for test/check_reuse.lua.
+    if texio and texio.write_nl then texio.write_nl('log',string.format('beamer-floral: frame %d class %s reuse %s',M.count,M.frame.class,
+      M.frame.reuse and 'yes' or not listed and 'no (not listed)' or growing and 'no (growing)'
+      or 'no (custom renderer)')..'\n') end
     M.frame.signature=Serial.encode({settings=M.frame.settings,width=spec.width,height=spec.height,
-      text=spec.text,header_y=spec.header_y,input_signature=M.input_signature,growth=M.frame.growth})
+      text=spec.text,header_y=spec.header_y,input_signature=M.input_signature,growth=M.frame.growth,
+      reuse=M.frame.reuse,class=M.frame.class})
   elseif document~=M.frame.document
       or (M.pending and Serial.encode(M.pending or false)~=M.frame.pending_signature)
       or dimensions~=M.frame.dimensions
@@ -171,6 +208,15 @@ function M.prepare(spec)
   end
   local signature=M.frame.signature
   local observed=geometry(spec)
+  -- A reused drawing ignores measured content, so content cannot request a
+  -- rerun. Only the frame title is kept, its height rounded up to 8 pt so
+  -- descenders do not split one-line titles: the upper plant leaves that band
+  -- clear, and it selects the drawing.
+  if M.frame.reuse then
+    local h=observed.frametitle and observed.frametitle_height
+    observed={lines={},text=observed.text,frametitle=observed.frametitle and true or false,
+      frametitle_height=h and h>0 and math.ceil(h/8)*8 or nil}
+  end
   local entry=M.current[M.count]
   if not entry then entry={signature=signature,geometry={lines={}},overlays=0}; M.current[M.count]=entry end
   entry.geometry=merge(entry.geometry,observed)
@@ -184,6 +230,21 @@ function M.prepare(spec)
   spec.seed=M.frame.seed
   -- split parity and any page-dependent composition must stay fixed as well.
   spec.page=M.count
+  if M.frame.reuse then
+    local t=spec.text
+    spec.lines={{x0=t.x0,y0=t.y0,x1=t.x1,y1=t.y1}}
+    -- A title's width is not measured: a titled drawing keeps the top band
+    -- clear across the text block, down to the title's height.
+    local titled=spec.frametitle and true or false
+    spec.frametitle=titled; spec.title=nil
+    if not titled then spec.frametitle_height=nil end
+    spec.header_right=titled and t.x1 or nil
+    spec.body_top=spec.header=='body' and not M.plain
+      and t.y1-(titled and spec.frametitle_height or 0) or nil
+    spec.seed=flora.seed(spec.doc_seed,page_classes[M.frame.class])
+    -- Alternating layouts need one drawing for each side.
+    spec.page=spec.layout=='split' and 2-M.count%2 or 1
+  end
   M.stage=entry.overlays
   M.stages=cached and cached.signature==signature and cached.overlays or M.stage
   -- A changed count is provisional until the next run. Never extrapolate.
@@ -265,26 +326,72 @@ function M.render_page(spec,a)
   return true
 end
 
--- Overlays of a static frame show the same flora: paint it once as a form
--- and draw that form on each page. Clips and bands are applied per page.
-function M.render_static(spec)
+-- One form, drawn on any number of pages. Clips and bands are applied per page.
+local function form_painter(holder,spec)
   local Paint=require('flora.paint')
-  local frame=M.frame
-  local key=Serial.encode(spec)
-  if frame.static_key~=key then
-    local pt=require('flora.compose').page(copy(spec))
-    local forms,resources=Paint.forms({{chunks={pt:body()}}},spec.width,spec.height)
-    frame.static={pt=pt,forms=forms,resources=resources}
-    frame.static_key=key
-  end
-  local shared=frame.static
-  local painter=Paint.new{backend='pdf'}
+  local pt=require('flora.compose').page(copy(spec))
+  local forms,resources=Paint.forms({{chunks={pt:body()}}},spec.width,spec.height)
+  holder.pt,holder.forms,holder.resources=pt,forms,resources
+end
+local function draw_form(shared)
+  local painter=require('flora.paint').new{backend='pdf'}
   painter.defs=shared.pt.defs
   painter.xobjects=shared.forms
   painter.pdf_resources=shared.resources
   painter.coverage=shared.pt.coverage
   painter.count=shared.pt.count
   painter:emit('/'..shared.forms[1].name..' Do')
+  return painter
+end
+
+-- Overlays of a static frame show the same flora: paint it once as a form.
+function M.render_static(spec)
+  local frame=M.frame
+  local key=Serial.encode(spec)
+  if frame.static_key~=key then
+    frame.static={}; form_painter(frame.static,spec)
+    frame.static_key=key
+  end
+  return draw_form(frame.static)
+end
+
+-- A reused drawing is one PDF object per class, title state, settings and
+-- page geometry. It goes through the engine's page cache, so later LaTeX
+-- passes embed the cached file instead of composing it again, and the file
+-- is written to this PDF once and drawn on every page that uses it.
+local function cached_image(spec)
+  local ok,Cache=pcall(require,'flora.cache')
+  if not ok or type(Cache.page)~='function' or not (img and img.scan and img.immediatewrite) then return nil end
+  local set=M.active_settings or flora.settings
+  if set.cache==false then return nil end
+  local file,e,hit=Cache.page(copy(spec),set,pdf.getcompresslevel and pdf.getcompresslevel() or 6)
+  if not file then return nil end
+  local image=img.scan({filename=file})
+  img.immediatewrite(image)
+  return {objnum=image.objnum,count=e.count or 0,coverage=e.coverage or 0,hit=hit}
+end
+function M.render_reused(spec)
+  M.reused=M.reused or {}
+  local key=Serial.encode(spec)
+  local reused=M.reused[key]
+  if not reused then
+    reused=cached_image(spec)
+    if reused then
+      reused.name='flreuse'..reused.objnum
+    else
+      reused={}; form_painter(reused,spec)
+    end
+    M.reused[key]=reused
+    texio.write_nl('log','beamer-floral: drew reused flora for class '..M.frame.class
+      ..(reused.hit and ' from the cache' or ''))
+  end
+  if not reused.objnum then return draw_form(reused) end
+  local painter=require('flora.paint').new{backend='pdf'}
+  painter.xobjects={}
+  painter.pdf_resources='/XObject << /'..reused.name..' '..reused.objnum..' 0 R >>'
+  painter.coverage=reused.coverage
+  painter.count=reused.count
+  painter:emit('/'..reused.name..' Do')
   return painter
 end
 
