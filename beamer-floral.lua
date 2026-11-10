@@ -44,6 +44,17 @@ local function reuse_set(value)
 end
 local setting_fields={'layout','mix','ornaments','palette','spin','tune','header','doc_seed','reserve',
   'gilt','gilt_dpi','gilt_env','gilt_look','backdrop'}
+-- Every setting the engine copies onto a spec (pattern, edge, outer, scale,
+-- hero and any later key) is part of the frame's identity: a change misses
+-- the geometry cache, and each drawing keys on its own spec.
+do
+  local known={}
+  for _,k in ipairs(setting_fields) do known[k]=true end
+  local extra={}
+  for _,field in pairs(Settings.SPEC or {}) do if not known[field] then extra[#extra+1]=field end end
+  table.sort(extra)
+  for _,field in ipairs(extra) do setting_fields[#setting_fields+1]=field end
+end
 local growth_defaults={growth='off', ['growth duration']=8, ['growth fps']=20}
 
 local function copy(t)
