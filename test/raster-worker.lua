@@ -26,12 +26,17 @@ assert(run());assert(plans==1 and renders==3)
 local f=assert(io.open(root..'/scratch/frame-1-sample-1.pdf'));assert(f:read('a')=='0.5');f:close()
 local function slurp(path) local h=assert(io.open(path,'rb'));local d=h:read('a');h:close();return d end
 assert(slurp(root..'/scratch/gifs.tsv')=='','no GIF playback lists no GIFs')
-frame.gif={rate_milli=2000,matte='FFFFFF',encoder='e2'}
+frame.gif={rate_milli=2000,matte='FFFFFF',encoder='e3'}
 assert(run())
 assert(slurp(root..'/scratch/gifs.tsv')==
-  folder..'\t0\t1\t2000\tFFFFFF\t'..folder..'/interval-1-r2000-mFFFFFF-e2.gif\n'..
-  folder..'\t1\t1\t2000\tFFFFFF\t'..folder..'/interval-2-r2000-mFFFFFF-e2.gif\n','one GIF per interval')
-frame.gif={rate_milli=2000,matte='nothex',encoder='e2'};os.remove(root..'/scratch/gifs.tsv')
+  folder..'\t0\t1\t2000\tFFFFFF\t'..folder..'/interval-1-r2000-mFFFFFF-e3.gif\t400,300\t\n'..
+  folder..'\t1\t1\t2000\tFFFFFF\t'..folder..'/interval-2-r2000-mFFFFFF-e3.gif\t400,300\t\n','one GIF per interval')
+-- Reservations travel with every interval: the GIF is an annotation, the page's clip cannot reach it.
+frame.spec.reserve={{0,0,25,100},{10.5,20,30,40.25}}
+assert(run())
+assert(slurp(root..'/scratch/gifs.tsv'):find('\t400,300\t0,0,25,100;10.5,20,30,40.25\n',1,true),'reserved rectangles reach gifs.tsv')
+frame.spec.reserve=nil
+frame.gif={rate_milli=2000,matte='nothex',encoder='e3'};os.remove(root..'/scratch/gifs.tsv')
 assert(not run(),'invalid matte must fail');assert(not lfs.attributes(root..'/scratch/gifs.tsv'))
 frame.gif=nil
 os.remove(root..'/scratch/index.floral')

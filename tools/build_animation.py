@@ -4,6 +4,7 @@ GIF playback (\\usepackage[gif]{beamer-floral-animation}) also needs Pillow."""
 import argparse
 from concurrent.futures import ThreadPoolExecutor
 import io
+import math
 import os
 from pathlib import Path
 import re
@@ -70,10 +71,34 @@ def _image_data(data, size):
             raise RuntimeError('unexpected GIF block')
 
 
-def gif_frame(image_module, path, matte):
-    """One sample as a 256 colour frame: matted, index 255 transparent."""
+def reserved_mask(image_module, size, geometry):
+    """255 inside every reserved rectangle. geometry is (width pt, height pt, rectangles);
+    rectangles are x0, y0, x1, y1 in pt from the lower-left corner and are rounded
+    outward, so a reserved area is always fully covered."""
+    from PIL import ImageDraw
+    width, height, rectangles = geometry
+    scale_x, scale_y = size[0] / width, size[1] / height
+    mask = image_module.new('L', size, 0)
+    draw = ImageDraw.Draw(mask)
+    for x0, y0, x1, y1 in rectangles:
+        left = max(0, math.floor(min(x0, x1) * scale_x))
+        right = min(size[0], math.ceil(max(x0, x1) * scale_x))
+        top = max(0, math.floor((height - max(y0, y1)) * scale_y))
+        bottom = min(size[1], math.ceil((height - min(y0, y1)) * scale_y))
+        if right > left and bottom > top:
+            draw.rectangle([left, top, right - 1, bottom - 1], fill=255)
+    return mask
+
+
+def gif_frame(image_module, path, matte, geometry=None):
+    """One sample as a 256 colour frame: matted, index 255 transparent.
+
+    The GIF is an annotation above the page, so the page's reservation clips do not
+    reach it; the reserved rectangles are made transparent here."""
     with image_module.open(path) as source:
         rgba = source.convert('RGBA')
+    if geometry and geometry[2]:
+        rgba.paste((0, 0, 0, 0), mask=reserved_mask(image_module, rgba.size, geometry))
     background = image_module.new('RGBA', rgba.size, (*matte, 255))
     flat = image_module.alpha_composite(background, rgba).convert('RGB')
     frame = flat.quantize(colors=255, method=image_module.Quantize.MEDIANCUT,
@@ -97,7 +122,7 @@ def build_gif(job):
         from PIL import Image
     except ImportError:
         raise RuntimeError('GIF playback needs Pillow (python3 -m pip install pillow)') from None
-    folder, first, steps, rate_milli, matte, out = job
+    folder, first, steps, rate_milli, matte, out, geometry = job
     colour = tuple(int(matte[i:i + 2], 16) for i in (0, 2, 4))
     out = Path(out)
     temporary = out.with_name(out.name + '.tmp')
@@ -105,7 +130,7 @@ def build_gif(job):
         chunks = []
         size = None
         for n in range(steps + 1):
-            size, palette, data = gif_frame(Image, Path(folder) / f'sample-{first + n}.png', colour)
+            size, palette, data = gif_frame(Image, Path(folder) / f'sample-{first + n}.png', colour, geometry)
             # Graphic control: disposal 2 (restore to background), transparent index 255.
             chunks.append(bytes([0x21, 0xF9, 4])
                           + struct.pack('<BHBB', 0x09, centiseconds(n, rate_milli), 255, 0)
@@ -134,8 +159,12 @@ def gif_jobs(listing, cache):
         return jobs
     root = cache.resolve()
     for line in listing.read_text().splitlines():
-        folder, first, steps, rate_milli, matte, out = line.split('\t')
-        job = (folder, int(first), int(steps), int(rate_milli), matte, out)
+        folder, first, steps, rate_milli, matte, out, page, reserved = line.split('\t')
+        width, height = (float(v) for v in page.split(','))
+        rectangles = [tuple(float(v) for v in item.split(',')) for item in reserved.split(';') if item]
+        if width <= 0 or height <= 0 or any(len(r) != 4 for r in rectangles):
+            raise RuntimeError(f'Invalid GIF job: {line}')
+        job = (folder, int(first), int(steps), int(rate_milli), matte, out, (width, height, rectangles))
         if job[2] < 1 or job[3] < 1 or not re.fullmatch(r'[0-9A-Fa-f]{6}', matte):
             raise RuntimeError(f'Invalid GIF job: {line}')
         if not Path(out).resolve().is_relative_to(root):
