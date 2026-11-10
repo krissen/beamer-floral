@@ -181,6 +181,9 @@ function M.prepare(spec)
   if spec.header=='body' and not M.plain and not spec.frametitle then
     spec.body_top=spec.body_top or spec.text.y1
   end
+  -- The engine places its running-head mark below the head only where one
+  -- is shown.
+  spec.running_head=not M.plain
   local document=Serial.encode(flora.settings)
   local dimensions=Serial.encode({width=spec.width,height=spec.height,text=spec.text,header_y=spec.header_y})
   if not M.frame then
