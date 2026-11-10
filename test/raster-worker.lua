@@ -24,6 +24,16 @@ local function run()
 end
 assert(run());assert(plans==1 and renders==3)
 local f=assert(io.open(root..'/scratch/frame-1-sample-1.pdf'));assert(f:read('a')=='0.5');f:close()
+local function slurp(path) local h=assert(io.open(path,'rb'));local d=h:read('a');h:close();return d end
+assert(slurp(root..'/scratch/gifs.tsv')=='','no GIF playback lists no GIFs')
+frame.gif={rate_milli=2000,matte='FFFFFF'}
+assert(run())
+assert(slurp(root..'/scratch/gifs.tsv')==
+  folder..'\t0\t1\t2000\tFFFFFF\t'..folder..'/interval-1-r2000-mFFFFFF.gif\n'..
+  folder..'\t1\t1\t2000\tFFFFFF\t'..folder..'/interval-2-r2000-mFFFFFF.gif\n','one GIF per interval')
+frame.gif={rate_milli=2000,matte='nothex'};os.remove(root..'/scratch/gifs.tsv')
+assert(not run(),'invalid matte must fail');assert(not lfs.attributes(root..'/scratch/gifs.tsv'))
+frame.gif=nil
 os.remove(root..'/scratch/index.floral')
 frame.levels={.4,1};assert(not run(),'worker must compare API levels')
 assert(not lfs.attributes(root..'/scratch/index.floral'))
@@ -37,6 +47,6 @@ assert(run());assert(plans==before,'warm worker must not plan')
 os.remove(folder..'/sample-1.png')
 assert(run());assert(plans==before+1,'partial cache plans only missing samples')
 for i=0,2 do os.remove(folder..'/sample-'..i..'.png');os.remove(root..'/scratch/frame-1-sample-'..i..'.pdf') end
-os.remove(root..'/scratch/index.floral');os.remove(root..'/scratch/jobs.tsv');os.remove(root..'/manifest')
+os.remove(root..'/scratch/index.floral');os.remove(root..'/scratch/gifs.tsv');os.remove(root..'/scratch/jobs.tsv');os.remove(root..'/manifest')
 assert(lfs.rmdir(folder));assert(lfs.rmdir(root..'/scratch'));assert(lfs.rmdir(root))
 print('raster worker contract tests passed')
