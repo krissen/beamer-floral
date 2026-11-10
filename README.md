@@ -192,9 +192,9 @@ select GIF playback:
 ```
 
 Every `growth=timed` interval is then built from the raster cache as a GIF
-and shown as a Movie annotation over the whole page, with no `animate`
-environment and no JavaScript in the PDF. `gif` includes `[raster]`, so the
-builder and its requirements above apply, and it also needs
+and played by a full-page Screen annotation, with no `animate` environment
+and no JavaScript in the PDF. `gif` includes `[raster]`, so the builder and
+its requirements above apply. It also needs
 [Pillow](https://pypi.org/project/pillow/) when it builds GIFs
 (`python3 -m pip install pillow`). The build is the same:
 
@@ -202,16 +202,21 @@ builder and its requirements above apply, and it also needs
 python3 tools/build_animation.py --outdir build/slides slides.tex
 ```
 
+By default the GIFs are **embedded in the PDF**, which is then
+self-contained. That costs about 1 MB per second of animation at 20 fps and
+144 dpi (8 s measured: 8.5 MB). With `[gif-external]` the PDF stays small and
+plays the GIFs from files instead, in a Movie annotation. Keep
+`<job>.floral-animation/` beside the PDF then, and move them together; a PDF
+without them plays nothing.
+
 The frames are composited against `\floralgifmatte` (default `FFFFFF`), so
 set it to your page colour; pixels that are almost fully transparent stay
-transparent. GIF files are named by interval, frame rate and matte colour and
-are reused on later builds.
+transparent. GIF files are named by interval, frame rate, matte colour and
+encoder version, and are reused on later builds.
 
 Limits:
 
-- The GIFs are external files. Keep `<job>.floral-animation/` beside the PDF
-  and move them together; a PDF without them plays nothing.
-- Playback is verified in pympress 1.8.6. Viewers that do not play Movie
+- Playback is verified in pympress 1.8.6. Viewers that do not play these
   annotations show each interval's start state, not the finished flora.
 - Each interval plays once. Returning to a page does not replay it.
 - Print or export from handout mode (it paints complete static flora).

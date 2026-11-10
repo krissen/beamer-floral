@@ -116,24 +116,30 @@ CI and bot review are pending; no merge has been performed.
 
 ## GIF playback (pympress)
 
-Automated checks cover the build, not the viewer. Build with Pillow installed:
+Automated checks cover the build, not the viewer. Build both variants with
+Pillow installed:
 
 ```sh
 .venv/bin/python tools/build_animation.py --engine ../tikz-flora --outdir build/gif test/growth-gif.tex
-.venv/bin/python tools/check_gif_pdf.py build/gif/growth-gif.pdf --pages 3
+.venv/bin/python tools/check_gif_pdf.py build/gif/growth-gif.pdf --pages 3 --mode embedded
+.venv/bin/python tools/build_animation.py --engine ../tikz-flora --outdir build/gif-external test/growth-gif-external.tex
+.venv/bin/python tools/check_gif_pdf.py build/gif-external/growth-gif-external.pdf --pages 3 --mode external
 ```
 
-The checker reads the PDF and the GIFs: one full-page Movie annotation per
-timed page, a GIF with the interval's frame count beside the PDF, and no
-JavaScript. Then, in pympress (pending; do not infer from the build):
+The checker reads the PDF and the GIFs: one full-page annotation per timed
+page (Screen with an embedded GIF, or Movie with an external one), a GIF with
+the interval's frame count whose first and last frame decode to their
+samples, and no JavaScript. Then, in pympress (pending; do not infer from the
+build):
 
 - Each timed page plays its interval once, above the text, and stops.
 - The text stays crisp and the link on page 2 stays clickable.
 - Pages 2 and 3 start at their nominal starting stage.
 - Leaving a page and returning does not replay it (known limit).
 - No flash of the finished flora on page entry or after the last frame.
-- Copy the PDF without `growth-gif.floral-animation/` beside it: no playback,
-  the start state of each interval shows (known limit).
+- Embedded: copy the PDF alone to another folder; it still plays.
+- External: copy the PDF without `growth-gif-external.floral-animation/`
+  beside it: no playback, the start state of each interval shows (known limit).
 
 `tools/probe_pympress.py` logs what the viewer does on each page: overlay
 events, GIF repaint cost, peak memory and the drawing right after a page
