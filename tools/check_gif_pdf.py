@@ -1,6 +1,6 @@
 """Check a PDF built with GIF playback: one full-page Movie annotation per timed
-page, a complete GIF for each, and no JavaScript anywhere. Needs qpdf; reads the
-GIFs itself, so Pillow is not required."""
+page, a complete GIF for each that decodes to its samples, and no JavaScript
+anywhere. Needs qpdf and Pillow."""
 import argparse
 import json
 from pathlib import Path
@@ -44,6 +44,48 @@ def gif_facts(path):
         else:
             raise RuntimeError(f'{path}: unexpected block')
     return frames, looped
+
+
+# Per-channel RMS (0-255) between a decoded frame and its matted sample. A
+# correct encoding stays at quantisation error; scrambled rows are far above.
+RMS_LIMIT = 8.0
+
+
+def rms_against_source(frame, sample, matte):
+    """Per-channel RMS of a decoded GIF frame against its sample matted on `matte`.
+
+    Also returns whether every fully transparent sample pixel decoded transparent."""
+    from PIL import Image, ImageChops
+    with Image.open(sample) as source:
+        source = source.convert('RGBA')
+    colour = tuple(int(matte[i:i + 2], 16) for i in (0, 2, 4))
+    background = Image.new('RGBA', source.size, (*colour, 255))
+    expected = Image.alpha_composite(background, source).convert('RGB')
+    frame = frame.convert('RGBA')
+    if frame.size != source.size:
+        raise RuntimeError(f'frame {frame.size} differs from sample {source.size}')
+    actual = Image.alpha_composite(background, frame).convert('RGB')
+    difference = ImageChops.difference(expected, actual)
+    pixels = source.size[0] * source.size[1]
+    squared = [sum(count * value * value for value, count in enumerate(histogram)) / pixels
+               for histogram in (difference.getchannel(band).histogram() for band in 'RGB')]
+    empty = source.getchannel('A').point([255] + [0] * 255)
+    transparent = ImageChops.multiply(empty, frame.getchannel('A')).getbbox() is None
+    return [v ** 0.5 for v in squared], transparent
+
+
+def check_decoded(path, steps, folder, first_sample):
+    """First and last frame of an interval GIF against their sample PNGs."""
+    from PIL import Image
+    matte = re.fullmatch(r'interval-\d+-r\d+-m([0-9A-Fa-f]{6})\.gif', path.name)[1]
+    with Image.open(path) as gif:
+        for index in (0, steps):
+            gif.seek(index)
+            rms, transparent = rms_against_source(
+                gif.copy(), folder / f'sample-{first_sample + index}.png', matte)
+            if max(rms) > RMS_LIMIT or not transparent:
+                raise RuntimeError(f'{path}: frame {index} does not match its sample '
+                                   f'(RMS {max(rms):.1f}, limit {RMS_LIMIT}, transparent {transparent})')
 
 
 def check(pdf, expected_pages=None):
@@ -120,6 +162,7 @@ def check(pdf, expected_pages=None):
                 raise RuntimeError(f'{path}: {len(frames)} frames, expected {steps + 1}')
             if looped:
                 raise RuntimeError(f'{path}: loop extension; the GIF must play once')
+            check_decoded(path, steps, folder, (stage - 1) * steps)
             if any(f is None or f[1] != 2 or f[2] != 255 or f[0] < 1 for f in frames):
                 raise RuntimeError(f'{path}: frames need disposal 2, transparent index 255 and a delay')
     print(f'GIF PDF checks passed ({timed} timed pages, no JavaScript)')

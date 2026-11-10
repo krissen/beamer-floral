@@ -84,7 +84,7 @@ def gif_frame(image_module, path, matte):
     palette += [0] * (768 - len(palette))
     frame.putpalette(palette)
     buffer = io.BytesIO()
-    frame.save(buffer, 'GIF', transparency=255, optimize=False)
+    frame.save(buffer, 'GIF', transparency=255, optimize=False, interlace=False)
     return rgba.size, bytes(palette), _image_data(buffer.getvalue(), rgba.size)
 
 

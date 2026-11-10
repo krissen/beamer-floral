@@ -11,6 +11,9 @@ from PIL import Image, ImageSequence
 spec = importlib.util.spec_from_file_location('animation_builder', 'tools/build_animation.py')
 builder = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(builder)
+spec = importlib.util.spec_from_file_location('gif_checker', 'tools/check_gif_pdf.py')
+checker = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(checker)
 
 STEPS, RATE_MILLI = 10, 20000
 Path('build').mkdir(exist_ok=True)
@@ -58,6 +61,31 @@ with tempfile.TemporaryDirectory(prefix='gif-job-', dir='build') as temporary:
     assert first.getpixel((40, 4))[3] == 0 and first.getpixel((41, 4))[3] == 255
     assert first.getpixel((0, 0))[3] == 0
     assert builder.valid_gif(out) and not builder.valid_gif(root / 'absent.gif')
+
+    # The invariant: every decoded frame equals its matted source within
+    # quantisation error, on a source whose rows all differ and whose edge is soft.
+    pixels = root / 'pixels'
+    pixels.mkdir()
+    for n in range(STEPS + 1):
+        image = Image.new('RGBA', (160, 90), (0, 0, 0, 0))
+        right = 20 + n * 13
+        for y in range(5, 85):
+            for x in range(10, right):
+                soft = max(0, min(255, 32 * (right - x)))   # soft right edge
+                image.putpixel((x, y), ((y % 16) * 16, (y % 16) * 83 % 256, (y % 16) * 41 % 256, soft))
+        image.save(pixels / f'sample-{n}.png')
+    for matte in ('FFFFFF', '203040'):
+        built = root / f'interval-5-r20000-m{matte}.gif'
+        builder.build_gif((str(pixels), 0, STEPS, RATE_MILLI, matte, str(built)))
+        with Image.open(built) as gif:
+            for index in range(gif.n_frames):
+                gif.seek(index)
+                rms, transparent = checker.rms_against_source(
+                    gif.copy(), pixels / f'sample-{index}.png', matte)
+                print('frame', index, matte, 'RMS', ' '.join(f'{v:.2f}' for v in rms))
+                assert max(rms) < checker.RMS_LIMIT, (index, matte, rms)
+                assert transparent, f'frame {index}: transparent source pixels must decode transparent'
+        checker.check_decoded(built, STEPS, pixels, 0)
 
     # A rate that is not a whole number of centiseconds carries the error.
     for rate in (20000, 15000, 59940, 60000, 7000):
