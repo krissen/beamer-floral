@@ -236,7 +236,8 @@ block clear and does not measure the content. Frames with a title share one
 drawing per title height (one line, two lines), and frames without one share
 another. A different reservation, `\florathisframe` setting or page geometry
 gives that frame its own drawing, which later frames with the same settings
-reuse. Growing frames keep their own drawings. The drawing is cached with the
+reuse. Growing frames keep their own drawings, and so does a frame that an
+integration draws with its own `render_page` callback. The drawing is cached with the
 other flora, so later compiles do not draw it again.
 
 What you give up:

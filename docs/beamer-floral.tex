@@ -170,7 +170,8 @@ that call \verb|\sectionpage|, in any theme. Frames with a title share one
 drawing per title height; frames without one share another. A different
 reservation, frame setting or page geometry gives that frame its own drawing,
 which later frames with the same settings reuse. Growing frames keep their
-own drawings. The drawing is cached with the other flora.
+own drawings, and so does a frame that an integration draws with its own
+\texttt{render\_page} callback. The drawing is cached with the other flora.
 
 On a deck of a title page and 30 frames of three overlays (91 pages), a
 second full compile with the flora cache in place takes about 5.5\,s with
