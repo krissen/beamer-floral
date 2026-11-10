@@ -175,9 +175,10 @@ function M.prepare(spec)
     M.frame.seed=flora.seed(spec.doc_seed,M.count)
     local mark=(tex.count or {}).floralpageclass or 0
     M.frame.class=(M.page_title or mark==1) and 'title' or mark==2 and 'section' or 'content'
-    -- A growing frame needs its own stages, so it keeps its own drawing.
+    -- A growing frame needs its own stages, and a frame with a caller's own
+    -- renderer is drawn by it, so both keep their own drawings.
     M.frame.reuse=(active['reuse'] or {})[M.frame.class]
-      and (M.frame.growth.growth=='off' or M.handout) or false
+      and (M.frame.growth.growth=='off' or M.handout) and not M.custom_render or false
     M.frame.signature=Serial.encode({settings=M.frame.settings,width=spec.width,height=spec.height,
       text=spec.text,header_y=spec.header_y,input_signature=M.input_signature,growth=M.frame.growth,
       reuse=M.frame.reuse,class=M.frame.class})

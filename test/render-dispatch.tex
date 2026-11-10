@@ -13,7 +13,7 @@
   flora.page=function(a)
     local count=beamer_floral.count
     local custom
-    if count==4 then
+    if count==4 or count==5 then
       custom=function() custom_calls=custom_calls+1 end
       a.render_page=custom
     end
@@ -22,13 +22,17 @@
       prepare(spec)
       if count==2 then assert(type(a.render_page)=='function','timed override must persist')
       elseif count==4 then assert(a.render_page==custom,'static custom renderer must be preserved')
+      elseif count==5 then
+        assert(a.render_page==custom,'reuse must preserve a custom renderer')
+        assert(not beamer_floral.frame.reuse,'a frame with a custom renderer is not reused')
+      elseif count==6 then assert(a.render_page==beamer_floral.render_reused,'reuse frames use the reused drawing')
       else assert(a.render_page==nil,'static frames must retain the engine cache path') end
     end
     return page(a)
   end
   floral_check_custom=function()
-    assert(custom_calls==1,'custom renderer must run once')
-    assert(cache_calls==3,'all three static pages must consult the ordinary cache')
+    assert(custom_calls==2,'each custom renderer must run once')
+    assert(cache_calls==4,'three static pages and the reused drawing must consult the cache')
   end
 }
 \usetheme{floral}
@@ -45,4 +49,9 @@
 \begin{frame}{Static override}First\pause\par Second\end{frame}
 \florathisframe{growth=off}
 \begin{frame}{Custom static painter}The existing callback is retained.\end{frame}
+\directlua{flora.render_page_version=1}
+\florathisframe{growth=off,reuse=content}
+\begin{frame}{Custom painter with reuse}The existing callback is retained.\end{frame}
+\florathisframe{growth=off,reuse=content}
+\begin{frame}{Reused drawing}This frame uses the reused drawing.\end{frame}
 \end{document}
