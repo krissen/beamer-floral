@@ -64,7 +64,10 @@ def timed_run(original, steps, scratch):
             return original([*TIME_COMMAND, "-o", str(report), *command], **kwargs)
         finally:
             seconds = time.monotonic() - start
-            text = report.read_text() if report.exists() else ""
+            try:
+                text = report.read_text()
+            except (OSError, UnicodeDecodeError):
+                text = ""
             match = re.search(RSS_PATTERN, text)
             if not match:
                 print(f"warning: no memory report for {command[0]}; RSS recorded as null", file=sys.stderr)
@@ -172,6 +175,9 @@ def main():
     args = parser.parse_args()
     args.engine = args.engine.resolve()
     outdir = args.outdir.resolve()
+    # Invalidate any earlier report before anything else can fail, so a
+    # failed rerun is never read as a complete earlier measurement.
+    write_report(outdir, {"complete": False, "builds": {}})
     source_path = args.source.resolve() if args.source else None
     os.chdir(ROOT)
     builder = load_builder()
@@ -185,8 +191,6 @@ def main():
     report = {"commit": git_commit(ROOT), "commit_dirty": git_dirty(ROOT), "engine": engine,
               "engine_source": engine_source, "dpi": args.dpi, "jobs": args.jobs,
               "platform": platform.platform(), "complete": False, "builds": {}}
-    # Replace any earlier report at once, so a failed first build is never
-    # read as a complete earlier measurement.
     write_report(outdir, report)
     print(f"{'build':16}{'total':>9}{'latex1':>9}{'export':>9}{'raster+':>9}{'latex2':>9}{'RSS MiB':>9}{'disk MiB':>10}")
     for name, source in work:
