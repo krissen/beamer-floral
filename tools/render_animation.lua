@@ -57,10 +57,11 @@ for _,id in ipairs(ids) do
     assert(type(gif)=='table' and type(gif.rate_milli)=='number' and gif.rate_milli>=1 and gif.rate_milli%1==0,
       'invalid GIF playback rate')
     assert(type(gif.matte)=='string' and gif.matte:match('^%x%x%x%x%x%x$'),'invalid GIF matte colour')
+    assert(type(gif.encoder)=='string' and gif.encoder:match('^e%d+$'),'invalid GIF encoder version')
     for k=1,frame.stages do
       -- The name must match C.gif_name in beamer-floral-cache.lua.
-      gifs[#gifs+1]=string.format('%s\t%d\t%d\t%d\t%s\t%s/interval-%d-r%d-m%s.gif',
-        folder,(k-1)*frame.steps,frame.steps,gif.rate_milli,gif.matte,folder,k,gif.rate_milli,gif.matte)
+      gifs[#gifs+1]=string.format('%s\t%d\t%d\t%d\t%s\t%s/interval-%d-r%d-m%s-%s.gif',
+        folder,(k-1)*frame.steps,frame.steps,gif.rate_milli,gif.matte,folder,k,gif.rate_milli,gif.matte,gif.encoder)
     end
   end
   index.frames[id]={signature=frame.signature,stages=frame.stages,steps=frame.steps,dpi=dpi}

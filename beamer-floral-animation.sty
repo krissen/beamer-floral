@@ -7,12 +7,34 @@
 }
 \RequirePackage{animate}[2024/10/14]
 \directlua{beamer_floral.animation_support=true; beamer_floral.raster_cache=false
-  beamer_floral.gif_playback=false; beamer_floral.gif_matte='FFFFFF'}
-\DeclareOption{vector}{\directlua{beamer_floral.raster_cache=false; beamer_floral.gif_playback=false}}
-\DeclareOption{raster}{\directlua{beamer_floral.raster_cache=true; beamer_floral.gif_playback=false}}
-% Intervals play as GIF files in a Movie annotation, for viewers that cannot
-% run the JavaScript of animate. The GIFs come from the raster cache.
-\DeclareOption{gif}{\directlua{beamer_floral.raster_cache=true; beamer_floral.gif_playback=true}}
+  beamer_floral.gif_playback=false; beamer_floral.gif_embed=false
+  beamer_floral.gif_matte='FFFFFF'}
+\DeclareOption{vector}{\directlua{beamer_floral.raster_cache=false; beamer_floral.gif_playback=false; beamer_floral.gif_embed=false}}
+\DeclareOption{raster}{\directlua{beamer_floral.raster_cache=true; beamer_floral.gif_playback=false; beamer_floral.gif_embed=false}}
+% Intervals play as GIFs, for viewers that cannot run the JavaScript of
+% animate. The GIFs come from the raster cache. [gif] embeds them in the PDF;
+% [gif-external] leaves them beside it and plays them from a Movie annotation.
+\DeclareOption{gif}{\directlua{beamer_floral.raster_cache=true; beamer_floral.gif_playback=true; beamer_floral.gif_embed=true}}
+\DeclareOption{gif-external}{\directlua{beamer_floral.raster_cache=true; beamer_floral.gif_playback=true; beamer_floral.gif_embed=false}}
+% Internal: embed one GIF (#1 file, #2 name, #3 width, #4 height, #5 physical
+% page) and cover the page with a Screen annotation that plays it. Poppler
+% drops a Screen annotation whose rendition action lacks /P, hence the page.
+\newcommand\floralembedgif[5]{%
+  \immediate\pdfextension obj stream attr{/Type /EmbeddedFile /Subtype /image\string##2Fgif} file{#1}%
+  \edef\floral@gifstream{\pdffeedback lastobj}%
+  \immediate\pdfextension obj{<< /Type /Filespec /F (#2) /UF (#2) /EF << /F \floral@gifstream\space 0 R >> >>}%
+  \edef\floral@gifspec{\pdffeedback lastobj}%
+  \immediate\pdfextension obj{<< /Type /Rendition /S /MR /N (#2)
+    /C << /Type /MediaClip /S /MCD /CT (image/gif) /D \floral@gifspec\space 0 R
+      /P << /Type /MediaPermissions /TF (TEMPALWAYS) >> >>
+    /P << /Type /MediaPlayParams /BE << /A true /C false /RC 1 >> >> >>}%
+  \edef\floral@gifrendition{\pdffeedback lastobj}%
+  \pdfextension annot reserveobjnum
+  \edef\floral@gifannot{\pdffeedback lastannot}%
+  \pdfextension annot useobjnum \floral@gifannot\space width #3 height #4 depth 0pt{%
+    /Subtype /Screen /F 4 /P \pdffeedback pageref #5 \space 0 R
+    /A << /S /Rendition /OP 0 /R \floral@gifrendition\space 0 R /AN \floral@gifannot\space 0 R >>}%
+}
 \ProcessOptions\relax
 % The page colour the GIF frames are matted against (six hex digits).
 \newcommand\floralgifmatte[1]{%

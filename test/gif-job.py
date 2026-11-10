@@ -75,7 +75,7 @@ with tempfile.TemporaryDirectory(prefix='gif-job-', dir='build') as temporary:
                 image.putpixel((x, y), ((y % 16) * 16, (y % 16) * 83 % 256, (y % 16) * 41 % 256, soft))
         image.save(pixels / f'sample-{n}.png')
     for matte in ('FFFFFF', '203040'):
-        built = root / f'interval-5-r20000-m{matte}.gif'
+        built = root / f'interval-5-r20000-m{matte}-e2.gif'
         builder.build_gif((str(pixels), 0, STEPS, RATE_MILLI, matte, str(built)))
         with Image.open(built) as gif:
             for index in range(gif.n_frames):
