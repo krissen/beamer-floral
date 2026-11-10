@@ -113,3 +113,35 @@ PR #17 and engine PR #7 carry the changes. CI initially compiled all documents
 but its host-side PDF checker could not read the container-owned PDF. PDF and
 raster checks now run inside the TeX container with their system dependencies.
 CI and bot review are pending; no merge has been performed.
+
+## GIF playback (pympress)
+
+Automated checks cover the build, not the viewer. Build with Pillow installed:
+
+```sh
+.venv/bin/python tools/build_animation.py --engine ../tikz-flora --outdir build/gif test/growth-gif.tex
+.venv/bin/python tools/check_gif_pdf.py build/gif/growth-gif.pdf --pages 3
+```
+
+The checker reads the PDF and the GIFs: one full-page Movie annotation per
+timed page, a GIF with the interval's frame count beside the PDF, and no
+JavaScript. Then, in pympress (pending; do not infer from the build):
+
+- Each timed page plays its interval once, above the text, and stops.
+- The text stays crisp and the link on page 2 stays clickable.
+- Pages 2 and 3 start at their nominal starting stage.
+- Leaving a page and returning does not replay it (known limit).
+- No flash of the finished flora on page entry or after the last frame.
+- Copy the PDF without `growth-gif.floral-animation/` beside it: no playback,
+  the start state of each interval shows (known limit).
+
+`tools/probe_pympress.py` logs what the viewer does on each page: overlay
+events, GIF repaint cost, peak memory and the drawing right after a page
+change. Run it with pympress's own Python, from a shell where a window may open:
+
+```sh
+<pympress python> tools/probe_pympress.py <outdir> build/gif/growth-gif.pdf 4 1 2 3
+```
+
+(`<outdir>` receives `events.log`; `4` is seconds per page, then the pages
+to visit.)

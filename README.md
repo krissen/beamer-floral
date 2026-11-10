@@ -181,6 +181,41 @@ Handout mode always uses complete static flora and needs no render cache.
 vector path. Neither this path nor manual overlay reveals need the external
 raster tools.
 
+### GIF playback for viewers without JavaScript
+
+Viewers such as pympress cannot run the JavaScript of `animate`. For them,
+select GIF playback:
+
+```tex
+\usepackage[gif]{beamer-floral-animation}
+\floralgifmatte{FFFFFF} % optional: the page colour, six hex digits
+```
+
+Every `growth=timed` interval is then built from the raster cache as a GIF
+and shown as a Movie annotation over the whole page, with no `animate`
+environment and no JavaScript in the PDF. `gif` includes `[raster]`, so the
+builder and its requirements above apply, and it also needs
+[Pillow](https://pypi.org/project/pillow/) when it builds GIFs
+(`python3 -m pip install pillow`). The build is the same:
+
+```sh
+python3 tools/build_animation.py --outdir build/slides slides.tex
+```
+
+The frames are composited against `\floralgifmatte` (default `FFFFFF`), so
+set it to your page colour; pixels that are almost fully transparent stay
+transparent. GIF files are named by interval, frame rate and matte colour and
+are reused on later builds.
+
+Limits:
+
+- The GIFs are external files. Keep `<job>.floral-animation/` beside the PDF
+  and move them together; a PDF without them plays nothing.
+- Playback is verified in pympress 1.8.6. Viewers that do not play Movie
+  annotations show each interval's start state, not the finished flora.
+- Each interval plays once. Returning to a page does not replay it.
+- Print or export from handout mode (it paints complete static flora).
+
 Overleaf can compile static flora, manual reveals and vector playback directly.
 For cached timed playback, build the cache locally first and upload it with
 the document; rebuild locally after changes that invalidate it. The external
