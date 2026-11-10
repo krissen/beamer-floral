@@ -56,6 +56,7 @@ jobs:
             test/article-mode.tex
             test/overlay-reuse.tex
             test/reuse.tex
+            test/reuse-stock.tex
             docs/src/tour.tex
             docs/src/showcase.tex
             docs/src/stock-default.tex
@@ -85,7 +86,7 @@ jobs:
           post_compile: |
             set -e
             FLORAL_VERIFY_STABLE=1 latexmk -g -lualatex -interaction=nonstopmode -halt-on-error test/growth.tex
-            texlua test/check_reuse.lua reuse.log
+            texlua test/check_reuse.lua reuse.log reuse-stock.log
             texlua test/check_boxes.lua frametitle-wrap.log
             texlua test/check_boxes.lua headline.log
             texlua test/check_boxes.lua ornament-settings.log

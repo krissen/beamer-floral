@@ -19,6 +19,8 @@ Settings.define('growth fps', function(v)
 end)
 -- Page classes that reuse one drawing per document instead of adapting.
 local page_classes={title=1,section=2,content=3}
+-- The value is a canonical string, not a table: settings merge tables key
+-- by key, so a later reuse=none or a narrower list must replace it whole.
 Settings.define('reuse', function(v)
   v=tostring(v):gsub('^%s*{',''):gsub('}%s*$','')
   local out={}
@@ -28,8 +30,18 @@ Settings.define('reuse', function(v)
     elseif page_classes[name] then out[name]=true
     else return nil,'reuse must be none, all, or a list of title, section and content' end
   end
-  return out
+  local names={}
+  for class in pairs(out) do names[#names+1]=class end
+  table.sort(names)
+  return #names>0 and table.concat(names,',') or 'none'
 end)
+local function reuse_set(value)
+  local out={}
+  for name in tostring(value or 'none'):gmatch('[^,]+') do
+    if page_classes[name] then out[name]=true end
+  end
+  return out
+end
 local setting_fields={'layout','mix','ornaments','palette','spin','tune','header','doc_seed','reserve',
   'gilt','gilt_dpi','gilt_env','gilt_look','backdrop'}
 local growth_defaults={growth='off', ['growth duration']=8, ['growth fps']=20}
@@ -177,8 +189,13 @@ function M.prepare(spec)
     M.frame.class=(M.page_title or mark==1) and 'title' or mark==2 and 'section' or 'content'
     -- A growing frame needs its own stages, and a frame with a caller's own
     -- renderer is drawn by it, so both keep their own drawings.
-    M.frame.reuse=(active['reuse'] or {})[M.frame.class]
-      and (M.frame.growth.growth=='off' or M.handout) and not M.custom_render or false
+    local listed=reuse_set(active['reuse'])[M.frame.class]
+    local growing=M.frame.growth.growth~='off' and not M.handout
+    M.frame.reuse=listed and not growing and not M.custom_render or false
+    -- One decision per frame, for test/check_reuse.lua.
+    if texio and texio.write_nl then texio.write_nl('log',string.format('beamer-floral: frame %d class %s reuse %s',M.count,M.frame.class,
+      M.frame.reuse and 'yes' or not listed and 'no (not listed)' or growing and 'no (growing)'
+      or 'no (custom renderer)')..'\n') end
     M.frame.signature=Serial.encode({settings=M.frame.settings,width=spec.width,height=spec.height,
       text=spec.text,header_y=spec.header_y,input_signature=M.input_signature,growth=M.frame.growth,
       reuse=M.frame.reuse,class=M.frame.class})
