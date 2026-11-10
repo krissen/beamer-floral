@@ -103,6 +103,10 @@ jobs:
             python3 tools/check_gif_pdf.py build/gif/growth-gif.pdf --pages 3 --mode embedded
             python3 tools/build_animation.py --engine tikz-flora --outdir build/gif-external test/growth-gif-external.tex
             python3 tools/check_gif_pdf.py build/gif-external/growth-gif-external.pdf --pages 3 --mode external
+            python3 tools/build_animation.py --engine tikz-flora --outdir build/gif-reserve test/growth-gif-reserve.tex
+            python3 tools/check_gif_pdf.py build/gif-reserve/growth-gif-reserve.pdf --pages 3 --mode embedded --reserved
+            python3 tools/build_animation.py --engine tikz-flora --outdir build/gif-reserve-external test/growth-gif-reserve-external.tex
+            python3 tools/check_gif_pdf.py build/gif-reserve-external/growth-gif-reserve-external.pdf --pages 3 --mode external --reserved
       - uses: actions/upload-artifact@v4
         if: failure()
         with:

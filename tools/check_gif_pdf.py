@@ -4,6 +4,7 @@ rendition holds the GIF as an embedded file. Either way each GIF is complete,
 decodes to its samples, and the PDF has no JavaScript. Needs qpdf and Pillow."""
 import argparse
 import json
+import math
 from pathlib import Path
 import re
 import subprocess
@@ -52,13 +53,74 @@ def gif_facts(path):
 RMS_LIMIT = 8.0
 
 
-def rms_against_source(frame, sample, matte):
+def parse_data(text):
+    """The engine's plain-data serializer (a Lua table constructor) as Python values."""
+    position = 0
+    token = re.compile(r'\s*(?:(-?\d[\d.eE+-]*)|"((?:[^"\\]|\\.)*)"|(true|false)|([A-Za-z_]\w*)|(.))')
+
+    def read():
+        nonlocal position
+        match = token.match(text, position)
+        position = match.end()
+        number, string, boolean, name, symbol = match.groups()
+        if number is not None:
+            return float(number)
+        if string is not None:
+            return re.sub(r'\\(.)', r'\1', string)
+        if boolean is not None:
+            return boolean == 'true'
+        if symbol != '{':
+            raise RuntimeError(f'unexpected {name or symbol!r} in manifest')
+        items, keyed = [], {}
+        while True:
+            following = token.match(text, position)
+            if following[5] == '}':
+                position = following.end()
+                if not keyed:
+                    return items
+                return {**{i + 1: v for i, v in enumerate(items)}, **keyed}
+            if following[5] == ',':
+                position = following.end()
+                continue
+            key = None
+            ahead = re.match(r'\s*(?:([A-Za-z_]\w*)|\[("(?:[^"\\]|\\.)*"|-?\d+)\])\s*=(?!=)', text[position:])
+            if ahead:
+                key = ahead[1] or (int(ahead[2]) if ahead[2].lstrip('-').isdigit() else ahead[2].strip('"'))
+                position += ahead.end()
+            value = read()
+            if key is None:
+                items.append(value)
+            else:
+                keyed[key] = value
+
+    return read()
+
+
+def reserved_areas(frame, size):
+    """Reserved rectangles of a frame as pixel boxes (left, top, right, bottom), rounded outward."""
+    width, height = frame['width'], frame['height']
+    boxes = []
+    for x0, y0, x1, y1 in frame.get('reserve', []):
+        left = max(0, math.floor(min(x0, x1) * size[0] / width))
+        right = min(size[0], math.ceil(max(x0, x1) * size[0] / width))
+        top = max(0, math.floor((height - max(y0, y1)) * size[1] / height))
+        bottom = min(size[1], math.ceil((height - min(y0, y1)) * size[1] / height))
+        if right > left and bottom > top:
+            boxes.append((left, top, right, bottom))
+    return boxes
+
+
+def rms_against_source(frame, sample, matte, spec=None):
     """Per-channel RMS of a decoded GIF frame against its sample matted on `matte`.
 
+    `spec` holds the page size and reservations: the sample is compared after the
+    reserved rectangles are cleared, which the GIF must show as transparent.
     Also returns whether every fully transparent sample pixel decoded transparent."""
     from PIL import Image, ImageChops
     with Image.open(sample) as source:
         source = source.convert('RGBA')
+    for box in reserved_areas(spec, source.size) if spec else []:
+        source.paste((0, 0, 0, 0), box)
     colour = tuple(int(matte[i:i + 2], 16) for i in (0, 2, 4))
     background = Image.new('RGBA', source.size, (*colour, 255))
     expected = Image.alpha_composite(background, source).convert('RGB')
@@ -75,7 +137,7 @@ def rms_against_source(frame, sample, matte):
     return [v ** 0.5 for v in squared], transparent
 
 
-def check_decoded(path, steps, folder, first_sample):
+def check_decoded(path, steps, folder, first_sample, spec=None):
     """First and last frame of an interval GIF against their sample PNGs."""
     from PIL import Image
     matte = GIF_NAME.fullmatch(path.name)[3]
@@ -83,7 +145,7 @@ def check_decoded(path, steps, folder, first_sample):
         for index in (0, steps):
             gif.seek(index)
             rms, transparent = rms_against_source(
-                gif.copy(), folder / f'sample-{first_sample + index}.png', matte)
+                gif.copy(), folder / f'sample-{first_sample + index}.png', matte, spec)
             if max(rms) > RMS_LIMIT or not transparent:
                 raise RuntimeError(f'{path}: frame {index} does not match its sample '
                                    f'(RMS {max(rms):.1f}, limit {RMS_LIMIT}, transparent {transparent})')
@@ -123,7 +185,7 @@ def embedded_gif(pdf, objects, value, annotation, reference, page_ref, name, cac
     raise RuntimeError(f'{name}: the embedded GIF matches no file in {cache}')
 
 
-def check(pdf, expected_pages=None, expected_mode=None):
+def check(pdf, expected_pages=None, expected_mode=None, expect_reserved=False):
     result = subprocess.run(['qpdf', '--json', '--json-key=qpdf', str(pdf)],
                             capture_output=True, text=True)
     if result.returncode not in (0, 3):
@@ -198,6 +260,17 @@ def check(pdf, expected_pages=None, expected_mode=None):
         raise RuntimeError('No timed pages found')
     if expected_pages is not None and timed != expected_pages:
         raise RuntimeError(f'{timed} timed pages, expected {expected_pages}')
+    # What LaTeX recorded for each frame (page size, reservations) names the folder by signature.
+    manifest = pdf.parent / (pdf.stem + '.floral-animation-manifest')
+    frames = parse_data(manifest.read_text())['frames']
+    recorded = {f['signature']: f['spec'] for f in (frames.values() if isinstance(frames, dict) else frames)}
+    specs = {}
+    for folder in intervals:
+        specs[folder] = recorded.get(folder.name.rsplit('-', 1)[0])
+        if specs[folder] is None:
+            raise RuntimeError(f'{folder}: not described by {manifest.name}')
+    if expect_reserved and not all(specs[folder].get('reserve') for folder in intervals):
+        raise RuntimeError('--reserved: a timed frame has no reservation recorded')
     for folder, stages in intervals.items():
         count = max(stages)
         if sorted(stages) != list(range(1, count + 1)):
@@ -212,7 +285,7 @@ def check(pdf, expected_pages=None, expected_mode=None):
                 raise RuntimeError(f'{path}: {len(frames)} frames, expected {steps + 1}')
             if looped:
                 raise RuntimeError(f'{path}: loop extension; the GIF must play once')
-            check_decoded(path, steps, folder, (stage - 1) * steps)
+            check_decoded(path, steps, folder, (stage - 1) * steps, specs.get(folder))
             if any(f is None or f[1] != 2 or f[2] != 255 or f[0] < 1 for f in frames):
                 raise RuntimeError(f'{path}: frames need disposal 2, transparent index 255 and a delay')
     print(f'GIF PDF checks passed ({timed} timed pages, {mode}, no JavaScript)')
@@ -222,6 +295,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('pdf', type=Path)
     parser.add_argument('--pages', type=int, help='expected number of timed pages')
+    parser.add_argument('--reserved', action='store_true', help='require reservations in the recorded frames')
     parser.add_argument('--mode', choices=('embedded', 'external'), help='expected GIF playback mode')
     arguments = parser.parse_args()
-    check(arguments.pdf.resolve(), arguments.pages, arguments.mode)
+    check(arguments.pdf.resolve(), arguments.pages, arguments.mode, arguments.reserved)

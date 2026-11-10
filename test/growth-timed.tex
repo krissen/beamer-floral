@@ -23,6 +23,11 @@
     \florasetup{growth duration=0.4,growth fps=10}
   \fi
 \fi
+\ifdefined\floralreserve
+  % A footline band and a block inside the page: nothing may play over them.
+  \florareserve{0pt}{0pt}{\paperwidth}{1cm}
+  \florareserve{7cm}{4cm}{9.3cm}{6.1cm}
+\fi
 \ifdefined\floralstatic\else
 \makeatletter
 \let\floraltestinit\@anim@@jsinit
