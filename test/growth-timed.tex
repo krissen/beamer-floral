@@ -3,13 +3,18 @@
 \ifdefined\floralstatic
   \florasetup{seed=3,density=0.2,growth=overlays}
 \else
-  \ifdefined\floralraster
+  \ifdefined\floralgif
+    \usepackage[gif]{beamer-floral-animation}
+  \else\ifdefined\floralraster
     \usepackage[raster]{beamer-floral-animation}
   \else
     \usepackage[vector]{beamer-floral-animation}
-  \fi
+  \fi\fi
   \florasetup{seed=3,density=0.2,growth=timed,growth duration=1,growth fps=20}
   \ifdefined\floralraster
+    \florasetup{growth duration=0.4,growth fps=10}
+  \fi
+  \ifdefined\floralgif
     \florasetup{growth duration=0.4,growth fps=10}
   \fi
 \fi
