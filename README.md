@@ -250,18 +250,22 @@ What you give up:
   full composition. `reuse=content` leaves title pages as they are.
 
 Measured with `tools/measure_reuse.py` on `test/reuse-benchmark.tex`
-(16:9, floral theme): seconds for a repeated compile with the caches in place,
-and PDF size. The first compile is slower in every mode.
+(16:9, floral theme). A warm build is a second full `latexmk` compile of the
+unchanged document with the flora caches kept; a cold build starts from an
+empty output directory.
 
 | Deck | Adaptive | `reuse=content` | `reuse=all` |
 |---|---:|---:|---:|
-| Title and 10 frames of two overlays, 21 pages | 9.2-10.0 s, 21.5 MB | | 1.6-1.8 s, 3.3 MB |
-| Title and 40 one-overlay frames, 41 pages | 2.0-2.1 s, 62.2 MB | 1.9-2.1 s, 8.6 MB | 1.9-2.1 s, 3.4 MB |
-| Title and 30 frames of three overlays, 91 pages | 25.0-25.2 s, 48.9 MB | | 2.5-3.1 s, 3.4 MB |
-| As above with 6 section pages, 97 pages | 35.3-40.8 s, 57.0 MB | 9.7-10.0 s, 16.6 MB | 9.6-11.3 s, 4.7 MB |
+| Title and 10 frames of two overlays, 21 pages | 19.4-19.8 s, 21.5 MB | | 3.8-3.9 s, 3.3 MB |
+| Title and 40 one-overlay frames, 41 pages | 4.7-5.1 s, 62.2 MB | 4.4-6.1 s, 8.6 MB | 4.2-4.3 s, 3.4 MB |
+| Title and 30 frames of three overlays, 91 pages | 60.3 s, 48.9 MB | | 5.5-5.6 s, 3.4 MB |
+| As above with 6 section pages, 97 pages | 92.6-95.5 s, 57.0 MB | 12.8-13.0 s, 16.6 MB | 12.7-12.8 s, 4.7 MB |
 
-The 97-page deck spends about 9.5 s per compile on the theme's navigation line
-even without flora. Measured with TeX Live 2025 and tikz-flora `cc3fb48`.
+Warm builds; cold builds take 30-34 s, 38-49 s, 77 s and 121-125 s adaptive
+against 5.6 s, 6.2-6.4 s, 7.5-7.8 s and 15.2-15.5 s with `reuse=all`. Beamer
+without floral takes 3.2-3.6 s on the 21-page deck, and the 97-page deck
+spends about 12 s on the theme's navigation line even without flora.
+Measured with TeX Live 2025 and tikz-flora `cc3fb48`.
 
 ## File size
 
