@@ -1,7 +1,9 @@
 """Measure cold and warm raster builds with per-step time, memory and disk.
 
-RSS is the largest single subprocess, not the sum of concurrent raster jobs.
+RSS is the largest single subprocess, not the sum of concurrent raster jobs;
+a step whose time report cannot be read records null and prints a warning.
 Disk is the largest sampled size of the output tree, every 500 ms.
+results.json is rewritten after every build, with "complete" set at the end.
 """
 
 import argparse
@@ -13,6 +15,7 @@ import platform
 import re
 import shutil
 import subprocess
+import sys
 import threading
 import time
 from types import SimpleNamespace
@@ -61,10 +64,15 @@ def timed_run(original, steps, scratch):
             return original([*TIME_COMMAND, "-o", str(report), *command], **kwargs)
         finally:
             seconds = time.monotonic() - start
-            text = report.read_text() if report.exists() else ""
+            try:
+                text = report.read_text()
+            except (OSError, UnicodeDecodeError):
+                text = ""
             match = re.search(RSS_PATTERN, text)
+            if not match:
+                print(f"warning: no memory report for {command[0]}; RSS recorded as null", file=sys.stderr)
             steps.append({"stage": stage_of(command), "seconds": round(seconds, 3),
-                          "rss": int(match[1]) * RSS_UNIT if match else 0})
+                          "rss": int(match[1]) * RSS_UNIT if match else None})
     return run
 
 
@@ -114,15 +122,44 @@ def summarize(result):
     for step in result["steps"]:
         seconds[step["stage"]] = seconds.get(step["stage"], 0) + step["seconds"]
     latex = [step["seconds"] for step in result["steps"] if step["stage"] == "latex"]
+    rss = [step["rss"] for step in result["steps"] if step["rss"] is not None]
     export = seconds.get("export", 0)
     return {"total": result["total_seconds"], "measure_latex": latex[0], "final_latex": sum(latex[1:]),
             "export": export, "raster_and_overhead": result["total_seconds"] - sum(latex) - export,
-            "rss_mib": max(step["rss"] for step in result["steps"]) / 2**20,
+            "rss_mib": max(rss) / 2**20 if rss else None,
             "disk_mib": result["peak_disk_bytes"] / 2**20}
 
 
 def git_commit(path):
     return subprocess.check_output(["git", "-C", str(path), "rev-parse", "HEAD"], text=True).strip()
+
+
+def git_dirty(path):
+    status = subprocess.check_output(["git", "-C", str(path), "status", "--porcelain", "--untracked-files=no"],
+                                     text=True)
+    return bool(status.strip())
+
+
+def engine_identity(engine):
+    """Return the engine revision and where it came from."""
+    engine_ref = engine / "engine-commit.txt"
+    if engine_ref.is_file():
+        return engine_ref.read_text().strip(), "engine-commit.txt"
+    if (engine / ".git").exists():
+        return git_commit(engine), "git"
+    return f"unknown ({engine.name})", "directory name"
+
+
+def write_report(outdir, report):
+    outdir.mkdir(parents=True, exist_ok=True)
+    target = outdir / "results.json"
+    temporary = target.with_suffix(".json.tmp")
+    temporary.write_text(json.dumps(report, indent=2) + "\n")
+    temporary.replace(target)
+
+
+def mib(value):
+    return "n/a" if value is None else f"{value:.1f}"
 
 
 def main():
@@ -138,6 +175,9 @@ def main():
     args = parser.parse_args()
     args.engine = args.engine.resolve()
     outdir = args.outdir.resolve()
+    # Invalidate any earlier report before anything else can fail, so a
+    # failed rerun is never read as a complete earlier measurement.
+    write_report(outdir, {"complete": False, "builds": {}})
     source_path = args.source.resolve() if args.source else None
     os.chdir(ROOT)
     builder = load_builder()
@@ -145,13 +185,13 @@ def main():
         work = [(source_path.stem, source_path)]
     else:
         work = [(name, write_fixture(name, outdir / name / "source")) for name in args.fixture or FIXTURES]
-    report = {"commit": git_commit(ROOT), "engine": args.engine.name, "dpi": args.dpi, "jobs": args.jobs,
-              "platform": platform.platform(), "builds": {}}
-    engine_ref = args.engine / "engine-commit.txt"
-    if engine_ref.is_file():
-        report["engine"] = engine_ref.read_text().strip()
-    elif (args.engine / ".git").exists():
-        report["engine"] = git_commit(args.engine)
+    engine, engine_source = engine_identity(args.engine)
+    if engine_source == "directory name":
+        print(f"warning: engine revision unknown; add {args.engine / 'engine-commit.txt'}", file=sys.stderr)
+    report = {"commit": git_commit(ROOT), "commit_dirty": git_dirty(ROOT), "engine": engine,
+              "engine_source": engine_source, "dpi": args.dpi, "jobs": args.jobs,
+              "platform": platform.platform(), "complete": False, "builds": {}}
+    write_report(outdir, report)
     print(f"{'build':16}{'total':>9}{'latex1':>9}{'export':>9}{'raster+':>9}{'latex2':>9}{'RSS MiB':>9}{'disk MiB':>10}")
     for name, source in work:
         build_dir = outdir / name / "build"
@@ -162,10 +202,11 @@ def main():
             report["builds"][f"{name}-{state}"] = result
             row = result["summary"]
             print(f"{name + '-' + state:16}{row['total']:>9.1f}{row['measure_latex']:>9.1f}{row['export']:>9.1f}"
-                  f"{row['raster_and_overhead']:>9.1f}{row['final_latex']:>9.1f}{row['rss_mib']:>9.1f}"
+                  f"{row['raster_and_overhead']:>9.1f}{row['final_latex']:>9.1f}{mib(row['rss_mib']):>9}"
                   f"{row['disk_mib']:>10.1f}")
-    outdir.mkdir(parents=True, exist_ok=True)
-    (outdir / "results.json").write_text(json.dumps(report, indent=2) + "\n")
+            write_report(outdir, report)
+    report["complete"] = True
+    write_report(outdir, report)
 
 
 if __name__ == "__main__":
