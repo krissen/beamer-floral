@@ -263,9 +263,9 @@ empty output directory.
 | As above with 6 section pages, 97 pages | 92.6-95.5 s, 57.0 MB | 12.8-13.0 s, 16.6 MB | 12.7-12.8 s, 4.7 MB |
 
 Warm builds; cold builds take 30-34 s, 38-49 s, 77 s and 121-125 s adaptive
-against 5.6 s, 6.2-6.4 s, 7.5-7.8 s and 15.2-15.5 s with `reuse=all`. Beamer
+against 5.5-5.6 s, 6.2-6.4 s, 7.5-7.8 s and 15.2-15.5 s with `reuse=all`. Beamer
 without floral takes 3.2-3.6 s on the 21-page deck, and the 97-page deck
-spends about 12 s on the theme's navigation line even without flora.
+takes about 12 s with flora off.
 Measured with TeX Live 2025 and tikz-flora `cc3fb48`.
 
 ## File size
