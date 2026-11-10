@@ -6,10 +6,10 @@ caches (<job>-flora/ and <job>.floral-cache), so every pass runs again with
 the flora cache from the first compile in place.
 
 Usage:
-  TIKZFLORA=<engine> [REUSE=all] [S=5] measure_reuse.py LABEL VARIANT N K
+  TIKZFLORA=<engine> [REUSE=all] [S=5] [PATTERN=asanoha] measure_reuse.py LABEL VARIANT N K
 
 VARIANT is none (Beamer only), off (theme, flora off) or adaptive; REUSE sets
-the reuse value, N the frames, K the overlays per frame and S a section page
+the reuse value, PATTERN a pattern setting (a deck of that pattern instead of flora), N the frames, K the overlays per frame and S a section page
 every S frames. Each build waits until the 1-minute load average is below
 --max-load (default 4, at most --wait seconds) and records it. Peak RSS comes
 from /usr/bin/time -l (macOS). Rows append to build/reuse-benchmark/results.jsonl.
@@ -69,10 +69,10 @@ def main():
     shutil.rmtree(out, ignore_errors=True)
     out.mkdir(parents=True)
     src = out / "d.tex"
-    src.write_text(f"\\def\\floralreuse{{{os.environ.get('REUSE', '')}}}\\def\\benchS{{{os.environ.get('S', '0')}}}"
+    src.write_text(f"\\def\\floralpattern{{{os.environ.get('PATTERN', '')}}}\\def\\floralreuse{{{os.environ.get('REUSE', '')}}}\\def\\benchS{{{os.environ.get('S', '0')}}}"
                    f"\\def\\floralvariant{{{args.variant}}}\\def\\benchN{{{args.frames}}}"
                    f"\\def\\benchK{{{args.overlays}}}\\input{{test/reuse-benchmark.tex}}\n")
-    row = {"label": args.label, "variant": args.variant, "reuse": os.environ.get("REUSE", ""),
+    row = {"label": args.label, "variant": args.variant, "reuse": os.environ.get("REUSE", ""), "pattern": os.environ.get("PATTERN", ""),
            "frames": args.frames, "overlays": args.overlays, "sections_every": int(os.environ.get("S", "0"))}
     row["cold"] = build(out, src, env, args.max_load, args.wait)
     for p in out.iterdir():

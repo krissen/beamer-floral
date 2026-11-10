@@ -287,6 +287,23 @@ edge and `scale` sets the cell size. The catalogue of patterns, groups and
 values is in the [engine's README](https://github.com/krissen/tikz-flora#patterns)
 and is not repeated here. Without a `pattern` key the flora is unchanged.
 
+Measured with `tools/measure_reuse.py` on `test/reuse-benchmark.tex` (16:9,
+floral theme, `PATTERN=asanoha` for the pattern decks, no `reuse`). Cold
+builds, with the pages in PDF size; the machine was shared and its load average
+was 6-10 during the runs, so times carry some noise.
+
+| Deck | Flora | `pattern=asanoha` |
+|---|---:|---:|
+| Title and 10 frames of two overlays, 21 pages | 31.3 s, 21.5 MB | 5.6 s, 0.18 MB |
+| Title and 40 one-overlay frames, 41 pages | 49.0 s, 62.2 MB | 7.9 s, 0.65 MB |
+| Title and 30 frames of three overlays, 6 section pages, 97 pages | 173 s, 57.0 MB | 44.6 s, 0.72 MB |
+
+Pattern pages are small vector drawings, so the file stays small without
+`reuse`. A frame with overlays is painted again for each deck rather than
+taken from the engine's page cache, which is why the last deck takes longer
+than the second although it has fewer frames.
+Measured with TeX Live 2025 and tikz-flora `8123ec2`.
+
 Patterns work with the rest of the theme:
 
 - `growth=overlays` and `growth=timed` grow the pattern through the same

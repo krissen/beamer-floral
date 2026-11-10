@@ -1,15 +1,17 @@
 % Bench deck for reuse; tools/measure_reuse.py sets the macros.
 % \floralvariant: none (no theme), off (theme, flora off) or adaptive;
 % \floralreuse: a reuse value; \benchN frames, \benchK overlays,
-% a section page every \benchS frames (0: none).
+% a section page every \benchS frames (0: none); \floralpattern a pattern
+% setting for a pattern deck (empty: flora).
 \providecommand\floralvariant{adaptive}\providecommand\benchN{10}\providecommand\benchK{2}
 \documentclass[aspectratio=169]{beamer}
-\def\floralnone{none}\providecommand\floralreuse{}\providecommand\benchS{0}
+\def\floralnone{none}\providecommand\floralreuse{}\providecommand\floralpattern{}\providecommand\benchS{0}
 \ifx\floralvariant\floralnone
   \setbeamersize{text margin left=2.5cm,text margin right=1cm}
 \else
   \usetheme{floral}
   \florasetup{seed=3}
+  \ifx\floralpattern\empty\else \edef\next{\noexpand\florasetup{pattern=\floralpattern}}\next\fi
   \ifx\floralreuse\empty\else \edef\next{\noexpand\florasetup{reuse={\floralreuse}}}\next\fi
 \fi
 \title{Bench}\author{beamer-floral}\date{}
