@@ -266,7 +266,36 @@ Warm builds; cold builds take 30-34 s, 38-49 s, 77 s and 121-125 s adaptive
 against 5.5-5.6 s, 6.2-6.4 s, 7.5-7.8 s and 15.2-15.5 s with `reuse=all`. Beamer
 without floral takes 3.2-3.6 s on the 21-page deck, and the 97-page deck
 takes about 12 s with flora off.
-Measured with TeX Live 2025 and tikz-flora `8123ec2`.
+Measured with TeX Live 2025 and tikz-flora `cc3fb48`.
+
+## Patterns
+
+The engine can fill a page with a geometric pattern instead of flora. The
+keys go in `\florasetup` or `\florathisframe`, like any other setting:
+
+```tex
+\florasetup{pattern=asanoha, edge=fade, hero=rosette}
+\florathisframe{pattern=seigaiha, outer=margin, scale=1.5}   % this frame only
+\florathisframe{pattern=none}                                % flora on this frame
+```
+
+![A frame with the asanoha pattern and a rosette](docs/img/patterns.png)
+
+`pattern` names a pattern or a group, `edge` how the pattern meets the text,
+`hero` adds one large motif in a top corner, `outer` how it meets the paper's
+edge and `scale` sets the cell size. The catalogue of patterns, groups and
+values is in the [engine's README](https://github.com/krissen/tikz-flora#patterns)
+and is not repeated here. Without a `pattern` key the flora is unchanged.
+
+Patterns work with the rest of the theme:
+
+- `growth=overlays` and `growth=timed` grow the pattern through the same
+  progression as flora, with `hero` growing ring by ring from its centre.
+  Cached raster playback keys on every pattern setting, so changing one
+  rebuilds the samples.
+- `reuse` draws one pattern page per page class; the pattern settings are part
+  of the drawing's key, so a frame with `\florathisframe{pattern=none}` gets
+  its own flora drawing and later frames with the same settings share it.
 
 ## File size
 
