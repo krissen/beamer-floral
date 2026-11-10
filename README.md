@@ -216,6 +216,13 @@ encoder version, and are reused on later builds.
 
 Limits:
 
+- The GIF is an annotation above the page, not page content. Reservations
+  (`\florareserve`) are applied to it: every pixel inside a reserved rectangle
+  is transparent in every frame, rounded outward to whole pixels. Because the
+  GIF plays above all page content, reserve areas that hold a logo or footline.
+- Soft flora edges are matted against `\floralgifmatte`, not against what is
+  under them. Over a coloured background band, set the matte to the band's colour
+  or accept a light halo.
 - Playback is verified in pympress 1.8.6. Viewers that do not play these
   annotations show each interval's start state, not the finished flora.
 - Each interval plays once. Returning to a page does not replay it.

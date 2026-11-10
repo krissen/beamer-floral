@@ -126,6 +126,24 @@ Pillow installed:
 .venv/bin/python tools/check_gif_pdf.py build/gif-external/growth-gif-external.pdf --pages 3 --mode external
 ```
 
+The reservation documents `test/growth-gif-reserve.tex` and
+`test/growth-gif-reserve-external.tex` add a footline band and a block inside
+the page; build them the same way (`--reserved` also requires the reservations
+in the recorded frames). The checker compares frames with the samples after the
+same masking and requires the reserved pixels to be transparent.
+
+What the page does around the flora in the engine's `typeset_page`, and what
+GIF playback does about it (the GIF is an annotation, so page-content operations
+do not reach it):
+
+| Operation | GIF playback |
+| --- | --- |
+| Reservation clips (`\florareserve`) | Baked into every frame: reserved pixels transparent, rounded outward. The engine also clips them inside the samples; measured on the reservation document, no sample has an opaque pixel inside a reserved box, so the mask changes only edge pixels. |
+| Background band (`background_height`) | Documented limit: soft edges are matted against `\floralgifmatte`, not the band. |
+| Bounding box | Cannot matter: sets the picture size; the annotation Rect is the page. |
+| Transforms, opacity | None are applied at page level. |
+| Stacking order | The GIF plays above all page content; documented, use `\florareserve` for logos and footlines. |
+
 The checker reads the PDF and the GIFs: one full-page annotation per timed
 page (Screen with an embedded GIF, or Movie with an external one), a GIF with
 the interval's frame count whose first and last frame decode to their
@@ -133,6 +151,8 @@ samples, and no JavaScript. Then, in pympress (pending; do not infer from the
 build):
 
 - Each timed page plays its interval once, above the text, and stops.
+- On the reservation documents nothing plays over the footline band or the
+  block inside the page.
 - The text stays crisp and the link on page 2 stays clickable.
 - Pages 2 and 3 start at their nominal starting stage.
 - Leaving a page and returning does not replay it (known limit).
