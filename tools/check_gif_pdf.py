@@ -1,6 +1,7 @@
-"""Check a PDF built with GIF playback: one full-page Movie annotation per timed
-page, a complete GIF for each that decodes to its samples, and no JavaScript
-anywhere. Needs qpdf and Pillow."""
+"""Check a PDF built with GIF playback. External (gif-external): one full-page Movie
+annotation per timed page. Embedded (gif): one full-page Screen annotation whose
+rendition holds the GIF as an embedded file. Either way each GIF is complete,
+decodes to its samples, and the PDF has no JavaScript. Needs qpdf and Pillow."""
 import argparse
 import json
 from pathlib import Path
@@ -77,7 +78,7 @@ def rms_against_source(frame, sample, matte):
 def check_decoded(path, steps, folder, first_sample):
     """First and last frame of an interval GIF against their sample PNGs."""
     from PIL import Image
-    matte = re.fullmatch(r'interval-\d+-r\d+-m([0-9A-Fa-f]{6})\.gif', path.name)[1]
+    matte = GIF_NAME.fullmatch(path.name)[3]
     with Image.open(path) as gif:
         for index in (0, steps):
             gif.seek(index)
@@ -88,7 +89,41 @@ def check_decoded(path, steps, folder, first_sample):
                                    f'(RMS {max(rms):.1f}, limit {RMS_LIMIT}, transparent {transparent})')
 
 
-def check(pdf, expected_pages=None):
+GIF_NAME = re.compile(r'interval-(\d+)-r(\d+)-m([0-9A-Fa-f]{6})-(e\d+)\.gif')
+
+
+def gif_encoder():
+    """The encoder version the package writes into GIF file names."""
+    text = (Path(__file__).resolve().parents[1] / 'beamer-floral-cache.lua').read_text()
+    return re.search(r"C\.gif_encoder='(e\d+)'", text)[1]
+
+
+def embedded_gif(pdf, objects, value, annotation, reference, page_ref, name, cache):
+    """Validate a Screen annotation that plays an embedded GIF; return its cache file."""
+    if annotation.get('/P') != page_ref:
+        raise RuntimeError(f'{name}: /P must be the page that lists the annotation')
+    action = annotation['/A']
+    if action.get('/AN') != reference:
+        raise RuntimeError(f'{name}: /AN must be the annotation itself')
+    if action.get('/S') != '/Rendition':
+        raise RuntimeError(f'{name}: the action must be a rendition')
+    rendition = value(action['/R'])
+    clip = value(rendition['/C'])
+    if clip.get('/CT') != 'u:image/gif':
+        raise RuntimeError(f'{name}: the media clip must be image/gif')
+    stream_ref = value(clip['/D'])['/EF']['/F']
+    number = stream_ref.split()[0]
+    data = subprocess.check_output(['qpdf', '--show-object=' + number, '--filtered-stream-data', str(pdf)])
+    if data[:4] != b'GIF8':
+        raise RuntimeError(f'{name}: the embedded file is not a GIF')
+    # Names do not say which frame a GIF belongs to; the cache file with the same bytes does.
+    for candidate in sorted(cache.glob('*/interval-*.gif')):
+        if candidate.read_bytes() == data:
+            return candidate
+    raise RuntimeError(f'{name}: the embedded GIF matches no file in {cache}')
+
+
+def check(pdf, expected_pages=None, expected_mode=None):
     result = subprocess.run(['qpdf', '--json', '--json-key=qpdf', str(pdf)],
                             capture_output=True, text=True)
     if result.returncode not in (0, 3):
@@ -118,32 +153,47 @@ def check(pdf, expected_pages=None):
             visit(item.get('value'), name)
     timed = 0
     intervals = {}
+    mode = None
+    cache = pdf.parent / (pdf.stem + '.floral-animation')
     for name, item in objects.items():
         page = item.get('value') if name.startswith('obj:') else None
         if not isinstance(page, dict) or page.get('/Type') != '/Page':
             continue
+        page_ref = name.removeprefix('obj:')
         box = [float(x) for x in value(page.get('/MediaBox') or [0, 0, 0, 0])]
-        movies = [annotation for annotation in (value(page.get('/Annots')) or [])
-                  if value(annotation).get('/Subtype') == '/Movie']
-        if not movies:
+        listed = value(page.get('/Annots')) or []
+        movies = [a for a in listed if value(a).get('/Subtype') == '/Movie']
+        screens = [a for a in listed if value(a).get('/Subtype') == '/Screen']
+        if not movies and not screens:
             continue
-        if len(movies) != 1:
-            raise RuntimeError(f'{name}: a timed page needs exactly one Movie annotation, found {len(movies)}')
-        movie = value(movies[0])
-        rect = [float(x) for x in movie['/Rect']]
-        if any(abs(a - b) > 0.01 for a, b in zip(rect, [0, 0, box[2] - box[0], box[3] - box[1]])):
-            raise RuntimeError(f'{name}: the Movie annotation must cover the page, Rect {rect} in {box}')
-        if movie.get('/A', {}).get('/Mode') != '/Once':
-            raise RuntimeError(f'{name}: the GIF must play once')
+        if movies and screens:
+            raise RuntimeError(f'{name}: Movie and Screen annotations on one timed page')
+        found = 'external' if movies else 'embedded'
+        if mode not in (None, found):
+            raise RuntimeError('The PDF mixes embedded and external GIF playback')
+        mode = found
+        if expected_mode and mode != expected_mode:
+            raise RuntimeError(f'{mode} GIF playback found, expected {expected_mode}')
+        annotations = movies or screens
+        if len(annotations) != 1:
+            raise RuntimeError(f'{name}: a timed page needs exactly one {found} annotation, found {len(annotations)}')
+        annotation = value(annotations[0])
+        rect = [float(x) for x in annotation['/Rect']]
+        if any(abs(x - y) > 0.01 for x, y in zip(rect, [0, 0, box[2] - box[0], box[3] - box[1]])):
+            raise RuntimeError(f'{name}: the annotation must cover the page, Rect {rect} in {box}')
         timed += 1
-        relative = movie['/Movie']['/F'].removeprefix('u:')
-        path = pdf.parent / relative
-        if not path.is_file():
-            raise RuntimeError(f'{name}: missing GIF {relative}')
-        label = re.fullmatch(r'floral-(\d+)-(\d+)', movie['/T'].removeprefix('u:'))
-        if not label:
-            raise RuntimeError(f'{name}: unexpected annotation name {movie["/T"]}')
-        intervals.setdefault(path.parent, {})[int(label[2])] = path
+        if found == 'external':
+            if annotation.get('/A', {}).get('/Mode') != '/Once':
+                raise RuntimeError(f'{name}: the GIF must play once')
+            path = pdf.parent / annotation['/Movie']['/F'].removeprefix('u:')
+            if not path.is_file():
+                raise RuntimeError(f'{name}: missing GIF {path}')
+        else:
+            path = embedded_gif(pdf, objects, value, annotation, annotations[0], page_ref, name, cache)
+        label = GIF_NAME.fullmatch(path.name)
+        if not label or label[4] != gif_encoder():
+            raise RuntimeError(f'{path}: not a GIF of the current encoder ({gif_encoder()})')
+        intervals.setdefault(path.parent, {})[int(label[1])] = path
     if not timed:
         raise RuntimeError('No timed pages found')
     if expected_pages is not None and timed != expected_pages:
@@ -165,12 +215,13 @@ def check(pdf, expected_pages=None):
             check_decoded(path, steps, folder, (stage - 1) * steps)
             if any(f is None or f[1] != 2 or f[2] != 255 or f[0] < 1 for f in frames):
                 raise RuntimeError(f'{path}: frames need disposal 2, transparent index 255 and a delay')
-    print(f'GIF PDF checks passed ({timed} timed pages, no JavaScript)')
+    print(f'GIF PDF checks passed ({timed} timed pages, {mode}, no JavaScript)')
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('pdf', type=Path)
     parser.add_argument('--pages', type=int, help='expected number of timed pages')
+    parser.add_argument('--mode', choices=('embedded', 'external'), help='expected GIF playback mode')
     arguments = parser.parse_args()
-    check(arguments.pdf.resolve(), arguments.pages)
+    check(arguments.pdf.resolve(), arguments.pages, arguments.mode)

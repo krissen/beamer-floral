@@ -100,7 +100,9 @@ jobs:
             FLORAL_VERIFY_STABLE=1 python3 tools/build_animation.py --engine tikz-flora --outdir build/raster-geometry test/raster-geometry.tex
             python3 tools/check_growth_pdf.py build/raster-geometry/raster-geometry.pdf
             python3 tools/build_animation.py --engine tikz-flora --outdir build/gif test/growth-gif.tex
-            python3 tools/check_gif_pdf.py build/gif/growth-gif.pdf --pages 3
+            python3 tools/check_gif_pdf.py build/gif/growth-gif.pdf --pages 3 --mode embedded
+            python3 tools/build_animation.py --engine tikz-flora --outdir build/gif-external test/growth-gif-external.tex
+            python3 tools/check_gif_pdf.py build/gif-external/growth-gif-external.pdf --pages 3 --mode external
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
