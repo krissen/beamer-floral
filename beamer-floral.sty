@@ -47,6 +47,9 @@
     if title_page and beamer_floral.title_defaults then
       flora.settings = require("flora.settings").merge(flora.settings, beamer_floral.title_defaults)
     end
+    if beamer_floral.plain and beamer_floral.plain_defaults then
+      flora.settings = require("flora.settings").merge(flora.settings, beamer_floral.plain_defaults)
+    end
     beamer_floral.active_settings = require("flora.settings").merge(flora.settings, flora.once)
     beamer_floral.pending = flora.once
     beamer_floral.input_signature = require("flora.serial").encode{
