@@ -79,6 +79,7 @@ jobs:
             texlua test/raster-worker.lua tikz-flora
             python3 test/raster-publication.py
             python3 test/measure-raster-build.py
+            python3 test/engine-pin.py
             texlua test/pdf-startup.lua
           post_compile: |
             set -e
