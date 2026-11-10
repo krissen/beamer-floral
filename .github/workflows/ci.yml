@@ -46,6 +46,7 @@ jobs:
             test/growth.tex
             test/growth-timed.tex
             test/growth-poster.tex
+            test/growth-patterns.tex
             test/growth-handout.tex
             test/frame-settings.tex
             test/frametitle-wrap.tex
@@ -57,10 +58,12 @@ jobs:
             test/overlay-reuse.tex
             test/reuse.tex
             test/reuse-stock.tex
+            test/patterns.tex
             docs/src/tour.tex
             docs/src/showcase.tex
             docs/src/stock-default.tex
             docs/src/stock-Madrid.tex
+            docs/src/pattern-example.tex
             docs/src/stock-Berlin.tex
             test/acceptance/matrix-43.tex
             test/acceptance/matrix-169.tex
@@ -86,7 +89,7 @@ jobs:
           post_compile: |
             set -e
             FLORAL_VERIFY_STABLE=1 latexmk -g -lualatex -interaction=nonstopmode -halt-on-error test/growth.tex
-            texlua test/check_reuse.lua reuse.log reuse-stock.log
+            texlua test/check_reuse.lua reuse.log reuse-stock.log patterns.log
             texlua test/check_boxes.lua frametitle-wrap.log
             texlua test/check_boxes.lua headline.log
             texlua test/check_boxes.lua ornament-settings.log
@@ -96,8 +99,11 @@ jobs:
             # Keep these checks in the TeX container: it owns the generated
             # PDFs and provides the matching LuaLaTeX/latexmk installation.
             python3 tools/check_growth_pdf.py growth-timed.pdf
+            python3 tools/check_growth_pdf.py growth-patterns.pdf
             python3 tools/build_animation.py --engine tikz-flora --outdir build/raster test/growth-raster.tex
             python3 tools/check_growth_pdf.py build/raster/growth-raster.pdf
+            python3 tools/build_animation.py --engine tikz-flora --outdir build/raster-patterns test/growth-patterns-raster.tex
+            python3 tools/check_growth_pdf.py build/raster-patterns/growth-patterns-raster.pdf
             python3 tools/build_animation.py --engine tikz-flora --outdir build/raster-geometry test/raster-geometry.tex
             FLORAL_VERIFY_STABLE=1 python3 tools/build_animation.py --engine tikz-flora --outdir build/raster-geometry test/raster-geometry.tex
             python3 tools/check_growth_pdf.py build/raster-geometry/raster-geometry.pdf

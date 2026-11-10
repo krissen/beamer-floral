@@ -18,6 +18,13 @@ local expected={
     -- content: one-line titled, untitled, two-line titled, reserved strip.
     drawings={title=1, section=1, content=4},
   },
+  -- Patterns: the settings are part of a drawing's key. Frames 1 and 2 share
+  -- one; flora on a frame, and a second pattern, each get another.
+  patterns={
+    decisions={'content yes', 'content yes', 'content yes', 'content yes',
+      'content no (growing)'},
+    drawings={title=0, section=0, content=3},
+  },
   ['reuse-stock']={
     decisions={'title yes', 'section no (not listed)', 'content no (not listed)'},
     drawings={title=1, section=0, content=0},

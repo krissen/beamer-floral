@@ -13,6 +13,8 @@
     \florasetup{growth duration=0.4,growth fps=10}
   \fi
 \fi
+% test/growth-patterns*.tex set \floralpatterns: a pattern with a hero instead of flora.
+\ifdefined\floralpatterns\florasetup{pattern=seigaiha,hero=rosette,edge=fade}\fi
 \ifdefined\floralstatic\else
 \makeatletter
 \let\floraltestinit\@anim@@jsinit
