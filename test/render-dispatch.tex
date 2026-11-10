@@ -3,36 +3,71 @@
 \directlua{
   local page=flora.page
   local custom_calls=0
-  local cache_calls=0
+  local static_calls=0
+  local stub_calls=0
+  % Cache lookups per frame; a frame not listed must not consult the cache.
+  local cache_calls={}
+  local expected_cache={[1]=1,[3]=2,[6]=1}
+  % A first run does not yet know frame 7's overlay count: its first overlay
+  % takes the engine path, which is correct. Once the count is known, both
+  % overlays share one static drawing, looked up once.
+  local engine7=0
   local cache=require('flora.cache')
   local cache_page=cache.page
   cache.page=function(...)
-    cache_calls=cache_calls+1
+    local count=beamer_floral.count
+    cache_calls[count]=(cache_calls[count] or 0)+1
     return cache_page(...)
+  end
+  local function growing(r)
+    assert(type(r)=='function' and r~=beamer_floral.render_static,
+      'growing frames keep the growth renderer')
   end
   flora.page=function(a)
     local count=beamer_floral.count
     local custom
-    if count==4 or count==5 then
+    if count==4 or count==5 or count==10 then
       custom=function() custom_calls=custom_calls+1 end
       a.render_page=custom
     end
     local prepare=a.prepare_spec
     a.prepare_spec=function(spec)
       prepare(spec)
-      if count==2 then assert(type(a.render_page)=='function','timed override must persist')
-      elseif count==4 then assert(a.render_page==custom,'static custom renderer must be preserved')
+      if count==2 or count==8 then growing(a.render_page)
+      elseif count==4 or count==10 then assert(a.render_page==custom,'static custom renderer must be preserved')
       elseif count==5 then
         assert(a.render_page==custom,'reuse must preserve a custom renderer')
         assert(not beamer_floral.frame.reuse,'a frame with a custom renderer is not reused')
       elseif count==6 then assert(a.render_page==beamer_floral.render_reused,'reuse frames use the reused drawing')
+      elseif count==7 and beamer_floral.stages==1 then
+        assert(a.render_page==nil,'a frame not yet known to have overlays keeps the engine path')
+        engine7=engine7+1
+      elseif count==7 then
+        assert(a.render_page==beamer_floral.render_static,'static overlays use the cached static drawing')
+        local static=a.render_page
+        a.render_page=function(...) static_calls=static_calls+1; return static(...) end
+      elseif count==9 then
+        growing(a.render_page)
+        % The raster cache is not built here; the route is all this frame checks.
+        a.render_page=function() stub_calls=stub_calls+1; return true end
       else assert(a.render_page==nil,'static frames must retain the engine cache path') end
     end
     return page(a)
   end
   floral_check_custom=function()
-    assert(custom_calls==2,'each custom renderer must run once')
-    assert(cache_calls==4,'three static pages and the reused drawing must consult the cache')
+    assert(custom_calls==4,'each custom renderer must run once per page')
+    local known=beamer_floral.previous[7]
+    if known and known.overlays==2 then
+      assert(static_calls==2 and engine7==0,'the static drawing must serve both overlays')
+    end
+    assert(static_calls+engine7==2,'frame 7 has two overlays')
+    expected_cache[7]=engine7+(static_calls>0 and 1 or 0)
+    assert(stub_calls==2,'the raster frame must reach its renderer on both overlays')
+    for frame=1,10 do
+      assert((cache_calls[frame] or 0)==(expected_cache[frame] or 0),
+        'frame '..frame..' consulted the cache '..(cache_calls[frame] or 0)..' times, expected '
+        ..(expected_cache[frame] or 0))
+    end
   end
 }
 \usetheme{floral}
@@ -54,4 +89,14 @@
 \begin{frame}{Custom painter with reuse}The existing callback is retained.\end{frame}
 \florathisframe{growth=off,reuse=content}
 \begin{frame}{Reused drawing}This frame uses the reused drawing.\end{frame}
+% The same text on both overlays: one drawing, looked up once per compile.
+\florathisframe{growth=off}
+\begin{frame}<1-2>{Static overlays}The same text on every overlay.\end{frame}
+\florathisframe{growth=overlays}
+\begin{frame}{Overlay growth}First\pause\par Second\end{frame}
+\directlua{beamer_floral.raster_cache=true}
+\begin{frame}{Raster playback}First\pause\par Second\end{frame}
+\directlua{beamer_floral.raster_cache=false}
+\florathisframe{growth=off}
+\begin{frame}{Custom painter with overlays}First\pause\par Second\end{frame}
 \end{document}
