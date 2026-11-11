@@ -233,6 +233,47 @@ function M.context(start,continuation,enabled,plain)
   end
 end
 
+-- A reused drawing's spec, from a page's prepared spec: one class drawing
+-- for every page of the class with the same title state and settings.
+local function reused_geometry(spec)
+  local t=spec.text
+  spec.lines={{x0=t.x0,y0=t.y0,x1=t.x1,y1=t.y1}}
+  -- A title's width is not measured: a titled drawing keeps the top band
+  -- clear across the text block, down to the title's height.
+  local titled=spec.frametitle and true or false
+  spec.frametitle=titled; spec.title=nil
+  if not titled then spec.frametitle_height=nil end
+  spec.header_right=titled and t.x1 or nil
+  spec.body_top=spec.header=='body' and not M.plain
+    and t.y1-(titled and spec.frametitle_height or 0) or nil
+  spec.seed=flora.seed(spec.doc_seed,page_classes[M.frame.class])
+  -- Alternating layouts need one drawing for each side.
+  spec.page=spec.layout=='split' and 2-M.count%2 or 1
+end
+-- Whether the engine places and paints a page's running-head marks on
+-- their own (compose.mark_layout); an older engine leaves reused pages
+-- without a mark.
+local function page_marks_supported()
+  local ok,C=pcall(require,'flora.compose')
+  return ok and type(C.mark_layout)=='function'
+end
+-- The engine's mark layout for a page spec, shared by every page whose spec
+-- differs only in its measured lines (one per class and title state), and
+-- its key.
+local function mark_layout(page)
+  local lines=page.lines
+  page.lines=nil
+  local key=Serial.encode(page)
+  page.lines=lines
+  M.mark_layouts=M.mark_layouts or {}
+  local layout=M.mark_layouts[key]
+  if not layout then
+    layout=require('flora.compose').mark_layout(page)
+    M.mark_layouts[key]=layout
+  end
+  return layout,key
+end
+
 function M.prepare(spec)
   if M.stage_now then spec.layout=M.stage_now end
   -- Untitled frames still have a running headline; plain frames do not.
@@ -289,11 +330,26 @@ function M.prepare(spec)
   -- A reused drawing ignores measured content, so content cannot request a
   -- rerun. Only the frame title is kept, its height rounded up to 8 pt so
   -- descenders do not split one-line titles: the upper plant leaves that band
-  -- clear, and it selects the drawing.
+  -- clear, and it selects the drawing. The page's running-head mark is its
+  -- own (render_reused): of the measured lines only those that decide it are
+  -- kept, and in body mode the page's own body top, which is its ceiling.
+  M.mark_geometry=nil
   if M.frame.reuse then
     local h=observed.frametitle and observed.frametitle_height
-    observed={lines={},text=observed.text,frametitle=observed.frametitle and true or false,
-      frametitle_height=h and h>0 and math.ceil(h/8)*8 or nil}
+    local rounded=h and h>0 and math.ceil(h/8)*8 or nil
+    local marks=page_marks_supported()
+    local lines,body_top={},nil
+    if marks then
+      local page=copy(spec)
+      for _,k in ipairs(setting_fields) do page[k]=copy(M.frame.settings[k]) end
+      page.frametitle_height=rounded
+      reused_geometry(page)
+      if page.body_top then body_top=observed.body_top or page.body_top; page.body_top=body_top end
+      local _,cut=mark_layout(page):place(observed.lines or {})
+      lines=cut
+    end
+    observed={lines=lines,text=observed.text,frametitle=observed.frametitle and true or false,
+      frametitle_height=rounded,body_top=body_top}
   end
   local entry=M.current[M.count]
   if not entry then entry={signature=signature,geometry={lines={}},overlays=0}; M.current[M.count]=entry end
@@ -309,19 +365,8 @@ function M.prepare(spec)
   -- split parity and any page-dependent composition must stay fixed as well.
   spec.page=M.count
   if M.frame.reuse then
-    local t=spec.text
-    spec.lines={{x0=t.x0,y0=t.y0,x1=t.x1,y1=t.y1}}
-    -- A title's width is not measured: a titled drawing keeps the top band
-    -- clear across the text block, down to the title's height.
-    local titled=spec.frametitle and true or false
-    spec.frametitle=titled; spec.title=nil
-    if not titled then spec.frametitle_height=nil end
-    spec.header_right=titled and t.x1 or nil
-    spec.body_top=spec.header=='body' and not M.plain
-      and t.y1-(titled and spec.frametitle_height or 0) or nil
-    spec.seed=flora.seed(spec.doc_seed,page_classes[M.frame.class])
-    -- Alternating layouts need one drawing for each side.
-    spec.page=spec.layout=='split' and 2-M.count%2 or 1
+    M.mark_geometry={lines=copy(spec.lines or {}),body_top=spec.body_top}
+    reused_geometry(spec)
   end
   M.stage=entry.overlays
   M.stages=cached and cached.signature==signature and cached.overlays or M.stage
@@ -455,7 +500,33 @@ local function cached_or_form(spec)
   if not drawing then drawing={}; form_painter(drawing,spec) end
   return drawing
 end
-local function draw_drawing(drawing)
+-- A drawing's Form or image XObject: its resource name and object number.
+local function xobject(drawing)
+  if drawing.objnum then return drawing.name,drawing.objnum end
+  local f=drawing.forms[1]
+  return f.name,f.object
+end
+-- A drawing, then a page's own marks over it: two XObjects, each carrying
+-- its own resources, so the page names only the two.
+local function draw_drawing(drawing,marks)
+  if marks then
+    local painter=require('flora.paint').new{backend='pdf'}
+    local refs,ops,defs={},{},{}
+    for _,d in ipairs({drawing,marks}) do
+      local name,object=xobject(d)
+      refs[#refs+1]='/'..name..' '..object..' 0 R'
+      ops[#ops+1]='/'..name..' Do'
+      if d.pt then for _,def in ipairs(d.pt.defs) do defs[#defs+1]=def end end
+    end
+    painter.defs=defs
+    painter.xobjects={}
+    painter.pdf_resources='/XObject << '..table.concat(refs,' ')..' >>'
+    painter.coverage=drawing.coverage or (drawing.pt and drawing.pt.coverage)
+    painter.count=(drawing.count or (drawing.pt and drawing.pt.count) or 0)
+      +(marks.count or (marks.pt and marks.pt.count) or 0)
+    painter:emit(table.concat(ops,' '))
+    return painter
+  end
   if not drawing.objnum then return draw_form(drawing) end
   local painter=require('flora.paint').new{backend='pdf'}
   painter.xobjects={}
@@ -485,6 +556,38 @@ function M.render_static(spec)
   return draw_drawing(frame.static)
 end
 
+-- A reused page's own running-head marks, painted over the class drawing:
+-- placed by the engine from this page's measured lines (and in body mode
+-- its body top, which also sets the page inset) with the drawing's layout,
+-- foot runs, clips and settings, as the adaptive page would place them. The mark's kind comes from the
+-- drawing's seed, so every page of a class shows the same kind. Pages
+-- whose marks fall alike share one drawing of them, cached as the flora is.
+-- nil when the page holds no mark or the engine cannot paint marks alone.
+local function reused_marks(spec)
+  local geometry=M.mark_geometry
+  if not geometry or not page_marks_supported() then return nil end
+  local page=copy(spec)
+  if geometry.body_top and page.body_top then page.body_top=geometry.body_top end
+  local layout,key=mark_layout(page)
+  local marks=layout:place(geometry.lines)
+  -- For test/check_reuse_mark.lua: the count, then each mark's size and
+  -- centre, one short line each.
+  texio.write_nl('log',string.format('beamer-floral: frame %d reused page marks %d',M.count,#marks))
+  for _,m in ipairs(marks) do
+    texio.write_nl('log',string.format('beamer-floral: frame %d reused page mark %.2f pt at %.2f',M.count,m.size,m.y))
+  end
+  if #marks==0 then return nil end
+  page.marks_only=marks
+  M.reused_marks=M.reused_marks or {}
+  key=key..Serial.encode(marks)
+  local drawing=M.reused_marks[key]
+  if not drawing then
+    drawing=cached_or_form(page)
+    M.reused_marks[key]=drawing
+  end
+  return drawing
+end
+
 -- A reused drawing is one PDF object per class, title state, settings and
 -- page geometry.
 function M.render_reused(spec)
@@ -497,7 +600,7 @@ function M.render_reused(spec)
     texio.write_nl('log','beamer-floral: drew reused flora for class '..M.frame.class
       ..(reused.hit and ' from the cache' or ''))
   end
-  return draw_drawing(reused)
+  return draw_drawing(reused,reused_marks(spec))
 end
 
 function M.paint_animation(i)

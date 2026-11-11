@@ -1,0 +1,47 @@
+% Reused pages carry their own running-head mark: the class drawing is shared,
+% and each page's mark is placed by that page's own title, as on the adaptive
+% page. test/reuse-mark-adaptive.tex builds the same frames without reuse;
+% test/check_reuse_mark.lua compares the marks the two logs record. The page
+% cache is off, so every run paints the marks it records.
+\providecommand\floralmarkreuse{all}
+\documentclass[aspectratio=169]{beamer}
+\usetheme{floral}
+\edef\next{\noexpand\florasetup{seed=3, density=0.25, cache=false, reuse={\floralmarkreuse}}}\next
+\AtBeginSection[]{\begin{frame}[plain]\sectionpage\end{frame}}
+\title{Reused marks}\author{beamer-floral}\date{}
+% Every header-slot ornament painted, with its frame, overlay and page box.
+\directlua{
+  local Orn=require('flora.ornaments')
+  local draw=Orn.draw
+  Orn.draw=function(kind,pt,rng,box,o)
+    local k=type(kind)=='string' and Orn.kinds[kind] or kind
+    if k and k.slot=='header' then
+      local pj=pt:_pj()
+      local x0,y0,x1,y1=box[1],box[2],box[3],box[4]
+      if pj then x0,y0=pj(x0,y0); x1,y1=pj(x1,y1) end
+      texio.write_nl('log',string.format('bf test: frame '..beamer_floral.count..' stage '
+        ..beamer_floral.stage..' mark '..k.name..' '..string.rep(' \csstring\%.3f',4),
+        math.min(x0,x1),math.min(y0,y1),math.max(x0,x1),math.max(y0,y1)))
+    end
+    return draw(kind,pt,rng,box,o)
+  end
+}
+\begin{document}
+\begin{frame}[plain]\titlepage\end{frame}
+\section{First}
+\begin{frame}{A short title}Body text on the frame.\end{frame}
+\begin{frame}{A title with a subtitle}{The subtitle sits underneath}Body text.\end{frame}
+\begin{frame}{A title long enough that it has to wrap onto a second line of the frame title}Body.\end{frame}
+\begin{frame}Untitled body text on the frame.\end{frame}
+\begin{frame}{Paused}First\pause\par Second\pause\par Third\end{frame}
+\begin{frame}{Only}\only<1>{One line}\only<2>{Two\par lines}\end{frame}
+\begin{frame}[plain]A plain frame without its running head.\end{frame}
+\florathisframe{layout=centered}
+\begin{frame}{Centred: a mark in each margin}Body text.\end{frame}
+\florathisframe{header=body}
+\begin{frame}{Body mode}Body text close under the title.\end{frame}
+\florareserve{0pt}{\the\dimexpr\paperheight-1.2cm\relax}{\the\dimexpr 3cm\relax}{\the\paperheight}
+\begin{frame}{Reserved corner}Body text.\end{frame}
+\floraclearreserve
+\begin{frame}{A short title again}Body text on the frame.\end{frame}
+\end{document}
