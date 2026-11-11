@@ -67,6 +67,11 @@
     -\beamer@rightmargin-\beamer@rightsidebar\relax
   \global\oddsidemargin=\dimexpr\beamer@leftmargin+\beamer@leftsidebar-1in-\hoffset\relax
   \global\evensidemargin=\oddsidemargin
+  % Beamer's page style draws the canvas, headline, footline and sidebars
+  % from \oddsidemargin back to the page edge with these geometry macros;
+  % they are derived from the margins, so a restore puts the document's back.
+  \xdef\Gm@lmargin{\the\dimexpr\beamer@leftmargin+\beamer@leftsidebar\relax}%
+  \xdef\Gm@rmargin{\the\dimexpr\beamer@rightmargin+\beamer@rightsidebar\relax}%
   \global\columnwidth=\textwidth \global\linewidth=\textwidth \global\hsize=\textwidth}
 \makeatother
 
