@@ -4,7 +4,7 @@ Usage: check_stage.py stage.log stage.pdf
 
 For every frame of test/stage.tex (and stage-43.tex) the log holds the
 registers Beamer saw ("STAGE n textwidth=... left=... right=...") and the PDF
-holds the words as typeset. Both must match the expected table: the document
+holds the words as typeset (stage-onlytext.tex: the class option onlytextwidth). Both must match the expected table: the document
 margins (2 cm each side), the stage on either side with the default 0.39
 paper width and 12 mm, an explicit width and margin, and the title and
 section pages that keep the document margins unless they ask for the stage.
@@ -25,20 +25,30 @@ DOC = (20.0, 20.0)
 STAGE = 0.39 * width_mm
 # frame -> (left mm, right mm, kind)
 EXPECTED = {
-    1: (*DOC, "content"),
+    1: (*DOC, "plain"),
     2: (12.0, STAGE, "content"),
-    3: (*DOC, "content"),
+    3: (*DOC, "plain"),
     4: (STAGE, 12.0, "content"),
     5: (*DOC, "title"),
     6: (*DOC, "section"),
     7: (STAGE, 12.0, "content"),
     8: (STAGE, 12.0, "title"),
-    9: (*DOC, "content"),
+    9: (*DOC, "plain"),
     10: (20.0, 50.0, "content"),
-    11: (*DOC, "content"),
+    11: (*DOC, "plain"),
     12: (20.0, 60.0, "content"),
-    13: (*DOC, "content"),
+    13: (*DOC, "spread"),
 }
+# The class option onlytextwidth: stage=off must keep it on.
+EXPECTED_ONLYTEXT = {
+    1: (*DOC, "tight"),
+    2: (12.0, STAGE, "tight"),
+    3: (*DOC, "tight"),
+    4: (STAGE, 12.0, "tight"),
+    5: (*DOC, "tight"),
+}
+if "onlytext" in log.name:
+    EXPECTED = EXPECTED_ONLYTEXT
 TITLE_OFFSET_MM = 18.0  # \floratitleoffset
 
 errors = []
@@ -73,13 +83,25 @@ for n, (left, right, kind) in sorted(EXPECTED.items()):
     lo, hi = left * BP, width_bp - right * BP
     xmin = min(b[0] for b in boxes)
     xmax = max(b[2] for b in boxes)
-    if xmin < lo - 0.5 or xmax > hi + 0.5:
+    # "plain": a frame on the document margins with Beamer's default columns,
+    # which spread over the slide and may leave the text block on either side:
+    # only the registers are checked.
+    if kind != "plain" and (xmin < lo - 0.5 and kind != "spread" or xmax > hi + 0.5):
         fail(f"frame {n}: words span {xmin:.1f}..{xmax:.1f}bp, outside the text block {lo:.1f}..{hi:.1f}bp")
     if kind == "content":
         if not lo - 0.5 <= xmin <= lo + 1.5:
             fail(f"frame {n}: text starts at {xmin:.1f}bp, expected the left margin {lo:.1f}bp")
         if xmax < hi - 20:
             fail(f"frame {n}: text ends at {xmax:.1f}bp and does not use the width up to {hi:.1f}bp")
+    elif kind == "tight":
+        # Columns that fill the text block exactly start at its left edge.
+        if not lo - 0.5 <= xmin <= lo + 1.5:
+            fail(f"frame {n}: columns start at {xmin:.1f}bp, expected the left margin {lo:.1f}bp")
+    elif kind == "spread":
+        # Beamer's default: such columns spread over the whole slide, so the
+        # left one starts left of the text block.
+        if xmin > lo - 5:
+            fail(f"frame {n}: columns start at {xmin:.1f}bp; expected them to spread left of {lo:.1f}bp")
     elif kind == "title":
         title = [b for b in boxes if b[4] == "Stage"]
         if len(title) != 1:
