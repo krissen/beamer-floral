@@ -613,6 +613,15 @@ def matrix_cell(doc, work, anim, name):
     return k, dst, run(dst, work, only={"ink"})["ink"]
 
 
+def names_frame(failure, k):
+    """Whether an ink failure is about frame k: a pair k-1..k or k..k+1."""
+    pair = re.search(r"from frame (\d+) to (\d+)", failure)
+    if pair:
+        return k in (int(pair.group(1)), int(pair.group(2)))
+    single = re.search(r"frame (\d+) has", failure)
+    return bool(single) and int(single.group(1)) == k
+
+
 def matrix(pdf, work, keep):
     """Every animation x every kind of misplaced middle frame must be caught."""
     from concurrent.futures import ThreadPoolExecutor
@@ -622,8 +631,11 @@ def matrix(pdf, work, keep):
 
     def one(cell):
         anim, name = cell
-        return matrix_cell(doc, os.path.join(work, "cell%d%s" % (anim, name.replace(" ", ""))),
-                           anim, name)
+        k, dst, fails = matrix_cell(
+            doc, os.path.join(work, "cell%d%s" % (anim, name.replace(" ", ""))), anim, name)
+        # Only a failure about the mutated frame counts: any other failure
+        # would be the document's own.
+        return k, dst, [f for f in fails if names_frame(f, k)]
     with ThreadPoolExecutor(max_workers=3) as pool:
         done = list(pool.map(one, cells))
     ok = True
@@ -662,18 +674,17 @@ def main(argv):
     pdf = Path(args[0]).resolve()
     with tempfile.TemporaryDirectory() as work:
         status = 0
-        if "--matrix" not in argv:
-            results = run(pdf, work, log=log)
-            for name, fails in results.items():
-                print("%s %s" % ("FAIL" if fails else "PASS", name))
-                for f in fails:
-                    print("    " + f)
-                status |= bool(fails)
-        if "--self-test" in argv:
-            if status:
-                sys.exit("the real PDF fails; not running the mutations")
-            if not self_test(pdf, work, log):
-                status = 1
+        results = run(pdf, work, log=log)
+        for name, fails in results.items():
+            print("%s %s" % ("FAIL" if fails else "PASS", name))
+            for f in fails:
+                print("    " + f)
+            status |= bool(fails)
+        mutating = "--self-test" in argv or "--matrix" in argv
+        if mutating and status:
+            sys.exit("the real PDF fails; not running the mutations")
+        if "--self-test" in argv and not self_test(pdf, work, log):
+            status = 1
         if "--matrix" in argv and not matrix(pdf, work, keep):
             status = 1
         sys.exit(status)
