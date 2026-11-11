@@ -102,7 +102,9 @@ build outputs. LuaLaTeX requests a rerun when the geometry or overlay count chan
 `latexmk` runs the necessary passes. On a first uncached run the decoration
 is provisional. Keep floral settings, reservations, margins and on/off state
 constant within a frame; change them before the next frame. An `againframe`
-replay gets a new garden, and `allowframebreaks` continuations each get their
+replay gets a new garden and takes its stage from the settings at the replay, so
+repeat a `\florathisframe{stage=...}` before it when the original frame had one;
+and `allowframebreaks` continuations each get their
 own. Split-layout parity follows those logical frame invocations rather than
 the overlay page counter. Settings queued while flora is off remain pending
 until a frame is painted.
