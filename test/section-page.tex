@@ -34,6 +34,8 @@
       section(spec,'first-overlay section preset must persist')
     elseif n==7 then
       section(spec,'a titled frame can carry a section page')
+    elseif n==8 then
+      section(spec,'a section with a navigation label takes the section preset')
     end
   end
 }
@@ -52,4 +54,6 @@
   \only<2>{Content following the section page keeps the same garden.}
 \end{frame}
 \begin{frame}\sectionpage\end{frame}
+% The page shows the full name, not the label; CI greps the PDF text for it.
+\section[Short label]{The full section name}
 \end{document}

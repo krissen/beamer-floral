@@ -104,6 +104,7 @@ jobs:
             FLORAL_VERIFY_STABLE=1 latexmk -g -lualatex -interaction=nonstopmode -halt-on-error test/growth.tex
             texlua test/check_reuse.lua reuse.log reuse-stock.log reuse-section-page.log stage-reuse.log patterns.log
             python3 test/check_patterns.py patterns.pdf
+            pdftotext section-page.pdf - | grep -q 'The full section name'
             python3 test/check_stage.py stage.log stage.pdf
             python3 test/check_stage.py stage-43.log stage-43.pdf
             python3 test/check_stage.py stage-onlytext.log stage-onlytext.pdf
