@@ -419,7 +419,12 @@ ornament at the top of the left margin. On a titled frame it sits above the
 title, in a size that follows the room there: 20 to 22 pt over a one-line
 title, 12 to 14 pt with a subtitle or over two lines.
 `\florasetup{tune={gesture={mark_min=10}}}` sets the smallest mark drawn
-(10 pt by default); with less room the mark is left out.
+(10 pt by default); with less room the mark is left out. The mark is drawn
+whole or not at all: no kind, the compass with its crosshair included,
+reaches above or below its square, so the top of the page never cuts it,
+and beside a reservation (see [Reserving space](#reserving-space)) it takes
+the largest whole mark that fits, lower down or smaller, or is left out.
+Pattern pages carry no mark.
 
 ### Layout and density
 
@@ -734,6 +739,8 @@ at the lower-left corner:
 This is useful for a footline, a logo or a caption. Reservations persist
 until `\floraclearreserve`; set and clear them between frames, not between
 overlays. They clip the flora and preserve the underlying background.
+The running-head mark is never cut by one: it moves down or gets smaller
+beside it, or is left out, and its rule stops short of it.
 `\florabackground[bottom]{blue!10}{1cm}` adds a band before the flora;
 use height `0pt` to disable it. A reservation protects content over that band.
 Neither command measures a logo automatically.
