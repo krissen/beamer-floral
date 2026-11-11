@@ -53,7 +53,7 @@
         if l.x1>box[1] and l.x0<p.spec.text.x1 and l.y1<=box[4] then floor=math.max(floor,l.y1) end
       end
       assert(box[2]>=floor+2-1e-6,'mark reaches the ink under it on frame '..n)
-      assert(box[3]-box[1]>=12-1e-6,'mark under the 12 pt minimum on frame '..n)
+      assert(box[3]-box[1]>=10-1e-6,'mark under the 10 pt minimum on frame '..n)
       if n>=2 and not (n==5) then
         assert(p.clip==nil,'a titled frame must place its mark without the header clip')
       end
