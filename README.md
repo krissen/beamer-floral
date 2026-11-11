@@ -310,23 +310,21 @@ What you give up:
 Measured with `tools/measure_reuse.py` on `test/reuse-benchmark.tex`
 (16:9, floral theme). A warm build is a second full `latexmk` compile of the
 unchanged document with the flora caches kept; a cold build starts from an
-empty output directory.
+empty output directory. The machine was shared, and its load average was
+4.6-26.7 at the start of the builds, so times carry some noise.
 
 | Deck | Adaptive | `reuse=content` | `reuse=all` |
 |---|---:|---:|---:|
-| Title and 10 frames of two overlays, 21 pages | 4.6 s, 21.5 MB | | 3.8-3.9 s, 3.3 MB |
-| Title and 40 one-overlay frames, 41 pages | 4.7-5.1 s, 62.2 MB | 4.4-6.1 s, 8.6 MB | 4.2-4.3 s, 3.4 MB |
-| Title and 30 frames of three overlays, 91 pages | 6.9 s, 49.0 MB | | 5.5-5.6 s, 3.4 MB |
-| As above with 6 section pages, 97 pages | 92.6-95.5 s, 57.0 MB\* | 12.8-13.0 s, 16.6 MB | 12.7-12.8 s, 4.7 MB |
+| Title and 10 frames of two overlays, 21 pages | 3.8-4.4 s, 21.5 MB | | 3.8-3.9 s, 3.3 MB |
+| Title and 40 one-overlay frames, 41 pages | 4.6-5.2 s, 62.0 MB | 4.2-4.4 s, 8.5 MB | 4.2-4.3 s, 3.3 MB |
+| Title and 30 frames of three overlays, 91 pages | 5.9-6.2 s, 48.8 MB | | 5.5-5.8 s, 3.3 MB |
+| As above with 6 section pages, 97 pages | 23.2-25.7 s, 57.0 MB | 12.5-30.7 s, 16.7 MB | 12.8-13.8 s, 4.6 MB |
 
-Warm builds; cold builds take 15 s, 38-49 s, 40 s and 121-125 s\* adaptive
-against 5.5-5.6 s, 6.2-6.4 s, 7.5-7.8 s and 15.2-15.5 s with `reuse=all`.
-Frames with several overlays have been read back from the cache since #36;
-the adaptive figures marked \* were measured before that and are remeasured in
-#27. Beamer
-without floral takes 3.2-3.6 s on the 21-page deck, and the 97-page deck
-takes about 12 s with flora off.
-Measured with TeX Live 2025 and tikz-flora `cc3fb48`.
+Warm builds; cold builds take 14.3-16.2 s, 36.6-42.3 s, 33.4-36.5 s and
+76.1-89.9 s adaptive against 5.4 s, 5.7-5.9 s, 7.1-7.8 s and 14.7-16.0 s with
+`reuse=all`. Beamer without floral takes 3.3-3.4 s on the 21-page deck, and
+the 97-page deck takes 12.4-13.8 s with flora off.
+Measured with TeX Live 2025 and tikz-flora `60a153d`.
 
 ## Patterns
 
@@ -350,18 +348,16 @@ and is not repeated here. Without a `pattern` key the flora is unchanged.
 Measured with `tools/measure_reuse.py` on `test/reuse-benchmark.tex` (16:9,
 floral theme, `PATTERN=asanoha` for the pattern decks, no `reuse`). Cold
 builds, with the PDF size; the machine was shared and its load average
-was 6-10 during the runs, so times carry some noise.
+was 4.6-26.7 at the start of the runs, so times carry some noise.
 
 | Deck | Flora | `pattern=asanoha` |
 |---|---:|---:|
-| Title and 10 frames of two overlays, 21 pages | 31.3 s, 21.5 MB | 5.6 s, 0.18 MB |
-| Title and 40 one-overlay frames, 41 pages | 49.0 s, 62.2 MB | 7.9 s, 0.65 MB |
-| Title and 30 frames of three overlays, 6 section pages, 97 pages | 173 s, 57.0 MB | 44.6 s, 0.72 MB |
+| Title and 10 frames of two overlays, 21 pages | 14.3-16.2 s, 21.5 MB | 4.4-4.5 s, 0.18 MB |
+| Title and 40 one-overlay frames, 41 pages | 36.6-42.3 s, 62.0 MB | 5.6 s, 0.65 MB |
+| Title and 30 frames of three overlays, 6 section pages, 97 pages | 76.1-89.9 s, 57.0 MB | 29.9-35.8 s, 0.72 MB |
 
 Pattern pages are small vector drawings, so the file stays small without
-`reuse`. Measured with TeX Live 2025 and tikz-flora `8123ec2`, before frames
-with overlays were taken from the page cache (#36); #27 remeasures the
-overlay decks.
+`reuse`. Measured with TeX Live 2025 and tikz-flora `60a153d`.
 
 Patterns work with the rest of the theme:
 
