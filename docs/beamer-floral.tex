@@ -94,7 +94,11 @@ The package sets margins of 2.5\,cm on the left and 1\,cm on the right. Call
 
 The floral theme adds \cmd{floralornamentsetup}, \cmd{floraldivider} and the
 \texttt{floral} templates for \texttt{itemize item}, \texttt{itemize subitem}
-and \texttt{itemize subsubitem}. Every frame of the theme carries a
+and \texttt{itemize subsubitem}, and an optional section page,
+\verb|\setbeamertemplate{section page}[floral]|: the section name beside the
+flora with a divider below it, on a lighter version of the title page's
+composition. It is not selected by default, and the theme adds no
+\cmd{AtBeginSection} hook; the README shows the one-line hook. Every frame of the theme carries a
 running-head mark at the top of the left margin; on a titled frame it sits
 above the title, in a size that follows the room there.
 \verb|tune={gesture={mark_min=10}}| sets the smallest mark drawn (10\,pt by
