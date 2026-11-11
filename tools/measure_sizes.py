@@ -57,8 +57,12 @@ def main():
     rows = [measure(variant, outdir, engine) for variant in args.variant or VARIANTS]
     commit = subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "--short", "HEAD"],
                                      text=True).strip()
-    engine_commit = subprocess.check_output(["git", "-C", str(engine), "rev-parse", "--short", "HEAD"],
-                                            text=True).strip()
+    pinned = engine / "engine-commit.txt"
+    if pinned.is_file():
+        engine_commit = pinned.read_text().split()[0][:7]
+    else:
+        engine_commit = subprocess.check_output(
+            ["git", "-C", str(engine), "rev-parse", "--short", "HEAD"], text=True).strip()
     tex = subprocess.check_output(["lualatex", "--version"], text=True).splitlines()[0]
     result = {"commit": commit, "engine": engine_commit, "tex": tex,
               "platform": platform.platform(), "rows": rows}
