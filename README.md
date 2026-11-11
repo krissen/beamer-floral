@@ -595,6 +595,8 @@ side (default `12mm`). Both take any length, such as `55mm` or `0.3\paperwidth`.
 - Stage frames keep `columns` inside the text block, as with the class option
   `onlytextwidth`; the frames after them keep the document's own setting. An
   explicit `[totalwidth=...]` on a staged frame still wins.
+- `pattern` works on the stage: the pattern fills the
+  wide margin and gives way to the text column.
 - With `reuse`, a staged frame has its own page geometry and so its own shared
   drawing; frames on the document margins keep theirs.
 - Sidebar themes are not supported, as before.
