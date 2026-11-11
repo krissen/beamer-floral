@@ -1,0 +1,15 @@
+% The README's "Patterns" example: asanoha, fading into the text, with a rosette.
+\documentclass[aspectratio=169]{beamer}
+\usetheme{floral}
+\florasetup{seed=3, pattern=asanoha, edge=fade, hero=rosette}
+\setbeamersize{text margin left=2.5cm, text margin right=1cm}
+\title{Patterns}\author{The Floral Project}\date{}
+\begin{document}
+\begin{frame}{A geometric pattern instead of flora}
+  \begin{itemize}
+    \item The pattern fills the margins and gives way to the text.
+    \item \texttt{hero=rosette} adds one large motif in a top corner.
+    \item \texttt{\textbackslash florathisframe\{pattern=none\}} grows flora on one frame.
+  \end{itemize}
+\end{frame}
+\end{document}

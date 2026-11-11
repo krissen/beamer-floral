@@ -26,7 +26,7 @@ You need LuaLaTeX and the engine,
 [tikz-flora](https://github.com/krissen/tikz-flora). This package uses
 integration hooks that are not in the upstream engine yet; they are
 [proposed upstream](https://github.com/wn-mitch/tikz-flora/issues/2). Until
-they land, use the `beamer-floral` branch of the fork, commit `cc3fb48` or
+they land, use the `beamer-floral` branch of the fork, commit `8123ec2` or
 later. The options below all take care of that.
 
 ### From the release archive
@@ -182,6 +182,59 @@ Handout mode always uses complete static flora and needs no render cache.
 vector path. Neither this path nor manual overlay reveals need the external
 raster tools.
 
+### GIF playback for viewers without JavaScript
+
+Viewers such as pympress cannot run the JavaScript of `animate`. For them,
+select GIF playback:
+
+```tex
+\usepackage[gif]{beamer-floral-animation}
+\floralgifmatte{FFFFFF} % optional: the page colour, six hex digits
+```
+
+Every `growth=timed` interval is then built from the raster cache as a GIF
+and played by a full-page Screen annotation, with no `animate` environment
+and no JavaScript in the PDF. `gif` includes `[raster]`, so the builder and
+its requirements above apply. It also needs
+[Pillow](https://pypi.org/project/pillow/) when it builds GIFs
+(`python3 -m pip install pillow`). The build is the same:
+
+```sh
+python3 tools/build_animation.py --outdir build/slides slides.tex
+```
+
+By default the GIFs are **embedded in the PDF**, which is then
+self-contained. That costs about 1 MB per second of animation at 20 fps and
+144 dpi (8 s measured: 8.5 MB). With `[gif-external]` the PDF stays small and
+plays the GIFs from files instead, in a Movie annotation. Keep
+`<job>.floral-animation/` beside the PDF then, and move them together; a PDF
+without them plays nothing.
+
+The frames are composited against `\floralgifmatte` (default `FFFFFF`), so
+set it to your page colour; pixels that are almost fully transparent stay
+transparent. GIF files are named by interval, frame rate, matte colour and
+encoder version, and are reused on later builds.
+
+Limits:
+
+- GIF frames are thinned above 50 fps effective rate (`growth fps` times
+  the rounding of steps per interval can exceed it): every k-th sample is
+  kept, with the first and last always present. Viewers that decode GIFs with
+  GdkPixbuf, as pympress does, play any frame delay below 2 centiseconds as 20 ms
+  (and a zero delay as 100 ms), so faster frames would play too slowly.
+  An interval shorter than 20 ms plays in 20 ms.
+- The GIF is an annotation above the page, not page content. Reservations
+  (`\florareserve`) are applied to it: every pixel inside a reserved rectangle
+  is transparent in every frame, rounded outward to whole pixels. Because the
+  GIF plays above all page content, reserve areas that hold a logo or footline.
+- Soft flora edges are matted against `\floralgifmatte`, not against what is
+  under them. Over a coloured background band, set the matte to the band's colour
+  or accept a light halo.
+- Playback is verified in pympress 1.8.6. Viewers that do not play these
+  annotations show each interval's start state, not the finished flora.
+- Each interval plays once. Returning to a page does not replay it.
+- Print or export from handout mode (it paints complete static flora).
+
 Overleaf can compile static flora, manual reveals and vector playback directly.
 For cached timed playback, build the cache locally first and upload it with
 the document; rebuild locally after changes that invalidate it. The external
@@ -237,7 +290,8 @@ drawing per title height (one line, two lines), and frames without one share
 another. A different reservation, `\florathisframe` setting or page geometry
 gives that frame its own drawing, which later frames with the same settings
 reuse. Growing frames keep their own drawings, and so does a frame that an
-integration draws with its own `render_page` callback. The drawing is cached with the
+integration draws with its own `render_page` callback. Pattern frames keep
+their own drawings too (see [Patterns](#patterns)). The drawing is cached with the
 other flora, so later compiles do not draw it again.
 
 What you give up:
@@ -270,6 +324,54 @@ the adaptive figures marked \* were measured before that and are remeasured in
 without floral takes 3.2-3.6 s on the 21-page deck, and the 97-page deck
 takes about 12 s with flora off.
 Measured with TeX Live 2025 and tikz-flora `cc3fb48`.
+
+## Patterns
+
+The engine can fill a page with a geometric pattern instead of flora. The
+keys go in `\florasetup` or `\florathisframe`, like any other setting:
+
+```tex
+\florasetup{pattern=asanoha, edge=fade, hero=rosette}
+\florathisframe{pattern=seigaiha, outer=margin, scale=1.5}   % this frame only
+\florathisframe{pattern=none}                                % flora on this frame
+```
+
+![A frame with the asanoha pattern and a rosette](docs/img/patterns.png)
+
+`pattern` names a pattern or a group, `edge` how the pattern meets the text,
+`hero` adds one large motif in a top corner, `outer` how it meets the paper's
+edge and `scale` sets the cell size. The catalogue of patterns, groups and
+values is in the [engine's README](https://github.com/krissen/tikz-flora#patterns)
+and is not repeated here. Without a `pattern` key the flora is unchanged.
+
+Measured with `tools/measure_reuse.py` on `test/reuse-benchmark.tex` (16:9,
+floral theme, `PATTERN=asanoha` for the pattern decks, no `reuse`). Cold
+builds, with the PDF size; the machine was shared and its load average
+was 6-10 during the runs, so times carry some noise.
+
+| Deck | Flora | `pattern=asanoha` |
+|---|---:|---:|
+| Title and 10 frames of two overlays, 21 pages | 31.3 s, 21.5 MB | 5.6 s, 0.18 MB |
+| Title and 40 one-overlay frames, 41 pages | 49.0 s, 62.2 MB | 7.9 s, 0.65 MB |
+| Title and 30 frames of three overlays, 6 section pages, 97 pages | 173 s, 57.0 MB | 44.6 s, 0.72 MB |
+
+Pattern pages are small vector drawings, so the file stays small without
+`reuse`. A frame with overlays is painted again rather than
+taken from the engine's page cache, which is why the last deck takes longer
+than the second although it has fewer frames.
+Measured with TeX Live 2025 and tikz-flora `8123ec2`.
+
+Patterns work with the rest of the theme:
+
+- `growth=overlays` and `growth=timed` grow the pattern through the same
+  progression as flora, with `hero` growing ring by ring from its centre.
+  Cached raster playback keys on every pattern setting, so changing one
+  rebuilds the samples.
+- Pattern frames keep their own drawing under `reuse`. A reused drawing keeps
+  the whole text block clear, which leaves a pattern almost nothing to fill,
+  and a pattern is small and quick to draw without it (see the measurements
+  below). A frame with `\florathisframe{pattern=none}` is a flora frame and is
+  reused as usual.
 
 ## File size
 

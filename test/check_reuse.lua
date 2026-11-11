@@ -18,6 +18,14 @@ local expected={
     -- content: one-line titled, untitled, two-line titled, reserved strip.
     drawings={title=1, section=1, content=4},
   },
+  -- Patterns keep their own drawings under reuse: a reused drawing keeps the
+  -- text block clear and leaves a pattern nothing to fill. The frame with
+  -- pattern=none is flora and is reused.
+  patterns={
+    decisions={'content no (pattern)', 'content no (pattern)', 'content yes',
+      'content no (pattern)', 'content no (growing)'},
+    drawings={title=0, section=0, content=1},
+  },
   ['reuse-stock']={
     decisions={'title yes', 'section no (not listed)', 'content no (not listed)'},
     drawings={title=1, section=0, content=0},

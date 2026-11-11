@@ -3,16 +3,37 @@
 \ifdefined\floralstatic
   \florasetup{seed=3,density=0.2,growth=overlays}
 \else
-  \ifdefined\floralraster
+  \ifdefined\floralgifexternal
+    \usepackage[gif-external]{beamer-floral-animation}
+  \else\ifdefined\floralgif
+    \usepackage[gif]{beamer-floral-animation}
+  \else\ifdefined\floralraster
     \usepackage[raster]{beamer-floral-animation}
   \else
     \usepackage[vector]{beamer-floral-animation}
-  \fi
+  \fi\fi\fi
   \florasetup{seed=3,density=0.2,growth=timed,growth duration=1,growth fps=20}
   \ifdefined\floralraster
     \florasetup{growth duration=0.4,growth fps=10}
   \fi
+  \ifdefined\floralgif
+    \florasetup{growth duration=0.4,growth fps=10}
+  \fi
+  \ifdefined\floralgifexternal
+    \florasetup{growth duration=0.4,growth fps=10}
+  \fi
+  \ifdefined\floralfast
+    % Effective rates above 50 fps: 3 steps in 0.05 s, then 2 steps in 0.025 s.
+    \florasetup{growth duration=0.05,growth fps=60}
+  \fi
 \fi
+\ifdefined\floralreserve
+  % A footline band and a block inside the page: nothing may play over them.
+  \florareserve{0pt}{0pt}{\paperwidth}{1cm}
+  \florareserve{7cm}{4cm}{9.3cm}{6.1cm}
+\fi
+% test/growth-patterns*.tex set \floralpatterns: a pattern with a hero instead of flora.
+\ifdefined\floralpatterns\florasetup{pattern=seigaiha,hero=rosette,edge=fade}\fi
 \ifdefined\floralstatic\else
 \makeatletter
 \let\floraltestinit\@anim@@jsinit

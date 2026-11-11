@@ -44,6 +44,17 @@ local function reuse_set(value)
 end
 local setting_fields={'layout','mix','ornaments','palette','spin','tune','header','doc_seed','reserve',
   'gilt','gilt_dpi','gilt_env','gilt_look','backdrop'}
+-- Every setting the engine copies onto a spec (pattern, edge, outer, scale,
+-- hero and any later key) is part of the frame's identity: a change misses
+-- the geometry cache, and each drawing keys on its own spec.
+do
+  local known={}
+  for _,k in ipairs(setting_fields) do known[k]=true end
+  local extra={}
+  for _,field in pairs(Settings.SPEC or {}) do if not known[field] then extra[#extra+1]=field end end
+  table.sort(extra)
+  for _,field in ipairs(extra) do setting_fields[#setting_fields+1]=field end
+end
 local growth_defaults={growth='off', ['growth duration']=8, ['growth fps']=20}
 
 local function copy(t)
@@ -188,14 +199,17 @@ function M.prepare(spec)
     local mark=(tex.count or {}).floralpageclass or 0
     M.frame.class=(M.page_title or mark==1) and 'title' or mark==2 and 'section' or 'content'
     -- A growing frame needs its own stages, and a frame with a caller's own
-    -- renderer is drawn by it, so both keep their own drawings.
+    -- renderer is drawn by it, so both keep their own drawings. So does a
+    -- pattern frame: a reused drawing keeps the whole text block clear, which
+    -- leaves a pattern almost nothing to fill, and patterns are cheap to draw.
     local listed=reuse_set(active['reuse'])[M.frame.class]
     local growing=M.frame.growth.growth~='off' and not M.handout
-    M.frame.reuse=listed and not growing and not M.custom_render or false
+    local patterned=type(spec.pattern)=='table' and next(spec.pattern)~=nil
+    M.frame.reuse=listed and not growing and not patterned and not M.custom_render or false
     -- One decision per frame, for test/check_reuse.lua.
     if texio and texio.write_nl then texio.write_nl('log',string.format('beamer-floral: frame %d class %s reuse %s',M.count,M.frame.class,
       M.frame.reuse and 'yes' or not listed and 'no (not listed)' or growing and 'no (growing)'
-      or 'no (custom renderer)')..'\n') end
+      or patterned and 'no (pattern)' or 'no (custom renderer)')..'\n') end
     M.frame.signature=Serial.encode({settings=M.frame.settings,width=spec.width,height=spec.height,
       text=spec.text,header_y=spec.header_y,input_signature=M.input_signature,growth=M.frame.growth,
       reuse=M.frame.reuse,class=M.frame.class})
@@ -285,8 +299,12 @@ function M.render_page(spec,a)
       return nil
     end
     steps=math.max(1,math.floor(samples+0.5))
+    if M.gif_playback and not M.raster_cache then
+      tex.error('beamer-floral: GIF playback needs the raster cache')
+      return nil
+    end
     if M.raster_cache then
-      raster=raster_cache().collect(M,copy(spec),steps)
+      raster=raster_cache().collect(M,copy(spec),steps,seconds)
       if not raster then
         if os.getenv('FLORAL_ANIMATION_PREPARE')~='1' then
           tex.error('beamer-floral: raster animation cache missing or stale; run python3 tools/build_animation.py for this document, or select [vector]')
@@ -312,7 +330,12 @@ function M.render_page(spec,a)
     if growth.growth=='overlays' then return Progression.render(frame.plan,last) end
     first=M.stage==1 and 0 or frame.levels[M.stage-1]
   end
-  M.animation={plan=frame.plan,spec=copy(spec),args=copy(a),first=first,last=last,steps=steps,raster=raster}
+  M.animation={plan=frame.plan,spec=copy(spec),args=copy(a),first=first,last=last,steps=steps,raster=raster,count=M.count}
+  if raster and raster.gif then
+    -- No animate environment and no JavaScript: the viewer plays the GIF.
+    raster_cache().typeset_gif(M.animation)
+    return true
+  end
   -- N intervals have N+1 samples, including their exact endpoints.
   -- The final frame has no playback dwell; animate stops on that frame.
   tex.sprint(string.format(
@@ -421,6 +444,15 @@ function M.paint_animation(i)
   local t=animation.first+(animation.last-animation.first)*i/animation.steps
   local pt=require('flora.progression').render(animation.plan,t)
   flora.typeset_page(pt,animation.spec,animation.args)
+end
+
+-- \floralgifmatte: the page colour the GIF frames are composited against.
+function M.check_matte(value)
+  if not value:match('^%x%x%x%x%x%x$') then
+    tex.error('beamer-floral: \\floralgifmatte needs six hexadecimal digits, as in FFFFFF')
+    return M.gif_matte
+  end
+  return value:upper()
 end
 
 function M.note_animation(id)
