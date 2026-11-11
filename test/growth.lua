@@ -34,7 +34,7 @@ assert(rendered[4]==1,'final overlay must be complete')
 -- Timed uses the same intervals and preserves endpoints after rounding.
 M.frame.growth={growth='timed',['growth duration']=8,['growth fps']=20}
 M.animation_support=true
-local stable=spec();stable.seed=1;stable.page=1
+local stable=spec();stable.seed=1;stable.page=1;stable.running_head=true
 for i=1,4 do
   M.stage=i
   assert(M.render_page(stable,{test=true})==true)

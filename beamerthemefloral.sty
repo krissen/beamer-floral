@@ -17,6 +17,10 @@
 \directlua{beamer_floral.title_defaults={layout="left",
   mix={density=2,leaves=3,leaflets=3,sprays=3,bloom=3},
   tune={gesture={top_inset=0}}}}
+% Plain frames show no running head, so nothing needs clearing above the
+% flora: the border and the head mark start at the paper's top, as on the
+% title page. Explicit frame settings still win.
+\directlua{beamer_floral.plain_defaults={tune={gesture={top_inset=0}}}}
 
 \makeatletter
 
