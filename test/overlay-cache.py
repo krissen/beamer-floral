@@ -51,6 +51,12 @@ VARIANTS = {
     "stage left": ({"ocstagesetting": r"\florasetup{stage=left}"}, "MMMHM"),
 }
 
+# Variants whose changed frame must be grown exactly once on the first
+# compile, however many overlays it has: frame number -> count. The frame
+# override lives for the first overlay only, so every overlay's drawing must
+# be keyed on the settings the frame started with.
+GROWN_ONCE = {"frame setting": {1: 1}}
+
 
 def source(switches):
     defs = "".join(f"\\def\\{k}{{{v}}}" for k, v in switches.items())
@@ -90,6 +96,19 @@ def statuses(logs):
             sys.exit(f"frame {frame} was painted without the page cache")
         result += "H" if all(s == "from the cache" for s in found) else "M"
     return result
+
+
+def grown_counts(logs):
+    """How many times each frame was grown and cached, over all passes."""
+    grown = {frame: 0 for frame in range(1, FRAMES + 1)}
+    for log in logs:
+        frame = None
+        for line in log.splitlines():
+            if m := FRAME.match(line):
+                frame = int(m.group(1))
+            elif (m := CACHE.match(line)) and frame in grown and m.group(1) == "grown and cached":
+                grown[frame] += 1
+    return grown
 
 
 def pages(out, name):
@@ -135,7 +154,11 @@ def main():
             out = Path(tmp) / slug
             shutil.copytree(base, out)
             (out / "d.tex").write_text(source(switches))
-            got = statuses(compile_passes(out, env))
+            logs = compile_passes(out, env)
+            got = statuses(logs)
+            grown = grown_counts(logs)
+            wanted = GROWN_ONCE.get(name, {})
+            grown_ok = all(grown[f] == n for f, n in wanted.items())
             # The cold build of the unchanged deck is the base build itself.
             if switches:
                 cold = Path(tmp) / f"{slug}-cold"
@@ -146,9 +169,10 @@ def main():
             else:
                 cold_pages = base_pages
             diff = differing_pixels(pages(out, "warm"), cold_pages)
-            ok = got == expected and diff is not None and not any(diff)
+            ok = got == expected and grown_ok and diff is not None and not any(diff)
             pixels = "page count or size differs" if diff is None else f"warm vs cold {sum(diff)} px"
-            print(f"{'PASS' if ok else 'FAIL'} {name}: frames {got}, expected {expected}; {pixels}")
+            print(f"{'PASS' if ok else 'FAIL'} {name}: frames {got}, expected {expected}; {pixels}"
+                  + "".join(f"; frame {f} grown {grown[f]}x (want {n})" for f, n in wanted.items()))
             if not ok:
                 failures.append(name)
     if failures:

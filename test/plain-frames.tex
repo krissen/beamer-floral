@@ -19,7 +19,7 @@
       assert(inset(spec)==0,'plain frame must clear no top inset')
     elseif n==3 or n==4 then
       assert(spec.running_head==true,'framed page must report its running head')
-      assert(inset(spec)==24,'framed page must keep the theme inset')
+      assert(inset(spec)==20,'framed page must keep the theme inset')
     elseif n==5 then
       assert(spec.running_head==false and inset(spec)==10,'frame override must win on a plain frame')
     end

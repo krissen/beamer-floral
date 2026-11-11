@@ -44,6 +44,7 @@ jobs:
             test/title-defaults.tex
             test/plain-frames.tex
             test/plain-frames-stock.tex
+            test/titled-mark.tex
             test/render-dispatch.tex
             test/render-dispatch-handout.tex
             test/growth.tex

@@ -253,6 +253,9 @@ function M.prepare(spec)
     end
     M.frame.growth={}
     local active=M.active_settings or flora.settings
+    -- The frame's first-page settings, including a \florathisframe override
+    -- that later overlays no longer carry; overlay drawings are keyed on it.
+    M.frame.active=copy(active)
     for k,v in pairs(growth_defaults) do
       M.frame.growth[k]=active[k] or v
     end
@@ -436,7 +439,7 @@ end
 local function cached_image(spec)
   local ok,Cache=pcall(require,'flora.cache')
   if not ok or type(Cache.page)~='function' or not (img and img.scan and img.immediatewrite) then return nil end
-  local set=M.active_settings or flora.settings
+  local set=(M.frame and M.frame.active) or M.active_settings or flora.settings
   if set.cache==false then return nil end
   local file,e,hit=Cache.page(copy(spec),set,pdf.getcompresslevel and pdf.getcompresslevel() or 6)
   if not file then return nil end

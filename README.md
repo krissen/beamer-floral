@@ -26,7 +26,7 @@ You need LuaLaTeX and the engine,
 [tikz-flora](https://github.com/krissen/tikz-flora). This package uses
 integration hooks that are not in the upstream engine yet; they are
 [proposed upstream](https://github.com/wn-mitch/tikz-flora/issues/2). Until
-they land, use the `beamer-floral` branch of the fork, commit `129327d` or
+they land, use the `beamer-floral` branch of the fork, commit `60a153d` or
 later. The options below all take care of that.
 
 ### From the release archive
@@ -303,6 +303,7 @@ What you give up:
 - Every page of a class looks the same.
 - On titled frames the top edge carries no flora, since the title's width is
   not measured.
+- Reused pages carry no running-head mark.
 - With `title` in the list, the title page is much plainer than its usual
   full composition. `reuse=content` leaves title pages as they are.
 
@@ -444,6 +445,13 @@ The first displayed overlay selects the preset for the whole frame: a title
 shown only on a later overlay does not change the composition mid-frame.
 See [the full animated title example](docs/src/growth-title.tex), which uses
 the default eight-second duration and the optional raster cache.
+
+Every frame of the floral theme carries a running-head mark, a small gilt
+ornament at the top of the left margin. On a titled frame it sits above the
+title, in a size that follows the room there: 20 to 22 pt over a one-line
+title, 12 to 14 pt with a subtitle or over two lines.
+`\florasetup{tune={gesture={mark_min=10}}}` sets the smallest mark drawn
+(10 pt by default); with less room the mark is left out.
 
 ### Layout and density
 
