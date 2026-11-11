@@ -1,0 +1,86 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{floral}
+\florasetup{seed=3,density=0.25,cache=false}
+\title{Titled frames}
+\author{The Floral Project}
+\date{}
+% Titled frames carry the running-head mark too. The adapter reports the
+% running head and the theme's 20 pt inset and header clip; the engine paints
+% the mark after that clip ends, so it may rise above the clip line, but it
+% stays whole under the inset and above the title's ink, and every overlay of
+% a frame shows the same mark. The page cache is off, so every run composes
+% the marks it checks.
+\directlua{
+  local H=20
+  local prior=beamer_floral.prepare
+  local function gesture(spec)
+    return spec.tune and spec.tune.gesture or {}
+  end
+  beamer_floral.prepare=function(spec)
+    prior(spec)
+    local n=beamer_floral.count
+    local g=gesture(spec)
+    if n>=2 and not (n==5) then
+      assert(spec.frametitle,'frame '..n..' must report its title')
+      assert(spec.running_head==true,'titled frame must report its running head')
+      assert(g.top_inset==H and g.header_clip==1 and g.header_gap==12,
+        'titled frame must get the theme inset 20 and the header clip')
+    elseif n==5 then
+      assert(not spec.frametitle and spec.running_head==true and g.top_inset==H,
+        'untitled frame must keep the running head and the inset')
+    end
+  end
+  local C=require('flora.compose')
+  local Orn=require('flora.ornaments')
+  local placed,marks={},{}
+  local place=C.header_mark
+  C.header_mark=function(spec,inset,clip)
+    local r,band=place(spec,inset,clip)
+    placed[beamer_floral.count]={spec=spec,inset=inset,clip=clip,r=r}
+    return r,band
+  end
+  local draw=Orn.draw
+  Orn.draw=function(kind,pt,rng,box,o)
+    local k=type(kind)=='string' and Orn.kinds[kind] or kind
+    if k and k.slot=='header' then
+      local n=beamer_floral.count
+      local p=assert(placed[n],'a mark without a placement')
+      local inset=p.inset or 0
+      local top=inset>0 and p.spec.height-inset-2 or p.spec.height-6
+      assert(box[4]<=top+1e-6,'mark crosses the page inset or the paper top on frame '..n)
+      local floor=0
+      for _,l in ipairs(p.spec.lines or {}) do
+        if l.x1>box[1] and l.x0<p.spec.text.x1 and l.y1<=box[4] then floor=math.max(floor,l.y1) end
+      end
+      assert(box[2]>=floor+2-1e-6,'mark reaches the ink under it on frame '..n)
+      assert(box[3]-box[1]>=12-1e-6,'mark under the 12 pt minimum on frame '..n)
+      if n>=2 and not (n==5) then
+        assert(p.clip==nil,'a titled frame must place its mark without the header clip')
+      end
+      local key=table.concat({box[1],box[2],box[3],box[4]},' ')
+      assert(marks[n]==nil or marks[n]==key,'overlays of frame '..n..' must show one mark')
+      marks[n]=key
+    end
+    return draw(kind,pt,rng,box,o)
+  end
+  beamer_floral.titled_marks=marks
+}
+\begin{document}
+\begin{frame}[plain]\titlepage\end{frame}
+\section{One}
+\begin{frame}{A short title}Body\end{frame}
+\begin{frame}{A title with a subtitle}{The subtitle sits underneath}Body\end{frame}
+\begin{frame}{A title long enough that it has to wrap onto a second line of the frame title}Body\end{frame}
+\begin{frame}Untitled body\end{frame}
+\begin{frame}{Paused}First\pause\par Second\end{frame}
+\begin{frame}{Only}\only<1>{One line}\only<2>{Two\par lines}\end{frame}
+\begin{frame}{Growing}
+  \begin{itemize}\item<+-> One\item<+-> Two\item<+-> Three\end{itemize}
+\end{frame}
+\directlua{
+  local marks=beamer_floral.titled_marks
+  for _,n in ipairs({1,2,3,4,5,6,7,8}) do
+    assert(marks[n],'frame '..n..' must carry a running-head mark')
+  end
+}
+\end{document}
