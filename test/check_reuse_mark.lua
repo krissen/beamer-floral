@@ -1,11 +1,13 @@
--- Usage: texlua test/check_reuse_mark.lua reuse-mark.log reuse-mark-adaptive.log [reuse-stock.log]
+-- Usage: texlua test/check_reuse_mark.lua reuse-mark.log reuse-mark-adaptive.log [reuse-stock.log [reuse-mark-content.log]]
 -- Reused pages carry their own running-head mark. For each frame of
 -- test/reuse-mark.tex, the marks every reused page logs ("reused page
 -- marks") must match, in size and height, the marks the adaptive build
 -- paints for the same frame; every overlay of a frame logs the same marks;
 -- the pages of one class show one kind; no mark is under the 10 pt
 -- minimum; and beside a reserve each mark and rule is whole or absent. A stock-theme log, when given, must show reused pages without a
--- mark, as stock themes have none.
+-- mark, as stock themes have none. A reuse=content log, when given, must
+-- match the adaptive build too: its reused content pages by the marks they
+-- log, its title and section pages, drawn adaptively, by those they paint.
 local function read(path)
   local f=assert(io.open(path,'r')); local text=f:read('a'); f:close()
   -- TeX wraps log lines at about 79 characters. The lines read here are
@@ -86,32 +88,54 @@ local function classes(lines)
   return out
 end
 
-local reuse_log,adaptive_log,stock_log=arg[1],arg[2],arg[3]
+local reuse_log,adaptive_log,stock_log,content_log=arg[1],arg[2],arg[3],arg[4]
 if not (reuse_log and adaptive_log) then
-  print('usage: texlua test/check_reuse_mark.lua reuse-mark.log reuse-mark-adaptive.log [reuse-stock.log]')
+  print('usage: texlua test/check_reuse_mark.lua reuse-mark.log reuse-mark-adaptive.log [reuse-stock.log [reuse-mark-content.log]]')
   os.exit(2)
 end
 local reuse_lines,adaptive_lines=read(reuse_log),read(adaptive_log)
-local reused,pages=reused_marks(reuse_lines)
 local adaptive=painted_marks(adaptive_lines)
-local class=classes(reuse_lines)
-local frames=0
-for n in pairs(class) do frames=math.max(frames,n) end
-if frames<15 then fail('FAIL %s: %d frames, expected 15',reuse_log,frames) end
-for n=1,frames do
-  if not class[n].reused then fail('FAIL frame %d: not reused',n) end
-  local r=reused[n] and reused[n].list
-  local a=adaptive[n] or {}
-  if not r then fail('FAIL frame %d: no reused-page marks logged',n)
-  elseif #r~=#a then fail('FAIL frame %d: %d marks reused, %d adaptive',n,#r,#a)
-  else
-    for i,m in ipairs(r) do
-      if math.abs(m[1]-a[i][1])>0.011 or math.abs(m[2]-a[i][2])>0.011 then
-        fail('FAIL frame %d mark %d: reused %.2f pt at %.2f, adaptive %.2f pt at %.2f',n,i,m[1],m[2],a[i][1],a[i][2])
+-- Each frame's marks in `lines` against the adaptive build's: a reused
+-- frame's as its pages log them, any other frame's as painted. `all`: every
+-- frame must be reused. Returns the frame classes and pages logged.
+local function compare(lines,log,all)
+  local reused,pages=reused_marks(lines)
+  local painted=painted_marks(lines)
+  local class=classes(lines)
+  local frames=0
+  for n in pairs(class) do frames=math.max(frames,n) end
+  if frames<16 then fail('FAIL %s: %d frames, expected 16',log,frames) end
+  for n=1,frames do
+    if all and not class[n].reused then fail('FAIL %s frame %d: not reused',log,n) end
+    local r
+    if class[n].reused then
+      r=reused[n] and reused[n].list
+      if not r then fail('FAIL %s frame %d: no reused-page marks logged',log,n) end
+    else
+      r=painted[n] or {}
+    end
+    local a=adaptive[n] or {}
+    if r and #r~=#a then fail('FAIL %s frame %d: %d marks, %d adaptive',log,n,#r,#a)
+    elseif r then
+      for i,m in ipairs(r) do
+        if math.abs(m[1]-a[i][1])>0.011 or math.abs(m[2]-a[i][2])>0.011 then
+          fail('FAIL %s frame %d mark %d: %.2f pt at %.2f, adaptive %.2f pt at %.2f',log,n,i,m[1],m[2],a[i][1],a[i][2])
+        end
+        if m[1]<10-1e-6 then fail('FAIL %s frame %d: a %.2f pt mark is under the minimum',log,n,m[1]) end
       end
-      if m[1]<10-1e-6 then fail('FAIL frame %d: a %.2f pt mark is under the minimum',n,m[1]) end
     end
   end
+  return class,pages
+end
+local class,pages=compare(reuse_lines,reuse_log,true)
+-- Section pages, the floral template's among them (test/reuse-mark.tex has
+-- one of each), carry a mark like the adaptive page's.
+do
+  local marked=0
+  for n,c in pairs(class) do
+    if c.class=='section' and (adaptive[n] and #adaptive[n] or 0)>0 then marked=marked+1 end
+  end
+  if marked<2 then fail('FAIL %s: %d section frames with a mark, expected 2',reuse_log,marked) end
 end
 -- Overlays: the paused frame logs three pages, the frame with \only two.
 if pages[7]~=3 or pages[8]~=2 then fail('FAIL overlays: frame 7 logged %s pages, frame 8 %s',pages[7],pages[8]) end
@@ -181,6 +205,15 @@ if stock_log then
     if #m.list>0 then fail('FAIL %s frame %d: a stock theme page shows a mark',stock_log,n) end
   end
   if not any then fail('FAIL %s: no reused page logged its marks',stock_log) end
+end
+if content_log then
+  local content_class=compare(read(content_log),content_log,false)
+  local adaptive_frames=0
+  for n,c in pairs(content_class) do
+    if c.reused ~= (c.class=='content') then fail('FAIL %s frame %d: class %s reused %s',content_log,n,c.class,tostring(c.reused)) end
+    if not c.reused then adaptive_frames=adaptive_frames+1 end
+  end
+  if adaptive_frames==0 then fail('FAIL %s: no title or section frame drawn adaptively',content_log) end
 end
 if failed then os.exit(1) end
 print('PASS reused pages carry their own marks')

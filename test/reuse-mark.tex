@@ -1,7 +1,8 @@
 % Reused pages carry their own running-head mark: the class drawing is shared,
 % and each page's mark is placed by that page's own title, as on the adaptive
-% page. test/reuse-mark-adaptive.tex builds the same frames without reuse;
-% test/check_reuse_mark.lua compares the marks the two logs record. The page
+% page. test/reuse-mark-adaptive.tex builds the same frames without reuse,
+% test/reuse-mark-content.tex under reuse=content; test/check_reuse_mark.lua
+% compares the marks the logs record. The page
 % cache is off, so every run paints the marks it records. The reserved
 % frames check that a reserve never cuts a mark or its rule: the mark moves
 % down its band, shrinks or is left out, on both builds.
@@ -37,4 +38,9 @@
 \florareserve{\the\dimexpr 5cm\relax}{\the\dimexpr\paperheight-2cm\relax}{\the\dimexpr 6cm\relax}{\the\paperheight}
 \begin{frame}{A reserve across the rule}Body text.\end{frame}
 \floraclearreserve
+% The theme's optional section page: from here on \sectionpage uses the
+% floral template, a plain frame with the section composition.
+\setbeamertemplate{section page}[floral]
+\section{Second}
+\begin{frame}{After the floral section page}Body text.\end{frame}
 \end{document}
