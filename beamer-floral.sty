@@ -29,6 +29,41 @@
 \AddToHook{cmd/beamer@framenotesbegin/before}{\global\floraltitlepageflag=0\relax\global\floralpageclass=0\relax}
 \AddToHook{cmd/titlepage/before}{\global\floralpageclass=1\relax}
 \AddToHook{cmd/sectionpage/before}{\global\floralpageclass=2\relax}
+\AddToHook{cmd/titlepage/before}{\directlua{beamer_floral.stage_check()}}
+\AddToHook{cmd/sectionpage/before}{\directlua{beamer_floral.stage_check()}}
+
+% The stage layout (stage, stage width, stage margin; see the README). Beamer
+% reads the text margins when a frame starts and \setbeamersize works only in
+% the preamble, so the margin and width registers are assigned directly,
+% globally, at the start of every frame. \floralstagerestore returns to the
+% margins taken when the document began.
+\makeatletter
+\newif\iffloralenvframe
+\AddToHook{cmd/frame/before}{%
+  \ifx\@currenvir\beamer@frametext\floralenvframetrue\else\floralenvframefalse\fi}
+\AddToHook{cmd/beamer@framecommand/before}{%
+  \iffloralenvframe
+    \directlua{beamer_floral.stage_begin("\luaescapestring{\detokenize\expandafter{\the\beamer@envbody}}",
+      \iffloraon true\else false\fi)}%
+  \else
+    \directlua{beamer_floral.stage_begin(nil, \iffloraon true\else false\fi)}%
+  \fi}
+\newcommand\floralstagemargins[2]{%
+  \global\beamer@leftmargin=\dimexpr#1\relax
+  \global\beamer@rightmargin=\dimexpr#2\relax
+  \floral@stagegeometry}
+\newcommand\floralstagerestore{%
+  \global\beamer@leftmargin=\floral@baseleft
+  \global\beamer@rightmargin=\floral@baseright
+  \floral@stagegeometry}
+\newdimen\floral@baseleft \newdimen\floral@baseright
+\newcommand\floral@stagegeometry{%
+  \global\textwidth=\dimexpr\paperwidth-\beamer@leftmargin-\beamer@leftsidebar
+    -\beamer@rightmargin-\beamer@rightsidebar\relax
+  \global\oddsidemargin=\dimexpr\beamer@leftmargin+\beamer@leftsidebar-1in-\hoffset\relax
+  \global\evensidemargin=\oddsidemargin
+  \global\columnwidth=\textwidth \global\linewidth=\textwidth \global\hsize=\textwidth}
+\makeatother
 
 \directlua{%
   if flora.prepare_spec_version ~= 1 then
@@ -171,6 +206,7 @@
 
 \AtBeginDocument{%
   \mode<handout>{\directlua{beamer_floral.handout=true}}%
+  \floral@baseleft=\beamer@leftmargin \floral@baseright=\beamer@rightmargin
   \floratextblockx{\the\beamer@leftmargin}{\the\dimexpr\paperwidth-\beamer@rightmargin\relax}%
   \ifdim\beamer@leftsidebar>0pt
     \floral@sidebarwarning
