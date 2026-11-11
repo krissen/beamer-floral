@@ -6,8 +6,9 @@
   local static_calls=0
   local stub_calls=0
   % Cache lookups per frame; a frame not listed must not consult the cache.
+  % The reused frame 6 looks up its class drawing and its own mark drawing.
   local cache_calls={}
-  local expected_cache={[1]=1,[3]=2,[6]=1}
+  local expected_cache={[1]=1,[3]=2,[6]=2}
   % A first run does not yet know frame 7's overlay count: its first overlay
   % takes the engine path, which is correct. Once the count is known, both
   % overlays share one static drawing, looked up once.
