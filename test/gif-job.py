@@ -85,7 +85,7 @@ with tempfile.TemporaryDirectory(prefix='gif-job-', dir='build') as temporary:
                 print('frame', index, matte, 'RMS', ' '.join(f'{v:.2f}' for v in rms))
                 assert max(rms) < checker.RMS_LIMIT, (index, matte, rms)
                 assert transparent, f'frame {index}: transparent source pixels must decode transparent'
-        checker.check_decoded(built, STEPS, pixels, 0)
+        checker.check_decoded(built, list(range(STEPS + 1)), pixels, 0)
 
     # Reservations: the page's clip does not reach an annotation, so the GIF must
     # carry it. The page is 80 x 45 pt, the samples 160 x 90 px (2 px per pt). One
@@ -111,10 +111,10 @@ with tempfile.TemporaryDirectory(prefix='gif-job-', dir='build') as temporary:
         # Pixels just outside a reservation are untouched (the last frame is opaque there).
         assert gif.convert('RGBA').getpixel((39, 55))[3] == 255 and gif.convert('RGBA').getpixel((80, 55))[3] == 255
         assert gif.convert('RGBA').getpixel((60, 39))[3] == 255 and gif.convert('RGBA').getpixel((60, 70))[3] == 255
-    checker.check_decoded(masked, STEPS, pixels, 0, recorded)
+    checker.check_decoded(masked, list(range(STEPS + 1)), pixels, 0, recorded)
     # The checker rejects a GIF built without the masking.
     try:
-        checker.check_decoded(unmasked, STEPS, pixels, 0, recorded)
+        checker.check_decoded(unmasked, list(range(STEPS + 1)), pixels, 0, recorded)
     except RuntimeError as error:
         print('unmasked GIF rejected:', error)
     else:
@@ -125,11 +125,57 @@ with tempfile.TemporaryDirectory(prefix='gif-job-', dir='build') as temporary:
                                   '20,10,40,25;0,0,15.3,8.2;70,35,95,60']) + '\n')
     assert builder.gif_jobs(listing, root)[0][6] == (80.0, 45.0, [(20.0, 10.0, 40.0, 25.0), (0.0, 0.0, 15.3, 8.2), (70.0, 35.0, 95.0, 60.0)])
 
-    # A rate that is not a whole number of centiseconds carries the error.
-    for rate in (20000, 15000, 59940, 60000, 7000):
-        cs = [builder.centiseconds(i, rate) for i in range(161)]
-        assert min(cs) >= 1
-        assert abs(sum(cs[:160]) * 10 - 160 * 1e6 / rate) <= 10, rate
+    # Timing matrix. GdkPixbuf plays a delay below 2 cs as 20 ms (0 cs as 100 ms), so:
+    # every delay is at least 2 cs, the first and last sample are shown, and the delays
+    # of all frames but the last sum to the interval's duration within 10 ms whenever
+    # that is at least 20 ms (shorter intervals become two frames of 2 cs). Rates up to
+    # 50 fps are written exactly as before the rule existed.
+    rates = [7, 15, 20, 25, 50, 59.94, 60, 100, 120, 333, 1000, 6400]
+    cells = [(round(fps * 1000), steps) for fps in rates for steps in (1, 2, 3, 7, 40)]
+    # The finding's own case: duration 0.05 s over 16 overlays at 20 fps.
+    seconds = 0.05 / 16
+    cells.append((round(max(1, round(seconds * 20)) / seconds * 1000), max(1, round(seconds * 20))))
+    tiny = root / 'tiny'
+    tiny.mkdir()
+    for n in range(41):
+        image = Image.new('RGBA', (16, 12), (0, 0, 0, 0))
+        for x in range(n % 16 + 1):
+            image.putpixel((x, n % 12), (n * 6 % 256, 90, 200, 255))
+        image.save(tiny / f'sample-{n}.png')
+
+    def legacy(steps, rate_milli):
+        def edge(n):
+            return (n * 200000 + rate_milli) // (2 * rate_milli)
+        return list(range(steps + 1)), [edge(n + 1) - edge(n) for n in range(steps + 1)]
+
+    for rate_milli, steps in cells:
+        shown, delays = builder.frame_plan(steps, rate_milli)
+        cell = (rate_milli, steps)
+        assert (shown, delays) == checker.expected_plan(steps, rate_milli), cell
+        assert min(delays) >= 2, cell
+        assert shown[0] == 0 and shown[-1] == steps and shown == sorted(set(shown)), cell
+        duration_ms = steps * 1e6 / rate_milli
+        if duration_ms >= 20:
+            assert abs(sum(delays[:-1]) * 10 - duration_ms) <= 10, (cell, delays, duration_ms)
+        else:
+            assert shown == [0, steps] and delays[0] == 2, cell
+        if rate_milli <= 50000:
+            assert (shown, delays) == legacy(steps, rate_milli), cell
+        # The written file follows the plan, frame for frame.
+        target = root / 'matrix.gif'
+        builder.build_gif((str(tiny), 0, steps, rate_milli, 'FFFFFF', str(target), (16, 12, [])))
+        facts, looped = checker.gif_facts(target)
+        assert [f[0] for f in facts] == delays and not looped, cell
+        if rate_milli <= 50000:
+            reference = root / 'reference.gif'
+            current = builder.frame_plan
+            builder.frame_plan = legacy
+            try:
+                builder.build_gif((str(tiny), 0, steps, rate_milli, 'FFFFFF', str(reference), (16, 12, [])))
+            finally:
+                builder.frame_plan = current
+            assert target.read_bytes() == reference.read_bytes(), ('byte identity', cell)
+    print('timing matrix:', len(cells), 'cells passed')
 
     # A sample that cannot be read publishes nothing, not even a partial file.
     broken = root / 'broken'

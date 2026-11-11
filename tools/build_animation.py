@@ -37,11 +37,31 @@ def engine_paths(explicit):
     raise RuntimeError('Cannot locate the engine Lua modules; pass --engine')
 
 
-def centiseconds(index, rate_milli):
-    """Whole-centisecond delay of frame `index`; the rounding error is carried forward."""
+# GdkPixbuf (the decoder pympress uses) plays a frame delay below 2 cs as 20 ms and
+# a zero delay as 100 ms, so no frame is written with less than 2 cs and a rate
+# above 50 fps is thinned to every k-th sample.
+MIN_DELAY = 2
+MAX_RATE_MILLI = 50000
+
+
+def frame_plan(steps, rate_milli):
+    """Samples (0..steps) shown by an interval's GIF and the delay of each, in centiseconds.
+
+    Stride k = max(1, ceil(rate / 50 fps)); samples 0, k, 2k, ... below steps, and steps.
+    A final gap shorter than 2 cs after rounding drops the sample before it. A delay is
+    the time to the next kept sample in whole centiseconds, the rounding error carried
+    forward; the last frame gets one nominal sample time, at least 2 cs. An interval
+    shorter than 20 ms becomes two frames with 2 cs, the only case that is not to scale."""
     def edge(n):
         return (n * 200000 + rate_milli) // (2 * rate_milli)
-    return edge(index + 1) - edge(index)
+
+    stride = max(1, -(-rate_milli // MAX_RATE_MILLI))
+    kept = list(range(0, steps, stride)) + [steps]
+    if len(kept) > 2 and edge(steps) - edge(kept[-2]) < MIN_DELAY:
+        del kept[-2]
+    delays = [max(MIN_DELAY, edge(b) - edge(a)) for a, b in zip(kept, kept[1:])]
+    delays.append(max(MIN_DELAY, edge(steps + 1) - edge(steps)))
+    return kept, delays
 
 
 def _sub_blocks_end(data, position):
@@ -114,7 +134,7 @@ def gif_frame(image_module, path, matte, geometry=None):
 
 
 def build_gif(job):
-    """Write one interval's GIF: steps + 1 frames, played once, never half written.
+    """Write one interval's GIF (frame_plan), played once, never half written.
 
     Frames are assembled here rather than by Pillow's multi-frame writer, which
     merges identical neighbours and would change the frame count."""
@@ -129,11 +149,12 @@ def build_gif(job):
     try:
         chunks = []
         size = None
-        for n in range(steps + 1):
+        kept, delays = frame_plan(steps, rate_milli)
+        for n, delay in zip(kept, delays):
             size, palette, data = gif_frame(Image, Path(folder) / f'sample-{first + n}.png', colour, geometry)
             # Graphic control: disposal 2 (restore to background), transparent index 255.
             chunks.append(bytes([0x21, 0xF9, 4])
-                          + struct.pack('<BHBB', 0x09, centiseconds(n, rate_milli), 255, 0)
+                          + struct.pack('<BHBB', 0x09, delay, 255, 0)
                           + struct.pack('<BHHHHB', 0x2C, 0, 0, *size, 0x87) + palette + data)
         with open(temporary, 'wb') as stream:
             stream.write(b'GIF89a' + struct.pack('<HHBBB', *size, 0x70, 0, 0))

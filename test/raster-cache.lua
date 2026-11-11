@@ -64,11 +64,11 @@ a.gif_playback=true;a.gif_matte='FFFFFF';a.animation_cache=nil;a.stage=1
 assert(C.collect(a,spec,2,1)==nil,'GIF mode must reject a cache without the GIF')
 assert(a.animation_manifest[1].gif.rate_milli==2000 and a.animation_manifest[1].gif.matte=='FFFFFF')
 assert(a.animation_manifest[1].signature==signature,'GIF info must not change the cache signature')
-local gif=folder..'/interval-1-r2000-mFFFFFF-e3.gif'
+local gif=folder..'/interval-1-r2000-mFFFFFF-e4.gif'
 write(folder..'/interval-1-r2000-mFFFFFF.gif','GIF89a'..string.rep('\0',32))
 assert(C.collect(a,spec,2,1)==nil,'a GIF from an older encoder must not be reused')
 os.remove(folder..'/interval-1-r2000-mFFFFFF.gif')
-assert(a.animation_manifest[1].gif.encoder==C.gif_encoder and C.gif_encoder=='e3')
+assert(a.animation_manifest[1].gif.encoder==C.gif_encoder and C.gif_encoder=='e4')
 -- Reservations are part of the signature (they name the sample folder and the GIFs) and of the manifest.
 local reserved={width=400,height=300,seed=1,text=spec.text,reserve={{0,0,25,100}}}
 C.collect(a,reserved,2,1)
@@ -78,7 +78,7 @@ C.collect(a,spec,2,1);assert(a.animation_manifest[1].signature==signature)
 write(gif,'broken');assert(C.collect(a,spec,2,1)==nil,'GIF mode must reject a file that is no GIF')
 write(gif,'GIF89a'..string.rep('\0',32))
 local hit=assert(C.collect(a,spec,2,1),'GIF mode must accept a cache with the GIF')
-assert(hit.gif==gif and hit.gif_relative==root:match('[^/]+$')..'/'..signature..'-144/interval-1-r2000-mFFFFFF-e3.gif')
+assert(hit.gif==gif and hit.gif_relative==root:match('[^/]+$')..'/'..signature..'-144/interval-1-r2000-mFFFFFF-e4.gif')
 assert(C.collect(a,spec,2,0.5)==nil,'another rate needs another GIF')
 a.gif_matte='102030';assert(C.collect(a,spec,2,1)==nil,'another matte needs another GIF')
 a.gif_matte='FFFFFF';a.stage=2;assert(C.collect(a,spec,2,1)==nil,'each interval has its own GIF')
@@ -98,17 +98,17 @@ assert(page:find('/Subtype /Movie',1,true) and page:find('/T (floral-7-1)',1,tru
 assert(page:find('/Mode /Once /ShowControls false',1,true))
 assert(page:find('width 400.00000000pt height 300.00000000pt',1,true),'the annotation covers the page')
 local target=page:match('/Movie << /F %(\\detokenize{(.-)}%)')
-assert(target==root:match('[^/]+$')..'/'..signature..'-144/interval-1-r2000-mFFFFFF-e3.gif','relative path, no directories above the cache')
+assert(target==root:match('[^/]+$')..'/'..signature..'-144/interval-1-r2000-mFFFFFF-e4.gif','relative path, no directories above the cache')
 for _,bad in ipairs{'a(b','a)b','a\\b','a%b'} do
   animation.raster.gif_relative=bad..'/x.gif';assert(not pcall(C.typeset_gif,animation),bad)
 end
 -- Embedded: one macro call carries file, name, page size and the physical page.
 page=nil;animation.raster.embed=true;animation.raster.gif=gif
-animation.raster.gif_relative=root:match('[^/]+$')..'/'..signature..'-144/interval-1-r2000-mFFFFFF-e3.gif'
+animation.raster.gif_relative=root:match('[^/]+$')..'/'..signature..'-144/interval-1-r2000-mFFFFFF-e4.gif'
 C.typeset_gif(animation)
-assert(page:find('\\floralembedgif{\\detokenize{'..gif..'}}{\\detokenize{interval-1-r2000-mFFFFFF-e3.gif}}{400.00000000pt}{300.00000000pt}{1}',1,true),page)
+assert(page:find('\\floralembedgif{\\detokenize{'..gif..'}}{\\detokenize{interval-1-r2000-mFFFFFF-e4.gif}}{400.00000000pt}{300.00000000pt}{1}',1,true),page)
 assert(not page:find('/Movie',1,true),'no Movie annotation for embedded GIFs')
-for _,bad in ipairs{folder..'/a(b-e3.gif',folder..'/a{b-e3.gif',folder..'/a#b-e3.gif'} do
+for _,bad in ipairs{folder..'/a(b-e4.gif',folder..'/a{b-e4.gif',folder..'/a#b-e4.gif'} do
   animation.raster.gif=bad;assert(not pcall(C.typeset_gif,animation),bad)
 end
 package.loaded['flora.paint']=previous;tex.sprint=function() end
@@ -117,7 +117,7 @@ os.remove(gif);a.gif_playback=false
 local sprinted=0
 tex.sprint=function() sprinted=sprinted+1 end
 M.frame.growth['growth duration']=1;M.gif_playback=true;M.stage=1;M.animation_cache=nil;M.animation_manifest={}
-local viagif=folder..'/interval-1-r4000-mFFFFFF-e3.gif'
+local viagif=folder..'/interval-1-r4000-mFFFFFF-e4.gif'
 os.getenv=function(name) if name=='FLORAL_ANIMATION_PREPARE' then return nil end return getenv(name) end
 assert(not pcall(M.render_page,spec,{}),'GIF mode without the GIF is a missing cache')
 write(viagif,'GIF89a'..string.rep('\0',32))

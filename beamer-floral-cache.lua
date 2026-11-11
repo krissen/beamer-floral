@@ -24,7 +24,7 @@ local function signature(record)
 end
 -- Encoder version of the GIF files. Raise it whenever the builder's output
 -- changes, so caches made by an older encoder are rebuilt, not reused.
-C.gif_encoder='e3'
+C.gif_encoder='e4'
 function C.gif_name(stage,rate_milli,matte,encoder)
   return string.format('interval-%d-r%d-m%s-%s.gif',stage,rate_milli,matte,encoder or C.gif_encoder)
 end
