@@ -313,8 +313,8 @@ What you give up:
   full composition. `reuse=content` leaves title pages as they are.
 
 On a deck of 97 pages, a warm build takes 23.2-25.7 s adaptive and
-12.8-13.8 s with `reuse=all`, a cold one 76.1-89.9 s against 14.7-16.0 s, and
-the PDF shrinks from 57.0 MB to 4.6 MB. The tables, the method and how to repeat the
+12.5-14.8 s with `reuse=all`, a cold one 76.1-89.9 s against 14.9-17.3 s, and
+the PDF shrinks from 57.0 MB to 4.7 MB. The tables, the method and how to repeat the
 measurements are in [docs/performance.md](docs/performance.md).
 
 ## Patterns
