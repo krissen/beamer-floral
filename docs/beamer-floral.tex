@@ -94,7 +94,11 @@ The package sets margins of 2.5\,cm on the left and 1\,cm on the right. Call
 
 The floral theme adds \cmd{floralornamentsetup}, \cmd{floraldivider} and the
 \texttt{floral} templates for \texttt{itemize item}, \texttt{itemize subitem}
-and \texttt{itemize subsubitem}.
+and \texttt{itemize subsubitem}. Every frame of the theme carries a
+running-head mark at the top of the left margin; on a titled frame it sits
+above the title, in a size that follows the room there.
+\verb|tune={gesture={mark_min=10}}| sets the smallest mark drawn (10\,pt by
+default); with less room the mark is left out.
 
 \section{Options}
 
@@ -193,6 +197,7 @@ What you give up:
   \item Every page of a class looks the same.
   \item On titled frames the top edge carries no flora, since the title's
     width is not measured.
+  \item Reused pages carry no running-head mark.
   \item With \texttt{title} in the list, the title page is much plainer than
     its usual full composition. \texttt{reuse=content} leaves title pages as
     they are.
