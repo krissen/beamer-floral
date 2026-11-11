@@ -388,14 +388,14 @@ and 20 fps, and raster samples are 144 dpi.
 | Variant | PDF size |
 |---|---:|
 | Beamer without floral | 0.05 MB |
-| `growth=off` | 21.3 MB |
-| `growth=overlays` | 47.3 MB |
-| `growth=timed`, vector | 88.8 MB |
-| `growth=timed`, raster | 111.9 MB |
+| `growth=off` | 21.5 MB |
+| `growth=overlays` | 47.5 MB |
+| `growth=timed`, vector | 89.4 MB |
+| `growth=timed`, raster | 113.4 MB |
 
-Measured with TeX Live 2025 and tikz-flora `129327d`. Your own figures will
+Measured with TeX Live 2025 and tikz-flora `60a153d`. Your own figures will
 depend on the density, layout and number of pages. A raster build also keeps
-its sample cache on disk, 103 MB for this document. Share a talk with
+its sample cache on disk, 104 MB for this document. Share a talk with
 `\florasetup{growth=off}` if size matters more than the animation.
 
 ## Standalone bundle
