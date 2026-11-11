@@ -122,6 +122,9 @@ and \texttt{itemize subsubitem}.
   \texttt{growth fps} & an integer from 1 to 60, default 20 \\
   \texttt{reuse} & \texttt{none}, \texttt{all}, or a list of \texttt{title},
     \texttt{section}, \texttt{content} \\
+  \texttt{stage} & \texttt{off} (default), \texttt{right}, \texttt{left} \\
+  \texttt{stage width} & a length, default \texttt{0.39\textbackslash paperwidth} \\
+  \texttt{stage margin} & a length, default \texttt{12mm} \\
   \bottomrule
 \end{tabular}
 \end{center}
@@ -190,6 +193,32 @@ What you give up:
     its usual full composition. \texttt{reuse=content} leaves title pages as
     they are.
 \end{itemize}
+
+\section{The stage}
+
+\texttt{stage} puts the text in a narrow column at the top of one side and
+gives the flora the wide margin on the other side and the foot. It sets the
+text margins and \texttt{layout=right} or \texttt{layout=left} in one step:
+
+\begin{lstlisting}[language={[LaTeX]TeX}]
+\florasetup{stage=right}                       % content frames from here on
+\florathisframe{stage=left, stage width=60mm}  % this frame only
+\florathisframe{stage=off}                     % this frame keeps the document margins
+\end{lstlisting}
+
+\texttt{stage width} is the margin on the decorated side (default
+\verb|0.39\paperwidth|), \texttt{stage margin} the text margin on the other
+side (default 12\,mm). \texttt{stage=off} returns to the margins the document
+had when it began, including its own \verb|\setbeamersize|.
+
+The stage applies to content frames. Title and section pages, which call
+\verb|\titlepage| and \verb|\sectionpage|, keep the document margins unless
+the frame asks for the stage with \verb|\florathisframe{stage=...}|. Beamer
+reads the margins when a frame starts and \verb|\setbeamersize| works only in
+the preamble, so the stage assigns the margin and width registers at the start
+of each frame; change it between frames. Use
+\verb|\begin{columns}[onlytextwidth]| on a staged frame. With
+\texttt{reuse}, a staged frame has its own shared drawing.
 
 \section{File size}
 

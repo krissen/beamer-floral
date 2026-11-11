@@ -431,6 +431,9 @@ page comes from the same English visual template used for acceptance tests.*
 | `ornaments` | `{moon=2, night=0, ...}` |
 | `tune` | engine overrides, e.g. `{compose={hero=0.295}}` |
 | `reuse` | `none`, `all`, or a list of `title`, `section`, `content` |
+| `stage` | `off` (default), `right`, `left` |
+| `stage width` | a length, default `0.39\paperwidth` |
+| `stage margin` | a length, default `12mm` |
 
 Named palettes:
 
@@ -454,6 +457,44 @@ layout does not exchange the package's 2.5 cm left and 1 cm right margins.
 Set deliberate custom margins after loading when exploring these layouts.
 Use the demonstrated left-layout title page before trying `layout=title`;
 that engine layout crowns measured text and is not selected by `\titlepage`.
+
+### The stage
+
+![Text in a narrow column, flora in the wide right margin](docs/img/stage.png)
+
+`stage` puts the text in a narrow column at the top of one side and gives
+the flora the wide margin on the other side and the foot. It sets the text
+margins and `layout=right` or `layout=left` in one step:
+
+```tex
+\florasetup{stage=right}                       % content frames from here on
+\florathisframe{stage=left, stage width=60mm}  % this frame only
+\florathisframe{stage=off}                     % this frame keeps the document margins
+```
+
+`stage width` is the margin on the decorated side (default `0.39\paperwidth`,
+62 mm on 16:9 and 50 mm on 4:3), `stage margin` the text margin on the other
+side (default `12mm`). Both take any length, such as `55mm` or `0.3\paperwidth`.
+
+- `stage=off` returns to the margins the document had when it began, including
+  your own `\setbeamersize`.
+- The stage applies to content frames. Title pages and section pages, the
+  frames that call `\titlepage` or `\sectionpage` (as `reuse` classifies them),
+  keep their own composition and the document margins, unless the frame asks
+  for the stage itself with `\florathisframe{stage=...}`. A title or section
+  page that is built by another macro, or a frame given as `\frame{...}`, is
+  staged by default; the package warns, and `\florathisframe{stage=off}`
+  before the frame fixes it.
+- Beamer reads the margins when a frame starts, and `\setbeamersize` works only
+  in the preamble, so the stage assigns the margin and width registers
+  directly at the start of each frame. A `\setbeamersize` in the preamble after
+  `stage` is set does not apply to staged frames. Change `stage` between
+  frames, not inside one.
+- Beamer's `columns` spread over the whole slide width unless you give
+  `onlytextwidth`; on a staged frame use `\begin{columns}[onlytextwidth]`.
+- With `reuse`, a staged frame has its own page geometry and so its own shared
+  drawing; frames on the document margins keep theirs.
+- Sidebar themes are not supported, as before.
 
 A quieter, foliage-led composition uses existing engine settings:
 

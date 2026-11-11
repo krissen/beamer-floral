@@ -1,0 +1,17 @@
+% The README's stage example: text in a narrow column, the flora in the wide
+% right margin and along the foot.
+\documentclass[aspectratio=169]{beamer}
+\usetheme{floral}
+\florasetup{seed=4, stage=right}
+\title{Stage}\author{The Floral Project}\date{}
+\begin{document}
+\begin{frame}{A narrow column of text}
+  The text sits at the top left; the flora fills the wide margin on the
+  right and runs along the foot.
+  \begin{itemize}
+    \item \texttt{stage=right} sets the margins and the layout in one step.
+    \item \texttt{stage width} and \texttt{stage margin} adjust them.
+    \item \texttt{\textbackslash florathisframe\{stage=off\}} leaves one frame.
+  \end{itemize}
+\end{frame}
+\end{document}

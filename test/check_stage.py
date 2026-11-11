@@ -36,6 +36,8 @@ EXPECTED = {
     9: (*DOC, "content"),
     10: (20.0, 50.0, "content"),
     11: (*DOC, "content"),
+    12: (20.0, 60.0, "content"),
+    13: (*DOC, "content"),
 }
 TITLE_OFFSET_MM = 18.0  # \floratitleoffset
 
