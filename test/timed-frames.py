@@ -15,17 +15,22 @@ reference images):
         comments and inline images are skipped, never counted.
   last  Rendering the last frame through the OCG switch is byte-identical to
         the plain render of the page.
-  ink   Frame 0 has no flora ink, and ink grows from frame to frame over
-        sampled frames 0, n/3, 2n/3 and n-1. Ink is the summed grey-level
-        difference from the same page with every frame off. Tolerance:
-        INK_FLOOR for "none" and a growth of at least INK_STEP between
-        sampled frames, both in grey-level units at 72 dpi. The interval of
-        a later overlay of a frame continues the flora of the one before: its
-        frame 0 must instead equal the last frame of the previous interval
-        (within INK_FLOOR). Which is which comes from the page labels: the
-        pages of one beamer frame share a label prefix, so an animation on a
-        page whose predecessor has the same prefix and carries an animation
-        continues that one; every other animation starts from nothing.
+  ink   Every frame is rendered alone and compared with the same page with
+        every frame off, giving a per-pixel ink map |frame - blank|. Frames
+        are cumulative, so between consecutive frames k and k+1:
+          - the summed ink grows by at least INK_STEP;
+          - at most LOST_MAX pixels lose more than 32 grey levels of ink
+            (new petals lighten earlier ink a little; a frame drawn in the
+            wrong place or mirrored loses thousands, which a sum cannot see).
+        A fresh animation starts from nothing (frame 0 within INK_FLOOR) and
+        every later frame carries ink above INK_FLOOR. The interval of a
+        later overlay of a frame continues the flora of the one before: its
+        frame-0 map must equal the previous interval's last-frame map, with
+        at most CONT_PIXELS pixels differing at all. Which is which comes
+        from the page labels: the pages of one beamer frame share a label
+        prefix, so an animation on a page whose predecessor has the same
+        prefix and carries an animation continues that one; every other
+        animation starts from nothing.
   group Transparency groups. No frame form itself carries /Group (what the
         engine pinned in engine-ref.txt emits: the groups are on nested
         forms); every nested /Group dictionary is the same dictionary.
@@ -53,10 +58,18 @@ DPI = 72
 # frame with no flora renders exactly as the blank page: the floor only keeps
 # a rounding change in a future poppler from failing the test.
 INK_FLOOR = 50
-# Sampled frames differ by whole petals; the smallest step seen on
-# growth-timed is about 50000 grey levels. A frame that did not grow gives a
-# step near 0.
-INK_STEP = 500
+# Measured on growth-timed over all 40 consecutive pairs: the summed ink
+# grows by 17337 at least (largest 179962). A frame that did not grow gives
+# a step near 0 or below.
+INK_STEP = 5000
+# Measured on growth-timed over all 40 consecutive pairs: at most 862 pixels
+# lose more than 32 grey levels (typically under 300). Frames drawn shifted
+# or mirrored lose 4897 and more; a blank frame loses the whole ink of its
+# neighbour.
+LOST_MAX = 2000
+# Measured: the frame-0 map of a continuing interval and the last-frame map
+# of the previous one differ in 0 pixels, one renderer on one document.
+CONT_PIXELS = 10
 
 NAME = re.compile(r"^[ub]:(\d+)\.(\d+)$")
 WORD = re.compile(rb"[^\s()<>\[\]{}/%]+")
@@ -295,41 +308,59 @@ def check_last(doc, work, log):
     return fails
 
 
+def lost_pixels(before, after):
+    return sum(1 for a, b in zip(before, after) if a - b > 32)
+
+
 def check_ink(doc, work, log):
     fails = []
     blank_pdf = only_on(doc, work, "blank", set())
-    ended = {}
+    last_map = {}
     for anim, pages in sorted(doc.frames.items()):
         number = min(pages)
         n = amount(pages)
-        if n is None or n < 4:
-            fails.append("animation %d: too few frames (%s) to sample" % (anim, n))
+        if n is None or n < 2:
+            fails.append("animation %d: too few frames (%s) to compare" % (anim, n))
             continue
         blank = render(blank_pdf, number, work, "blank%d" % anim)
-        samples = sorted({0, n // 3, 2 * n // 3, n - 1})
-        ink = []
-        for k in samples:
-            pdf = only_on(doc, work, "ink%d_%d" % (anim, k), {doc.ocg_for(anim, k)})
-            shot = render(pdf, number, work, "inkr%d_%d" % (anim, k))
-            ink.append(sum(abs(a - b) for a, b in zip(blank, shot)))
-        log("ink: animation %d page %d, frames %s: %s" % (anim, number, samples, ink))
-        ended[anim] = ink[-1]
+        maps = []
+        for k in range(n):
+            pdf = only_on(doc, work, "ink", {doc.ocg_for(anim, k)})
+            shot = render(pdf, number, work, "inkr")
+            maps.append(bytes(abs(a - b) for a, b in zip(blank, shot)))
+        ink = [sum(m) for m in maps]
+        last_map[anim] = maps[-1]
         before = doc.previous_interval(anim)
-        start = 0 if before is None else ended.get(before)
-        log("ink: animation %d %s" % (anim, "starts fresh" if before is None
-                                          else "continues animation %d" % before))
-        if start is None:
-            fails.append("animation %d: continues animation %d, which was not measured"
-                         % (anim, before))
-        elif abs(ink[0] - start) > INK_FLOOR:
-            fails.append("animation %d: frame 0 has ink %d, expected %d (%s; "
-                         "tolerance %d)" % (anim, ink[0], start,
-                         "a fresh start" if before is None else
-                         "the end of animation %d" % before, INK_FLOOR))
-        for (k0, i0), (k1, i1) in zip(zip(samples, ink), zip(samples[1:], ink[1:])):
-            if i1 < i0 + INK_STEP:
+        if before is None:
+            if ink[0] > INK_FLOOR:
+                fails.append("animation %d: frame 0 has ink %d, expected none "
+                             "(floor %d)" % (anim, ink[0], INK_FLOOR))
+            for k in range(1, n):
+                if ink[k] <= INK_FLOOR:
+                    fails.append("animation %d: frame %d has no ink (%d, floor %d)"
+                                 % (anim, k, ink[k], INK_FLOOR))
+        elif before not in last_map:
+            fails.append("animation %d: continues animation %d, which was not "
+                         "measured" % (anim, before))
+        else:
+            differ = sum(1 for a, b in zip(maps[0], last_map[before]) if a != b)
+            if differ > CONT_PIXELS:
+                fails.append("animation %d: frame 0 differs from the end of animation "
+                             "%d in %d pixels (tolerance %d)"
+                             % (anim, before, differ, CONT_PIXELS))
+        lost = [lost_pixels(maps[k], maps[k + 1]) for k in range(n - 1)]
+        for k in range(n - 1):
+            if ink[k + 1] - ink[k] < INK_STEP:
                 fails.append("animation %d: ink from frame %d to %d is %d to %d, "
-                             "growth under %d" % (anim, k0, k1, i0, i1, INK_STEP))
+                             "growth under %d" % (anim, k, k + 1, ink[k], ink[k + 1],
+                                                  INK_STEP))
+            if lost[k] > LOST_MAX:
+                fails.append("animation %d: %d pixels lose ink from frame %d to %d "
+                             "(limit %d)" % (anim, lost[k], k, k + 1, LOST_MAX))
+        log("ink: animation %d page %d, %d frames, %s; min growth %d, max lost %d"
+            % (anim, number, n, "starts fresh" if before is None
+               else "continues animation %d" % before,
+               min(ink[k + 1] - ink[k] for k in range(n - 1)), max(lost)))
     return fails
 
 
@@ -469,6 +500,43 @@ def mut_empty_continuation(doc, work):
         anim, doc.previous_interval(anim))
 
 
+CM = b"1 0 0 1 0 0 cm"
+
+
+def mut_wrapper(doc, work, anim, k, new_cm, what, widen=False):
+    ref = frames_of(doc, anim)[k]
+    data = doc.data(ref)
+    assert data.count(CM) == 1, data
+    changes = {}
+    if widen:
+        # Room for the shifted content: nothing is clipped by the frame box.
+        changes["/BBox"] = [-100, -100, 600, 400]
+    dst = os.path.join(work, "mut-wrap.pdf")
+    rewrite(doc.path, dst, {ref: stream_update(doc, ref, data.replace(CM, new_cm), changes)})
+    return dst, "frame %d.%d: %s" % (anim, k, what)
+
+
+def mut_shift(doc, work):
+    return mut_wrapper(doc, work, 0, 7, b"1 0 0 1 15 10 cm", "wrapper cm shifted (15, 10) pt")
+
+
+def mut_mirror(doc, work):
+    return mut_wrapper(doc, work, 0, 14, b"-1 0 0 1 453.539 0 cm", "mirrored")
+
+
+def mut_empty_unsampled(doc, work):
+    ref = frames_of(doc, 0)[5]
+    dst = os.path.join(work, "mut-empty5.pdf")
+    rewrite(doc.path, dst, {ref: stream_update(doc, ref, b" ")})
+    return dst, "content of frame 0.5 emptied (not one of four samples)"
+
+
+def mut_shift_continuation(doc, work):
+    anim = next(a for a in sorted(doc.frames) if doc.previous_interval(a) is not None)
+    return mut_wrapper(doc, work, anim, 0, b"1 0 0 1 0 -3 cm",
+                       "continuation frame shifted down 3 pt, nothing clipped (same ink sum)", widen=True)
+
+
 # (check that must fail, mutation)
 MUTATIONS = [
     ("qq", mut_drop_q),
@@ -476,6 +544,10 @@ MUTATIONS = [
     ("ink", mut_blank_frame),
     ("ink", mut_swap_oc),
     ("ink", mut_empty_continuation),
+    ("ink", mut_shift),
+    ("ink", mut_mirror),
+    ("ink", mut_empty_unsampled),
+    ("ink", mut_shift_continuation),
     ("group", mut_frame_group),
     ("group", mut_nested_group),
 ]
