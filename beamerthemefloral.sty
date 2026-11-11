@@ -9,9 +9,11 @@
 \RequirePackage{beamer-floral}
 
 % The theme keeps the flora in the margin beside the title. The package
-% supplies the thin stems, surround layout and body-mode default.
+% supplies the thin stems, surround layout and body-mode default. The 20 pt
+% inset keeps the flora 4 pt under the head's box (16 pt below the paper top)
+% and leaves room for the running-head mark above a frame title.
 \florasetup{header=margin,
-  tune={gesture={top_inset=24, header_clip=1, header_gap=12}, compose={hero_shift=21}}}
+  tune={gesture={top_inset=20, header_clip=1, header_gap=12}, compose={hero_shift=21}}}
 % Title pages use the fuller showcase composition. Explicit frame settings
 % override this preset; ordinary frames keep the document settings.
 \directlua{beamer_floral.title_defaults={layout="left",
