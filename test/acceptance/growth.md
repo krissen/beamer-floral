@@ -113,3 +113,69 @@ PR #17 and engine PR #7 carry the changes. CI initially compiled all documents
 but its host-side PDF checker could not read the container-owned PDF. PDF and
 raster checks now run inside the TeX container with their system dependencies.
 CI and bot review are pending; no merge has been performed.
+
+## GIF playback (pympress)
+
+Automated checks cover the build, not the viewer. Build both variants with
+Pillow installed:
+
+```sh
+.venv/bin/python tools/build_animation.py --engine ../tikz-flora --outdir build/gif test/growth-gif.tex
+.venv/bin/python tools/check_gif_pdf.py build/gif/growth-gif.pdf --pages 3 --mode embedded
+.venv/bin/python tools/build_animation.py --engine ../tikz-flora --outdir build/gif-external test/growth-gif-external.tex
+.venv/bin/python tools/check_gif_pdf.py build/gif-external/growth-gif-external.pdf --pages 3 --mode external
+```
+
+The reservation documents `test/growth-gif-reserve.tex` and
+`test/growth-gif-reserve-external.tex` add a footline band and a block inside
+the page; build them the same way (`--reserved` also requires the reservations
+in the recorded frames). The checker compares frames with the samples after the
+same masking and requires the reserved pixels to be transparent.
+
+What the page does around the flora in the engine's `typeset_page`, and what
+GIF playback does about it (the GIF is an annotation, so page-content operations
+do not reach it):
+
+| Operation | GIF playback |
+| --- | --- |
+| Reservation clips (`\florareserve`) | Baked into every frame: reserved pixels transparent, rounded outward. The engine also clips them inside the samples; measured on the reservation document, no sample has an opaque pixel inside a reserved box, so the mask changes only edge pixels. |
+| Background band (`background_height`) | Documented limit: soft edges are matted against `\floralgifmatte`, not the band. |
+| Bounding box | Cannot matter: sets the picture size; the annotation Rect is the page. |
+| Transforms, opacity | None are applied at page level. |
+| Stacking order | The GIF plays above all page content; documented, use `\florareserve` for logos and footlines. |
+
+`test/growth-gif-fast.tex` reaches effective rates above 50 fps (3 steps in
+0.05 s, 2 steps in 0.025 s). GIF frames are thinned there: the decoder pympress
+uses (GdkPixbuf 2.44.8, measured) plays a frame delay of 1 or 2 cs as 20 ms,
+3 cs as 30 ms and 0 cs as 100 ms, so no delay below 2 cs is written, the first
+and last sample of an interval always stay, and an interval shorter than 20 ms
+plays in 20 ms. The checker derives the expected frames and delays from the rate
+in the file name and the sample count, and rejects any delay below 2 cs.
+
+The checker reads the PDF and the GIFs: one full-page annotation per timed
+page (Screen with an embedded GIF, or Movie with an external one), a GIF with
+the interval's frame count whose first and last frame decode to their
+samples, and no JavaScript. Then, in pympress (pending; do not infer from the
+build):
+
+- Each timed page plays its interval once, above the text, and stops.
+- On the reservation documents nothing plays over the footline band or the
+  block inside the page.
+- The text stays crisp and the link on page 2 stays clickable.
+- Pages 2 and 3 start at their nominal starting stage.
+- Leaving a page and returning does not replay it (known limit).
+- No flash of the finished flora on page entry or after the last frame.
+- Embedded: copy the PDF alone to another folder; it still plays.
+- External: copy the PDF without `growth-gif-external.floral-animation/`
+  beside it: no playback, the start state of each interval shows (known limit).
+
+`tools/probe_pympress.py` logs what the viewer does on each page: overlay
+events, GIF repaint cost, peak memory and the drawing right after a page
+change. Run it with pympress's own Python, from a shell where a window may open:
+
+```sh
+<pympress python> tools/probe_pympress.py <outdir> build/gif/growth-gif.pdf 4 1 2 3
+```
+
+(`<outdir>` receives `events.log`; `4` is seconds per page, then the pages
+to visit.)

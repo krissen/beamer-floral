@@ -46,6 +46,7 @@ jobs:
             test/growth.tex
             test/growth-timed.tex
             test/growth-poster.tex
+            test/growth-patterns.tex
             test/growth-handout.tex
             test/frame-settings.tex
             test/frametitle-wrap.tex
@@ -61,10 +62,12 @@ jobs:
             test/stage-43.tex
             test/stage-onlytext.tex
             test/stage-reuse.tex
+            test/patterns.tex
             docs/src/tour.tex
             docs/src/showcase.tex
             docs/src/stock-default.tex
             docs/src/stock-Madrid.tex
+            docs/src/pattern-example.tex
             docs/src/stock-Berlin.tex
             test/acceptance/matrix-43.tex
             test/acceptance/matrix-169.tex
@@ -73,7 +76,7 @@ jobs:
             test/acceptance/overlays.tex
             test/acceptance/handout.tex
           latexmk_use_lualatex: true
-          extra_system_packages: python3 nodejs qpdf poppler-utils
+          extra_system_packages: python3 py3-pillow nodejs qpdf poppler-utils
           pre_compile: |
             set -e
             # latex-action forwards TEXINPUTS but not FLORA_LUA; the engine's
@@ -84,13 +87,15 @@ jobs:
             texlua test/raster-cache.lua tikz-flora
             texlua test/raster-worker.lua tikz-flora
             python3 test/raster-publication.py
+            python3 test/gif-job.py
             python3 test/measure-raster-build.py
             python3 test/engine-pin.py
             texlua test/pdf-startup.lua
           post_compile: |
             set -e
             FLORAL_VERIFY_STABLE=1 latexmk -g -lualatex -interaction=nonstopmode -halt-on-error test/growth.tex
-            texlua test/check_reuse.lua reuse.log reuse-stock.log stage-reuse.log
+            texlua test/check_reuse.lua reuse.log reuse-stock.log stage-reuse.log patterns.log
+            python3 test/check_patterns.py patterns.pdf
             python3 test/check_stage.py stage.log stage.pdf
             python3 test/check_stage.py stage-43.log stage-43.pdf
             python3 test/check_stage.py stage-onlytext.log stage-onlytext.pdf
@@ -103,11 +108,24 @@ jobs:
             # Keep these checks in the TeX container: it owns the generated
             # PDFs and provides the matching LuaLaTeX/latexmk installation.
             python3 tools/check_growth_pdf.py growth-timed.pdf
+            python3 tools/check_growth_pdf.py growth-patterns.pdf
             python3 tools/build_animation.py --engine tikz-flora --outdir build/raster test/growth-raster.tex
             python3 tools/check_growth_pdf.py build/raster/growth-raster.pdf
+            python3 tools/build_animation.py --engine tikz-flora --outdir build/raster-patterns test/growth-patterns-raster.tex
+            python3 tools/check_growth_pdf.py build/raster-patterns/growth-patterns-raster.pdf
             python3 tools/build_animation.py --engine tikz-flora --outdir build/raster-geometry test/raster-geometry.tex
             FLORAL_VERIFY_STABLE=1 python3 tools/build_animation.py --engine tikz-flora --outdir build/raster-geometry test/raster-geometry.tex
             python3 tools/check_growth_pdf.py build/raster-geometry/raster-geometry.pdf
+            python3 tools/build_animation.py --engine tikz-flora --outdir build/gif test/growth-gif.tex
+            python3 tools/check_gif_pdf.py build/gif/growth-gif.pdf --pages 3 --mode embedded
+            python3 tools/build_animation.py --engine tikz-flora --outdir build/gif-external test/growth-gif-external.tex
+            python3 tools/check_gif_pdf.py build/gif-external/growth-gif-external.pdf --pages 3 --mode external
+            python3 tools/build_animation.py --engine tikz-flora --outdir build/gif-fast test/growth-gif-fast.tex
+            python3 tools/check_gif_pdf.py build/gif-fast/growth-gif-fast.pdf --pages 3 --mode embedded
+            python3 tools/build_animation.py --engine tikz-flora --outdir build/gif-reserve test/growth-gif-reserve.tex
+            python3 tools/check_gif_pdf.py build/gif-reserve/growth-gif-reserve.pdf --pages 3 --mode embedded --reserved
+            python3 tools/build_animation.py --engine tikz-flora --outdir build/gif-reserve-external test/growth-gif-reserve-external.tex
+            python3 tools/check_gif_pdf.py build/gif-reserve-external/growth-gif-reserve-external.pdf --pages 3 --mode external --reserved
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
