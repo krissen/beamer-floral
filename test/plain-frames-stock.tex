@@ -1,0 +1,25 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{Berlin}
+\usepackage{beamer-floral}
+\florasetup{seed=3,density=0.25}
+% A stock theme gets the running-head flag but no plain-frame preset: its
+% plain frames keep the document's own inset.
+\directlua{
+  assert(beamer_floral.plain_defaults==nil,'only the floral theme sets plain-frame defaults')
+  local prior=beamer_floral.prepare
+  beamer_floral.prepare=function(spec)
+    prior(spec)
+    local n=beamer_floral.count
+    local inset=spec.tune and spec.tune.gesture and spec.tune.gesture.top_inset
+    if n==1 then
+      assert(spec.running_head==false and inset==nil,'stock plain frame must keep the document inset')
+    elseif n==2 then
+      assert(spec.running_head==true and inset==nil,'stock framed page must keep the document inset')
+    end
+  end
+}
+\begin{document}
+\begin{frame}[plain]Start\end{frame}
+\section{One}
+\begin{frame}{Titled}Body\end{frame}
+\end{document}

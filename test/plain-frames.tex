@@ -1,0 +1,36 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{floral}
+\florasetup{seed=3,density=0.25}
+\title{Plain frames}
+\author{The Floral Project}
+\date{}
+% Plain frames show no running head: the adapter says so to the engine, and
+% the floral theme clears no inset above their flora. Framed pages keep it.
+\directlua{
+  local prior=beamer_floral.prepare
+  local function inset(spec)
+    return spec.tune and spec.tune.gesture and spec.tune.gesture.top_inset
+  end
+  beamer_floral.prepare=function(spec)
+    prior(spec)
+    local n=beamer_floral.count
+    if n==1 or n==2 then
+      assert(spec.running_head==false,'plain frame must report no running head')
+      assert(inset(spec)==0,'plain frame must clear no top inset')
+    elseif n==3 or n==4 then
+      assert(spec.running_head==true,'framed page must report its running head')
+      assert(inset(spec)==24,'framed page must keep the theme inset')
+    elseif n==5 then
+      assert(spec.running_head==false and inset(spec)==10,'frame override must win on a plain frame')
+    end
+  end
+}
+\begin{document}
+\begin{frame}[plain]Start\end{frame}
+\begin{frame}[plain]\titlepage\end{frame}
+\section{One}
+\begin{frame}{Titled}Body\end{frame}
+\begin{frame}Untitled body\end{frame}
+\florathisframe{tune={gesture={top_inset=10}}}
+\begin{frame}[plain]End\end{frame}
+\end{document}
