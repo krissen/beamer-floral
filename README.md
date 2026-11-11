@@ -216,6 +216,12 @@ encoder version, and are reused on later builds.
 
 Limits:
 
+- GIF frames are thinned above 50 fps effective rate (`growth fps` times
+  the rounding of steps per interval can exceed it): every k-th sample is
+  kept, with the first and last always present. Viewers that decode GIFs with
+  GdkPixbuf, as pympress does, play any frame delay below 2 centiseconds as 20 ms
+  (and a zero delay as 100 ms), so faster frames would play too slowly.
+  An interval shorter than 20 ms plays in 20 ms.
 - The GIF is an annotation above the page, not page content. Reservations
   (`\florareserve`) are applied to it: every pixel inside a reserved rectangle
   is transparent in every frame, rounded outward to whole pixels. Because the

@@ -144,6 +144,14 @@ do not reach it):
 | Transforms, opacity | None are applied at page level. |
 | Stacking order | The GIF plays above all page content; documented, use `\florareserve` for logos and footlines. |
 
+`test/growth-gif-fast.tex` reaches effective rates above 50 fps (3 steps in
+0.05 s, 2 steps in 0.025 s). GIF frames are thinned there: the decoder pympress
+uses (GdkPixbuf 2.44.8, measured) plays a frame delay of 1 or 2 cs as 20 ms,
+3 cs as 30 ms and 0 cs as 100 ms, so no delay below 2 cs is written, the first
+and last sample of an interval always stay, and an interval shorter than 20 ms
+plays in 20 ms. The checker derives the expected frames and delays from the rate
+in the file name and the sample count, and rejects any delay below 2 cs.
+
 The checker reads the PDF and the GIFs: one full-page annotation per timed
 page (Screen with an embedded GIF, or Movie with an external one), a GIF with
 the interval's frame count whose first and last frame decode to their
