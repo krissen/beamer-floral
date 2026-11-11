@@ -19,6 +19,11 @@
 \directlua{beamer_floral.title_defaults={layout="left",
   mix={density=2,leaves=3,leaflets=3,sprays=3,bloom=3},
   tune={gesture={top_inset=0}}}}
+% Section pages drawn with the optional [floral] template take a lighter
+% echo of the title composition. Other section page templates, including
+% those of themes that define their own, keep the document settings.
+\directlua{beamer_floral.section_defaults={layout="left",
+  mix={density=1,leaves=2,leaflets=2,sprays=2,bloom=2}}}
 % Plain frames show no running head, so nothing needs clearing above the
 % flora: the border and the head mark start at the paper's top, as on the
 % title page. Explicit frame settings still win.
@@ -146,6 +151,29 @@
     {\usebeamerfont{institute}\usebeamercolor[fg]{institute}\insertinstitute\par}%
     \vskip0.6em
     {\usebeamerfont{date}\usebeamercolor[fg]{date}\insertdate\par}%
+  \end{minipage}%
+  \vfill
+}
+
+% The optional section page: \setbeamertemplate{section page}[floral]. It is
+% not the theme's default, so \sectionpage keeps Beamer's template, or
+% another theme's, unless a document selects this one. The heading sits where
+% the title block does, beside the flora, with the floral divider below it.
+% The theme adds no \AtBeginSection hook; the document decides which sections
+% get a page (see the README).
+% The heading is the full section name, as in Beamer's default template, not
+% the navigation label of \section[short]{...}. It has its own font, derived
+% from the section title's, so the larger size does not change other section
+% page templates.
+\setbeamerfont{floral section title}{parent=section title,size=\LARGE}
+\defbeamertemplate{section page}{floral}{%
+  \global\floralsectionpageflag=1\relax
+  \vfill
+  \hspace*{\floratitleoffset}%
+  \begin{minipage}{\dimexpr\textwidth-\floratitleoffset\relax}%
+    \centering
+    {\usebeamerfont{floral section title}\usebeamercolor[fg]{section title}\insertsection\par}%
+    \floraldivider
   \end{minipage}%
   \vfill
 }

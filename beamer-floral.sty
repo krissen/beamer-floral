@@ -22,11 +22,14 @@
 % Set document-specific margins after loading this package to override them.
 \setbeamersize{text margin left=2.5cm,text margin right=1cm}
 \newcount\floraltitlepageflag
+% Set by a section page template that wants the section composition (the
+% Floral theme's [floral] template); other themes' section pages leave it 0.
+\newcount\floralsectionpageflag
 % The page's class for reuse: 0 content, 1 title, 2 section. Hooks on
 % Beamer's own commands see every theme's title and section pages.
 \newcount\floralpageclass
 % Reset after Beamer has shipped the preceding slide, before this body.
-\AddToHook{cmd/beamer@framenotesbegin/before}{\global\floraltitlepageflag=0\relax\global\floralpageclass=0\relax}
+\AddToHook{cmd/beamer@framenotesbegin/before}{\global\floraltitlepageflag=0\relax\global\floralsectionpageflag=0\relax\global\floralpageclass=0\relax}
 \AddToHook{cmd/titlepage/before}{\global\floralpageclass=1\relax}
 \AddToHook{cmd/sectionpage/before}{\global\floralpageclass=2\relax}
 \AddToHook{cmd/titlepage/before}{\directlua{beamer_floral.stage_check()}}
@@ -91,6 +94,12 @@
     beamer_floral.page_title = title_page
     if title_page and beamer_floral.title_defaults then
       flora.settings = require("flora.settings").merge(flora.settings, beamer_floral.title_defaults)
+    end
+    local section_page = tex.count.floralsectionpageflag == 1
+    if beamer_floral.frame then section_page = beamer_floral.frame.section_preset end
+    beamer_floral.page_section = section_page
+    if section_page and not title_page and beamer_floral.section_defaults then
+      flora.settings = require("flora.settings").merge(flora.settings, beamer_floral.section_defaults)
     end
     if beamer_floral.plain and beamer_floral.plain_defaults then
       flora.settings = require("flora.settings").merge(flora.settings, beamer_floral.plain_defaults)

@@ -691,6 +691,31 @@ All three catalogue images come from the executable English
 [configuration catalogue](test/visual/ornament-catalogue.tex).
 Its background flora is disabled to make the individual shapes easy to compare.
 
+## Section pages
+
+The Floral theme has an optional section page. It sets the section name
+where the title block sits, beside the flora, with the floral divider below
+it, and takes a lighter version of the title page's composition:
+
+```tex
+\setbeamertemplate{section page}[floral]
+\AtBeginSection[]{\begin{frame}[plain]\sectionpage\end{frame}}
+```
+
+- The template is not the theme's default. Without the first line,
+  `\sectionpage` keeps Beamer's template, and a theme that defines its own
+  section page keeps it; such pages get the document's ordinary composition.
+- The theme adds no `\AtBeginSection` hook: the second line is the
+  document's, and leaving it out gives section pages only where a frame
+  calls `\sectionpage`. A plain frame, as here, starts the flora at the
+  paper's top like the title page; a frame with a running head keeps it.
+- The heading uses the font `floral section title`, which is `section title`
+  at `\LARGE`, in the `section title` colour. `\floralornamentsetup` changes
+  the divider, as anywhere else.
+- `\florathisframe` settings still win, and section pages keep the document
+  margins under `stage` and share a drawing under `reuse=section`, as other
+  section pages do.
+
 ## Reserving space
 
 Keep the flora out of a rectangle with paper coordinates as dimensions, origin
