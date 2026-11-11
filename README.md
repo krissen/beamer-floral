@@ -490,8 +490,9 @@ side (default `12mm`). Both take any length, such as `55mm` or `0.3\paperwidth`.
   directly at the start of each frame. A `\setbeamersize` in the preamble after
   `stage` is set does not apply to staged frames. Change `stage` between
   frames, not inside one.
-- Beamer's `columns` spread over the whole slide width unless you give
-  `onlytextwidth`; on a staged frame use `\begin{columns}[onlytextwidth]`.
+- Stage frames keep `columns` inside the text block, as with the class option
+  `onlytextwidth`; the frames after them keep the document's own setting. An
+  explicit `[totalwidth=...]` on a staged frame still wins.
 - With `reuse`, a staged frame has its own page geometry and so its own shared
   drawing; frames on the document margins keep theirs.
 - Sidebar themes are not supported, as before.

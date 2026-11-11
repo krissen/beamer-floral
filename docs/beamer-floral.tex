@@ -216,8 +216,10 @@ The stage applies to content frames. Title and section pages, which call
 the frame asks for the stage with \verb|\florathisframe{stage=...}|. Beamer
 reads the margins when a frame starts and \verb|\setbeamersize| works only in
 the preamble, so the stage assigns the margin and width registers at the start
-of each frame; change it between frames. Use
-\verb|\begin{columns}[onlytextwidth]| on a staged frame. With
+of each frame; change it between frames. Stage
+frames keep \texttt{columns} inside the text block, as the class option
+\texttt{onlytextwidth} does; the frames after them keep the document's own
+setting, and an explicit \verb|[totalwidth=...]| still wins. With
 \texttt{reuse}, a staged frame has its own shared drawing.
 
 \section{File size}
