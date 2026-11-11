@@ -199,14 +199,17 @@ function M.prepare(spec)
     local mark=(tex.count or {}).floralpageclass or 0
     M.frame.class=(M.page_title or mark==1) and 'title' or mark==2 and 'section' or 'content'
     -- A growing frame needs its own stages, and a frame with a caller's own
-    -- renderer is drawn by it, so both keep their own drawings.
+    -- renderer is drawn by it, so both keep their own drawings. So does a
+    -- pattern frame: a reused drawing keeps the whole text block clear, which
+    -- leaves a pattern almost nothing to fill, and patterns are cheap to draw.
     local listed=reuse_set(active['reuse'])[M.frame.class]
     local growing=M.frame.growth.growth~='off' and not M.handout
-    M.frame.reuse=listed and not growing and not M.custom_render or false
+    local patterned=type(spec.pattern)=='table' and next(spec.pattern)~=nil
+    M.frame.reuse=listed and not growing and not patterned and not M.custom_render or false
     -- One decision per frame, for test/check_reuse.lua.
     if texio and texio.write_nl then texio.write_nl('log',string.format('beamer-floral: frame %d class %s reuse %s',M.count,M.frame.class,
       M.frame.reuse and 'yes' or not listed and 'no (not listed)' or growing and 'no (growing)'
-      or 'no (custom renderer)')..'\n') end
+      or patterned and 'no (pattern)' or 'no (custom renderer)')..'\n') end
     M.frame.signature=Serial.encode({settings=M.frame.settings,width=spec.width,height=spec.height,
       text=spec.text,header_y=spec.header_y,input_signature=M.input_signature,growth=M.frame.growth,
       reuse=M.frame.reuse,class=M.frame.class})
