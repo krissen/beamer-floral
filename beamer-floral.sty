@@ -40,7 +40,7 @@
 \makeatletter
 \newif\iffloralenvframe
 \AddToHook{cmd/frame/before}{%
-  \ifx\@currenvir\beamer@frametext\floralenvframetrue\else\floralenvframefalse\fi}
+  \ifx\@currenvir\beamer@frametext\global\floralenvframetrue\else\global\floralenvframefalse\fi}
 \AddToHook{cmd/beamer@framecommand/before}{%
   \iffloralenvframe
     \directlua{beamer_floral.stage_begin("\luaescapestring{\detokenize\expandafter{\the\beamer@envbody}}",
