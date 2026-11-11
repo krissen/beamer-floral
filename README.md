@@ -26,7 +26,7 @@ You need LuaLaTeX and the engine,
 [tikz-flora](https://github.com/krissen/tikz-flora). This package uses
 integration hooks that are not in the upstream engine yet; they are
 [proposed upstream](https://github.com/wn-mitch/tikz-flora/issues/2). Until
-they land, use the `beamer-floral` branch of the fork, commit `cc3fb48` or
+they land, use the `beamer-floral` branch of the fork, commit `8123ec2` or
 later. The options below all take care of that.
 
 ### From the release archive
@@ -290,7 +290,8 @@ drawing per title height (one line, two lines), and frames without one share
 another. A different reservation, `\florathisframe` setting or page geometry
 gives that frame its own drawing, which later frames with the same settings
 reuse. Growing frames keep their own drawings, and so does a frame that an
-integration draws with its own `render_page` callback. The drawing is cached with the
+integration draws with its own `render_page` callback. Pattern frames keep
+their own drawings too (see [Patterns](#patterns)). The drawing is cached with the
 other flora, so later compiles do not draw it again.
 
 What you give up:
@@ -320,6 +321,54 @@ against 5.5-5.6 s, 6.2-6.4 s, 7.5-7.8 s and 15.2-15.5 s with `reuse=all`. Beamer
 without floral takes 3.2-3.6 s on the 21-page deck, and the 97-page deck
 takes about 12 s with flora off.
 Measured with TeX Live 2025 and tikz-flora `cc3fb48`.
+
+## Patterns
+
+The engine can fill a page with a geometric pattern instead of flora. The
+keys go in `\florasetup` or `\florathisframe`, like any other setting:
+
+```tex
+\florasetup{pattern=asanoha, edge=fade, hero=rosette}
+\florathisframe{pattern=seigaiha, outer=margin, scale=1.5}   % this frame only
+\florathisframe{pattern=none}                                % flora on this frame
+```
+
+![A frame with the asanoha pattern and a rosette](docs/img/patterns.png)
+
+`pattern` names a pattern or a group, `edge` how the pattern meets the text,
+`hero` adds one large motif in a top corner, `outer` how it meets the paper's
+edge and `scale` sets the cell size. The catalogue of patterns, groups and
+values is in the [engine's README](https://github.com/krissen/tikz-flora#patterns)
+and is not repeated here. Without a `pattern` key the flora is unchanged.
+
+Measured with `tools/measure_reuse.py` on `test/reuse-benchmark.tex` (16:9,
+floral theme, `PATTERN=asanoha` for the pattern decks, no `reuse`). Cold
+builds, with the PDF size; the machine was shared and its load average
+was 6-10 during the runs, so times carry some noise.
+
+| Deck | Flora | `pattern=asanoha` |
+|---|---:|---:|
+| Title and 10 frames of two overlays, 21 pages | 31.3 s, 21.5 MB | 5.6 s, 0.18 MB |
+| Title and 40 one-overlay frames, 41 pages | 49.0 s, 62.2 MB | 7.9 s, 0.65 MB |
+| Title and 30 frames of three overlays, 6 section pages, 97 pages | 173 s, 57.0 MB | 44.6 s, 0.72 MB |
+
+Pattern pages are small vector drawings, so the file stays small without
+`reuse`. A frame with overlays is painted again rather than
+taken from the engine's page cache, which is why the last deck takes longer
+than the second although it has fewer frames.
+Measured with TeX Live 2025 and tikz-flora `8123ec2`.
+
+Patterns work with the rest of the theme:
+
+- `growth=overlays` and `growth=timed` grow the pattern through the same
+  progression as flora, with `hero` growing ring by ring from its centre.
+  Cached raster playback keys on every pattern setting, so changing one
+  rebuilds the samples.
+- Pattern frames keep their own drawing under `reuse`. A reused drawing keeps
+  the whole text block clear, which leaves a pattern almost nothing to fill,
+  and a pattern is small and quick to draw without it (see the measurements
+  below). A frame with `\florathisframe{pattern=none}` is a flora frame and is
+  reused as usual.
 
 ## File size
 

@@ -64,5 +64,33 @@ M.handout=true
 assert(M.render_page(spec(),{})==nil,'handout delegates complete static painting')
 M.handout=false;M.frame.growth.growth='off'
 assert(M.render_page(spec(),{})==nil,'off delegates ordinary painting')
+-- Every pattern setting separates frames: the frame signature, and so the
+-- geometry cache and each drawing's key, changes with each of them.
+do
+  local Settings=require('flora.settings')
+  local fields={}
+  for _,f in pairs(Settings.SPEC) do fields[#fields+1]=f end
+  for _,f in ipairs{'pattern','pattern_edge','pattern_outer','pattern_scale','pattern_hero'} do
+    local found=false
+    for _,g in ipairs(fields) do found=found or g==f end
+    assert(found,'engine does not copy '..f..' onto the spec')
+  end
+  local function signature(patch)
+    local pstart=900+(signature_count or 0); signature_count=(signature_count or 0)+1
+    M.init(path); M.context(pstart,0,true,false)
+    local s=spec(); for k,v in pairs(patch) do s[k]=v end
+    M.prepare(s)
+    return M.frame.signature, s
+  end
+  local flora_sig=signature{}
+  local seen={[flora_sig]='flora'}
+  for k,v in pairs{pattern='asanoha',pattern_edge='fade',pattern_outer='margin',pattern_scale=2,pattern_hero='rosette'} do
+    local sig,s=signature{[k]=v}
+    assert(s[k]==v,k..' must reach the drawn spec')
+    assert(not seen[sig],k..' must change the frame signature')
+    seen[sig]=k
+  end
+  M.init(path)
+end
 os.remove(path)
 print('growth adapter contract tests passed')

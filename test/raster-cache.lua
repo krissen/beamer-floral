@@ -52,6 +52,29 @@ write(folder..'/sample-4.png',png)
 a.stage=2;assert(C.collect(a,spec,2).stage==2,'display order selects the correct interval')
 spec.seed=2;assert(C.collect(a,spec,2)==nil,'seed changes must invalidate cache')
 spec.seed=1;assert(C.collect(a,spec,3)==nil,'sample-grid changes must invalidate cache')
+-- A pattern page differs from a flora page, and every pattern setting
+-- (pattern, edge, outer, scale, hero) is part of the signature on its own.
+local flora_signature=signature
+local variants={pattern={pattern='asanoha'},
+  pattern_edge={pattern='asanoha',pattern_edge='fade'},
+  pattern_outer={pattern='asanoha',pattern_outer='margin'},
+  pattern_scale={pattern='asanoha',pattern_scale=2},
+  pattern_hero={pattern='asanoha',pattern_hero='rosette'}}
+local seen={[flora_signature]='flora'}
+local base_pattern=C.collect(a,{width=400,height=300,seed=1,text=spec.text,pattern='asanoha'},2)
+assert(base_pattern==nil,'a pattern page must not hit a flora cache')
+assert(a.animation_manifest[1].signature~=flora_signature,'pattern must change the signature')
+seen[a.animation_manifest[1].signature]='pattern'
+for _,key in ipairs{'pattern_edge','pattern_outer','pattern_scale','pattern_hero'} do
+  local v={width=400,height=300,seed=1,text=spec.text}
+  for k,val in pairs(variants[key]) do v[k]=val end
+  assert(C.collect(a,v,2)==nil,key..' changes must invalidate cache')
+  local sig=a.animation_manifest[1].signature
+  assert(not seen[sig],key..' must change the signature (same as '..tostring(seen[sig])..')')
+  seen[sig]=key
+end
+a.animation_manifest[1]=nil
+assert(C.collect(a,spec,2).stage==2,'the flora cache is still current after pattern variants')
 spec.lines={{x0=70,y0=100,x1=200,y1=120}}
 assert(C.collect(a,spec,2)==nil,'geometry changes must invalidate cache');spec.lines=nil
 os.remove(folder..'/sample-3.png')

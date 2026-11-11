@@ -32,6 +32,8 @@
   \florareserve{0pt}{0pt}{\paperwidth}{1cm}
   \florareserve{7cm}{4cm}{9.3cm}{6.1cm}
 \fi
+% test/growth-patterns*.tex set \floralpatterns: a pattern with a hero instead of flora.
+\ifdefined\floralpatterns\florasetup{pattern=seigaiha,hero=rosette,edge=fade}\fi
 \ifdefined\floralstatic\else
 \makeatletter
 \let\floraltestinit\@anim@@jsinit
