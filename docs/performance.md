@@ -131,7 +131,7 @@ REUSE=content python3 tools/measure_reuse.py p-41-content adaptive 40 1
 S=5 python3 tools/measure_reuse.py p-97-adaptive adaptive 30 3         # a section page every 5 frames
 PATTERN=asanoha python3 tools/measure_reuse.py p-21-pattern adaptive 10 2
 python3 tools/measure_reuse.py p-21-none none 10 2                     # Beamer without floral
-python3 tools/measure_reuse.py p-97-off off 30 3                       # flora off (with S=5 for 97 pages)
+S=5 python3 tools/measure_reuse.py p-97-off off 30 3                   # flora off, 97 pages
 ```
 
 `REUSE` sets the `reuse` value, `PATTERN` a pattern, and `S` puts a section
@@ -148,17 +148,23 @@ labels.
 `tools/measure_sizes.py` builds `test/size-benchmark.tex` in each variant
 (`none`, `static`, `overlays`, `vector`, `raster`) and prints the page count,
 size and build time. `--variant` measures only the named variants and may be
-repeated, which gives one config per command:
+repeated, which gives one config per command. The tool rewrites `results.json`
+in its `--outdir` on every run, so give each run its own `--outdir` or the
+earlier rows are lost (the 60a153d figures were measured this way):
 
 ```sh
 python3 tools/measure_sizes.py --engine build/engine-60a153d
-python3 tools/measure_sizes.py --engine build/engine-60a153d --variant vector
+for v in none static overlays vector raster; do
+  python3 tools/measure_sizes.py --engine build/engine-60a153d \
+    --variant $v --outdir build/size-60a153d/$v
+done
 ```
 
-The `growth=off` row of the table is the `static` variant. Results go to
+The `growth=off` row of the table is the `static` variant. Without `--outdir`, results go to
 `build/size-benchmark/results.json`, with the commit, the engine revision and
 the TeX version. The raster variant builds through `tools/build_animation.py`
-and is by far the slowest, about 12 minutes in the measurement above.
+and is by far the slowest variant: it took 10-12 minutes on the loaded machine
+of these runs, which is not a typical figure.
 
 ### Raster builds
 
