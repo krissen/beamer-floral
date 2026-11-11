@@ -1,0 +1,328 @@
+"""Check a PDF built with GIF playback. External (gif-external): one full-page Movie
+annotation per timed page. Embedded (gif): one full-page Screen annotation whose
+rendition holds the GIF as an embedded file. Either way each GIF is complete,
+decodes to its samples, and the PDF has no JavaScript. Needs qpdf and Pillow."""
+import argparse
+import json
+import math
+from pathlib import Path
+import re
+import subprocess
+import struct
+
+
+def gif_facts(path):
+    """Frames, delays (centiseconds), disposal and transparency of each frame, loop extension."""
+    data = path.read_bytes()
+    if data[:4] != b'GIF8' or data[-1:] != b';':
+        raise RuntimeError(f'{path}: not a complete GIF')
+    position = 13
+    if data[10] & 0x80:
+        position += 3 * (2 << (data[10] & 7))
+    frames, looped, control = [], False, None
+
+    def skip(at):
+        while data[at]:
+            at += data[at] + 1
+        return at + 1
+
+    while data[position] != 0x3B:
+        if data[position] == 0x21:
+            label = data[position + 1]
+            if label == 0xF9:
+                packed, delay, index = struct.unpack('<BHB', data[position + 3:position + 7])
+                control = (delay, packed >> 2 & 7, bool(packed & 1) and index)
+            elif label == 0xFF and data[position + 3:position + 14].startswith(b'NETSCAPE'):
+                looped = True
+            position = skip(position + 2)
+        elif data[position] == 0x2C:
+            flags = data[position + 9]
+            position += 10
+            if flags & 0x80:
+                position += 3 * (2 << (flags & 7))
+            position = skip(position + 1)
+            frames.append(control)
+            control = None
+        else:
+            raise RuntimeError(f'{path}: unexpected block')
+    return frames, looped
+
+
+# Per-channel RMS (0-255) between a decoded frame and its matted sample. A
+# correct encoding stays at quantisation error; scrambled rows are far above.
+RMS_LIMIT = 8.0
+
+
+def parse_data(text):
+    """The engine's plain-data serializer (a Lua table constructor) as Python values."""
+    position = 0
+    token = re.compile(r'\s*(?:(-?\d[\d.eE+-]*)|"((?:[^"\\]|\\.)*)"|(true|false)|([A-Za-z_]\w*)|(.))')
+
+    def read():
+        nonlocal position
+        match = token.match(text, position)
+        position = match.end()
+        number, string, boolean, name, symbol = match.groups()
+        if number is not None:
+            return float(number)
+        if string is not None:
+            return re.sub(r'\\(.)', r'\1', string)
+        if boolean is not None:
+            return boolean == 'true'
+        if symbol != '{':
+            raise RuntimeError(f'unexpected {name or symbol!r} in manifest')
+        items, keyed = [], {}
+        while True:
+            following = token.match(text, position)
+            if following[5] == '}':
+                position = following.end()
+                if not keyed:
+                    return items
+                return {**{i + 1: v for i, v in enumerate(items)}, **keyed}
+            if following[5] == ',':
+                position = following.end()
+                continue
+            key = None
+            ahead = re.match(r'\s*(?:([A-Za-z_]\w*)|\[("(?:[^"\\]|\\.)*"|-?\d+)\])\s*=(?!=)', text[position:])
+            if ahead:
+                key = ahead[1] or (int(ahead[2]) if ahead[2].lstrip('-').isdigit() else ahead[2].strip('"'))
+                position += ahead.end()
+            value = read()
+            if key is None:
+                items.append(value)
+            else:
+                keyed[key] = value
+
+    return read()
+
+
+def reserved_areas(frame, size):
+    """Reserved rectangles of a frame as pixel boxes (left, top, right, bottom), rounded outward."""
+    width, height = frame['width'], frame['height']
+    boxes = []
+    for x0, y0, x1, y1 in frame.get('reserve', []):
+        left = max(0, math.floor(min(x0, x1) * size[0] / width))
+        right = min(size[0], math.ceil(max(x0, x1) * size[0] / width))
+        top = max(0, math.floor((height - max(y0, y1)) * size[1] / height))
+        bottom = min(size[1], math.ceil((height - min(y0, y1)) * size[1] / height))
+        if right > left and bottom > top:
+            boxes.append((left, top, right, bottom))
+    return boxes
+
+
+def rms_against_source(frame, sample, matte, spec=None):
+    """Per-channel RMS of a decoded GIF frame against its sample matted on `matte`.
+
+    `spec` holds the page size and reservations: the sample is compared after the
+    reserved rectangles are cleared, which the GIF must show as transparent.
+    Also returns whether every fully transparent sample pixel decoded transparent."""
+    from PIL import Image, ImageChops
+    with Image.open(sample) as source:
+        source = source.convert('RGBA')
+    for box in reserved_areas(spec, source.size) if spec else []:
+        source.paste((0, 0, 0, 0), box)
+    colour = tuple(int(matte[i:i + 2], 16) for i in (0, 2, 4))
+    background = Image.new('RGBA', source.size, (*colour, 255))
+    expected = Image.alpha_composite(background, source).convert('RGB')
+    frame = frame.convert('RGBA')
+    if frame.size != source.size:
+        raise RuntimeError(f'frame {frame.size} differs from sample {source.size}')
+    actual = Image.alpha_composite(background, frame).convert('RGB')
+    difference = ImageChops.difference(expected, actual)
+    pixels = source.size[0] * source.size[1]
+    squared = [sum(count * value * value for value, count in enumerate(histogram)) / pixels
+               for histogram in (difference.getchannel(band).histogram() for band in 'RGB')]
+    empty = source.getchannel('A').point([255] + [0] * 255)
+    transparent = ImageChops.multiply(empty, frame.getchannel('A')).getbbox() is None
+    return [v ** 0.5 for v in squared], transparent
+
+
+def expected_plan(steps, rate_milli):
+    """Samples and delays (centiseconds) an interval GIF must have, from the rule alone.
+
+    Written independently of the builder: GdkPixbuf plays a delay below 2 cs as 20 ms,
+    so a rate above 50 fps keeps every k-th sample, k = ceil(rate / 50 fps). Times are
+    exact fractions rounded half up; a final gap under 2 cs merges into the one before."""
+    from fractions import Fraction
+    from math import ceil, floor
+
+    def at(n):
+        return floor(Fraction(n * 100000, rate_milli) + Fraction(1, 2))
+
+    stride = max(1, ceil(Fraction(rate_milli, 50000)))
+    shown = [*range(0, steps, stride), steps]
+    if len(shown) > 2 and at(steps) - at(shown[-2]) < 2:
+        shown.pop(-2)
+    delays = [max(2, at(later) - at(earlier)) for earlier, later in zip(shown, shown[1:])]
+    return shown, [*delays, max(2, at(steps + 1) - at(steps))]
+
+
+def check_decoded(path, samples, folder, first_sample, spec=None):
+    """Every frame of an interval GIF against the sample it shows."""
+    from PIL import Image
+    matte = GIF_NAME.fullmatch(path.name)[3]
+    with Image.open(path) as gif:
+        if gif.n_frames != len(samples):
+            raise RuntimeError(f'{path}: {gif.n_frames} frames, expected {len(samples)}')
+        for index, sample in enumerate(samples):
+            gif.seek(index)
+            rms, transparent = rms_against_source(
+                gif.copy(), folder / f'sample-{first_sample + sample}.png', matte, spec)
+            if max(rms) > RMS_LIMIT or not transparent:
+                raise RuntimeError(f'{path}: frame {index} does not match its sample '
+                                   f'(RMS {max(rms):.1f}, limit {RMS_LIMIT}, transparent {transparent})')
+
+
+GIF_NAME = re.compile(r'interval-(\d+)-r(\d+)-m([0-9A-Fa-f]{6})-(e\d+)\.gif')
+
+
+def gif_encoder():
+    """The encoder version the package writes into GIF file names."""
+    text = (Path(__file__).resolve().parents[1] / 'beamer-floral-cache.lua').read_text()
+    return re.search(r"C\.gif_encoder='(e\d+)'", text)[1]
+
+
+def embedded_gif(pdf, objects, value, annotation, reference, page_ref, name, cache):
+    """Validate a Screen annotation that plays an embedded GIF; return its cache file."""
+    if annotation.get('/P') != page_ref:
+        raise RuntimeError(f'{name}: /P must be the page that lists the annotation')
+    action = annotation['/A']
+    if action.get('/AN') != reference:
+        raise RuntimeError(f'{name}: /AN must be the annotation itself')
+    if action.get('/S') != '/Rendition':
+        raise RuntimeError(f'{name}: the action must be a rendition')
+    rendition = value(action['/R'])
+    clip = value(rendition['/C'])
+    if clip.get('/CT') != 'u:image/gif':
+        raise RuntimeError(f'{name}: the media clip must be image/gif')
+    stream_ref = value(clip['/D'])['/EF']['/F']
+    number = stream_ref.split()[0]
+    data = subprocess.check_output(['qpdf', '--show-object=' + number, '--filtered-stream-data', str(pdf)])
+    if data[:4] != b'GIF8':
+        raise RuntimeError(f'{name}: the embedded file is not a GIF')
+    # Names do not say which frame a GIF belongs to; the cache file with the same bytes does.
+    for candidate in sorted(cache.glob('*/interval-*.gif')):
+        if candidate.read_bytes() == data:
+            return candidate
+    raise RuntimeError(f'{name}: the embedded GIF matches no file in {cache}')
+
+
+def check(pdf, expected_pages=None, expected_mode=None, expect_reserved=False):
+    result = subprocess.run(['qpdf', '--json', '--json-key=qpdf', str(pdf)],
+                            capture_output=True, text=True)
+    if result.returncode not in (0, 3):
+        raise RuntimeError(result.stderr)
+    for line in result.stderr.splitlines():
+        if line.startswith('WARNING:'):
+            raise RuntimeError(line)
+    objects = json.loads(result.stdout)['qpdf'][1]
+
+    def value(item):
+        if isinstance(item, str) and re.fullmatch(r'\d+ \d+ R', item):
+            return objects['obj:' + item]['value']
+        return item
+
+    def visit(item, path=''):
+        if isinstance(item, dict):
+            for key, child in item.items():
+                if key in ('/JS', '/JavaScript') or child == '/JavaScript':
+                    raise RuntimeError(f'JavaScript in the PDF ({key} at {path or "root"})')
+                visit(child, path + key)
+        elif isinstance(item, list):
+            for child in item:
+                visit(child, path)
+
+    for name, item in objects.items():
+        if name.startswith('obj:'):
+            visit(item.get('value'), name)
+    timed = 0
+    intervals = {}
+    mode = None
+    cache = pdf.parent / (pdf.stem + '.floral-animation')
+    for name, item in objects.items():
+        page = item.get('value') if name.startswith('obj:') else None
+        if not isinstance(page, dict) or page.get('/Type') != '/Page':
+            continue
+        page_ref = name.removeprefix('obj:')
+        box = [float(x) for x in value(page.get('/MediaBox') or [0, 0, 0, 0])]
+        listed = value(page.get('/Annots')) or []
+        movies = [a for a in listed if value(a).get('/Subtype') == '/Movie']
+        screens = [a for a in listed if value(a).get('/Subtype') == '/Screen']
+        if not movies and not screens:
+            continue
+        if movies and screens:
+            raise RuntimeError(f'{name}: Movie and Screen annotations on one timed page')
+        found = 'external' if movies else 'embedded'
+        if mode not in (None, found):
+            raise RuntimeError('The PDF mixes embedded and external GIF playback')
+        mode = found
+        if expected_mode and mode != expected_mode:
+            raise RuntimeError(f'{mode} GIF playback found, expected {expected_mode}')
+        annotations = movies or screens
+        if len(annotations) != 1:
+            raise RuntimeError(f'{name}: a timed page needs exactly one {found} annotation, found {len(annotations)}')
+        annotation = value(annotations[0])
+        rect = [float(x) for x in annotation['/Rect']]
+        if any(abs(x - y) > 0.01 for x, y in zip(rect, [0, 0, box[2] - box[0], box[3] - box[1]])):
+            raise RuntimeError(f'{name}: the annotation must cover the page, Rect {rect} in {box}')
+        timed += 1
+        if found == 'external':
+            if annotation.get('/A', {}).get('/Mode') != '/Once':
+                raise RuntimeError(f'{name}: the GIF must play once')
+            path = pdf.parent / annotation['/Movie']['/F'].removeprefix('u:')
+            if not path.is_file():
+                raise RuntimeError(f'{name}: missing GIF {path}')
+        else:
+            path = embedded_gif(pdf, objects, value, annotation, annotations[0], page_ref, name, cache)
+        label = GIF_NAME.fullmatch(path.name)
+        if not label or label[4] != gif_encoder():
+            raise RuntimeError(f'{path}: not a GIF of the current encoder ({gif_encoder()})')
+        intervals.setdefault(path.parent, {})[int(label[1])] = path
+    if not timed:
+        raise RuntimeError('No timed pages found')
+    if expected_pages is not None and timed != expected_pages:
+        raise RuntimeError(f'{timed} timed pages, expected {expected_pages}')
+    # What LaTeX recorded for each frame (page size, reservations) names the folder by signature.
+    manifest = pdf.parent / (pdf.stem + '.floral-animation-manifest')
+    frames = parse_data(manifest.read_text())['frames']
+    recorded = {f['signature']: f['spec'] for f in (frames.values() if isinstance(frames, dict) else frames)}
+    specs = {}
+    for folder in intervals:
+        specs[folder] = recorded.get(folder.name.rsplit('-', 1)[0])
+        if specs[folder] is None:
+            raise RuntimeError(f'{folder}: not described by {manifest.name}')
+    if expect_reserved and not all(specs[folder].get('reserve') for folder in intervals):
+        raise RuntimeError('--reserved: a timed frame has no reservation recorded')
+    for folder, stages in intervals.items():
+        count = max(stages)
+        if sorted(stages) != list(range(1, count + 1)):
+            raise RuntimeError(f'{folder}: not every interval has a page')
+        samples = len(list(folder.glob('sample-*.png')))
+        if samples < 2 or (samples - 1) % count:
+            raise RuntimeError(f'{folder}: {samples} samples do not divide into {count} intervals')
+        steps = (samples - 1) // count
+        for stage, path in stages.items():
+            frames, looped = gif_facts(path)
+            shown, delays = expected_plan(steps, int(GIF_NAME.fullmatch(path.name)[2]))
+            if len(frames) != len(shown):
+                raise RuntimeError(f'{path}: {len(frames)} frames, expected {len(shown)}')
+            if looped:
+                raise RuntimeError(f'{path}: loop extension; the GIF must play once')
+            if any(f is None or f[1] != 2 or f[2] != 255 for f in frames):
+                raise RuntimeError(f'{path}: frames need disposal 2 and transparent index 255')
+            if any(f[0] < 2 for f in frames):
+                raise RuntimeError(f'{path}: a frame delay below 2 cs plays too slowly in pympress')
+            if [f[0] for f in frames] != delays:
+                raise RuntimeError(f'{path}: delays {[f[0] for f in frames]}, expected {delays}')
+            check_decoded(path, shown, folder, (stage - 1) * steps, specs.get(folder))
+    print(f'GIF PDF checks passed ({timed} timed pages, {mode}, no JavaScript)')
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('pdf', type=Path)
+    parser.add_argument('--pages', type=int, help='expected number of timed pages')
+    parser.add_argument('--reserved', action='store_true', help='require reservations in the recorded frames')
+    parser.add_argument('--mode', choices=('embedded', 'external'), help='expected GIF playback mode')
+    arguments = parser.parse_args()
+    check(arguments.pdf.resolve(), arguments.pages, arguments.mode, arguments.reserved)

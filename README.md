@@ -182,6 +182,59 @@ Handout mode always uses complete static flora and needs no render cache.
 vector path. Neither this path nor manual overlay reveals need the external
 raster tools.
 
+### GIF playback for viewers without JavaScript
+
+Viewers such as pympress cannot run the JavaScript of `animate`. For them,
+select GIF playback:
+
+```tex
+\usepackage[gif]{beamer-floral-animation}
+\floralgifmatte{FFFFFF} % optional: the page colour, six hex digits
+```
+
+Every `growth=timed` interval is then built from the raster cache as a GIF
+and played by a full-page Screen annotation, with no `animate` environment
+and no JavaScript in the PDF. `gif` includes `[raster]`, so the builder and
+its requirements above apply. It also needs
+[Pillow](https://pypi.org/project/pillow/) when it builds GIFs
+(`python3 -m pip install pillow`). The build is the same:
+
+```sh
+python3 tools/build_animation.py --outdir build/slides slides.tex
+```
+
+By default the GIFs are **embedded in the PDF**, which is then
+self-contained. That costs about 1 MB per second of animation at 20 fps and
+144 dpi (8 s measured: 8.5 MB). With `[gif-external]` the PDF stays small and
+plays the GIFs from files instead, in a Movie annotation. Keep
+`<job>.floral-animation/` beside the PDF then, and move them together; a PDF
+without them plays nothing.
+
+The frames are composited against `\floralgifmatte` (default `FFFFFF`), so
+set it to your page colour; pixels that are almost fully transparent stay
+transparent. GIF files are named by interval, frame rate, matte colour and
+encoder version, and are reused on later builds.
+
+Limits:
+
+- GIF frames are thinned above 50 fps effective rate (`growth fps` times
+  the rounding of steps per interval can exceed it): every k-th sample is
+  kept, with the first and last always present. Viewers that decode GIFs with
+  GdkPixbuf, as pympress does, play any frame delay below 2 centiseconds as 20 ms
+  (and a zero delay as 100 ms), so faster frames would play too slowly.
+  An interval shorter than 20 ms plays in 20 ms.
+- The GIF is an annotation above the page, not page content. Reservations
+  (`\florareserve`) are applied to it: every pixel inside a reserved rectangle
+  is transparent in every frame, rounded outward to whole pixels. Because the
+  GIF plays above all page content, reserve areas that hold a logo or footline.
+- Soft flora edges are matted against `\floralgifmatte`, not against what is
+  under them. Over a coloured background band, set the matte to the band's colour
+  or accept a light halo.
+- Playback is verified in pympress 1.8.6. Viewers that do not play these
+  annotations show each interval's start state, not the finished flora.
+- Each interval plays once. Returning to a page does not replay it.
+- Print or export from handout mode (it paints complete static flora).
+
 Overleaf can compile static flora, manual reveals and vector playback directly.
 For cached timed playback, build the cache locally first and upload it with
 the document; rebuild locally after changes that invalidate it. The external
