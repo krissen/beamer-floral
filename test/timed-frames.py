@@ -20,8 +20,12 @@ reference images):
         difference from the same page with every frame off. Tolerance:
         INK_FLOOR for "none" and a growth of at least INK_STEP between
         sampled frames, both in grey-level units at 72 dpi. The interval of
-        a later overlay continues the flora of the one before, so its frame
-        0 may instead equal the last frame of the previous interval.
+        a later overlay of a frame continues the flora of the one before: its
+        frame 0 must instead equal the last frame of the previous interval
+        (within INK_FLOOR). Which is which comes from the page labels: the
+        pages of one beamer frame share a label prefix, so an animation on a
+        page whose predecessor has the same prefix and carries an animation
+        continues that one; every other animation starts from nothing.
   group Transparency groups. No frame form itself carries /Group (what the
         engine pinned in engine-ref.txt emits: the groups are on nested
         forms); every nested /Group dictionary is the same dictionary.
@@ -127,6 +131,7 @@ class Doc:
         full = json.loads(out.stdout)
         self.objects = full["qpdf"][1]
         self.pages = [p["object"] for p in full["pages"]]
+        self.prefixes = [(p.get("label") or {}).get("/P") for p in full["pages"]]
         self.root_ref = self.objects["trailer"]["value"]["/Root"]
         self.root = self.val(self.root_ref)
         props = self.root["/OCProperties"]
@@ -171,6 +176,16 @@ class Doc:
                     anim, k = int(m.group(1)), int(m.group(2))
                     frames.setdefault(anim, {}).setdefault(number, {})[k] = ref
         return frames
+
+    def previous_interval(self, anim):
+        """The animation this one continues, or None for a fresh start."""
+        number = min(self.frames[anim])
+        before = number - 1
+        prefix = self.prefixes[number - 1]
+        if before < 1 or prefix is None or self.prefixes[before - 1] != prefix:
+            return None
+        return next((a for a, pages in self.frames.items()
+                     if a != anim and before in pages), None)
 
     def data(self, ref):
         return base64.b64decode(self.stream(ref)["data"])
@@ -299,10 +314,18 @@ def check_ink(doc, work, log):
             ink.append(sum(abs(a - b) for a, b in zip(blank, shot)))
         log("ink: animation %d page %d, frames %s: %s" % (anim, number, samples, ink))
         ended[anim] = ink[-1]
-        starts = [0] + ([ended[anim - 1]] if anim - 1 in ended else [])
-        if not any(abs(ink[0] - s) <= INK_FLOOR for s in starts):
-            fails.append("animation %d: frame 0 has ink %d, expected one of %s "
-                         "(floor %d)" % (anim, ink[0], starts, INK_FLOOR))
+        before = doc.previous_interval(anim)
+        start = 0 if before is None else ended.get(before)
+        log("ink: animation %d %s" % (anim, "starts fresh" if before is None
+                                          else "continues animation %d" % before))
+        if start is None:
+            fails.append("animation %d: continues animation %d, which was not measured"
+                         % (anim, before))
+        elif abs(ink[0] - start) > INK_FLOOR:
+            fails.append("animation %d: frame 0 has ink %d, expected %d (%s; "
+                         "tolerance %d)" % (anim, ink[0], start,
+                         "a fresh start" if before is None else
+                         "the end of animation %d" % before, INK_FLOOR))
         for (k0, i0), (k1, i1) in zip(zip(samples, ink), zip(samples[1:], ink[1:])):
             if i1 < i0 + INK_STEP:
                 fails.append("animation %d: ink from frame %d to %d is %d to %d, "
@@ -436,12 +459,23 @@ def mut_nested_group(doc, work):
     raise RuntimeError("no nested /Group to mutate")
 
 
+def mut_empty_continuation(doc, work):
+    """Frame 0 of an animation that continues another is emptied."""
+    anim = next(a for a in sorted(doc.frames) if doc.previous_interval(a) is not None)
+    first = frames_of(doc, anim)[0]
+    dst = os.path.join(work, "mut-cont.pdf")
+    rewrite(doc.path, dst, {first: stream_update(doc, first, b" ")})
+    return dst, "content of frame %d.0, which continues animation %d, emptied" % (
+        anim, doc.previous_interval(anim))
+
+
 # (check that must fail, mutation)
 MUTATIONS = [
     ("qq", mut_drop_q),
     ("last", mut_wrong_default),
     ("ink", mut_blank_frame),
     ("ink", mut_swap_oc),
+    ("ink", mut_empty_continuation),
     ("group", mut_frame_group),
     ("group", mut_nested_group),
 ]
