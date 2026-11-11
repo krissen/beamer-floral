@@ -5,13 +5,20 @@
 \providecommand\octhird{}
 \providecommand\ocsetting{}
 \providecommand\occount{2}
+\providecommand\ocstagesetting{}
 \documentclass{beamer}
 \usetheme{floral}
 % \florasetup reads its argument verbatim; expand the switch first.
 \edef\ocsetup{\noexpand\florasetup{seed=3,density=\ocdensity}}\ocsetup
 \begin{document}
+\ocstagesetting
 \ocsetting
 \begin{frame}{Changing frame}First\pause\par \octext\octhird\end{frame}
 \begin{frame}<1-\occount>{Same text on every overlay}The text does not change.\end{frame}
 \begin{frame}{Control}Alpha\pause\par Beta\end{frame}
+% Stage changes the page geometry: frames 4 and 5 have the same text and
+% overlays, so they must not share a cached drawing.
+\florathisframe{stage=right}
+\begin{frame}{Stage}Alpha\pause\par Beta\end{frame}
+\begin{frame}{Stage}Alpha\pause\par Beta\end{frame}
 \end{document}

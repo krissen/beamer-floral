@@ -25,7 +25,7 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-FRAMES = 3
+FRAMES = 5
 DPI = 40
 RERUN = re.compile(r"Rerun\s+to\s+get")
 # Each frame logs its reuse decision before its first page; every cache line
@@ -34,14 +34,21 @@ FRAME = re.compile(r"^beamer-floral: frame (\d+) class ")
 CACHE = re.compile(r"^(?:flora: page \d+|beamer-floral: frame \d+ static flora) "
                    r"(from the cache|grown and cached|painted)")
 
-# name: (switches, expected status of frames 1-3)
+# name: (switches, expected status of frames 1-5; 4 is on the stage, 5 is not)
 VARIANTS = {
-    "unchanged": ({}, "HHH"),
-    "changed text": ({"octext": "Second, changed"}, "MHH"),
-    "frame setting": ({"ocsetting": r"\florathisframe{gilt=vector}"}, "MHH"),
-    "document setting": ({"ocdensity": "0.25"}, "MMM"),
-    "overlay count, new geometry": ({"octhird": r"\pause\par Third"}, "MHH"),
-    "overlay count, same geometry": ({"occount": "3"}, "HHH"),
+    "unchanged": ({}, "HHHHH"),
+    "changed text": ({"octext": "Second, changed"}, "MHHHH"),
+    "frame setting": ({"ocsetting": r"\florathisframe{gilt=vector}"}, "MHHHH"),
+    "document setting": ({"ocdensity": "0.25"}, "MMMMM"),
+    "overlay count, new geometry": ({"octhird": r"\pause\par Third"}, "MHHHH"),
+    "overlay count, same geometry": ({"occount": "3"}, "HHHHH"),
+    # The stage keys are document settings, which the engine's cache key
+    # covers whole, so changing one misses every frame, though only the stage
+    # frame's geometry changes. Correct, if conservative.
+    "stage width": ({"ocstagesetting": r"\florasetup{stage width=50mm}"}, "MMMMM"),
+    "stage margin": ({"ocstagesetting": r"\florasetup{stage margin=20mm}"}, "MMMMM"),
+    # Document-level stage=left stages frames 1-3 and 5; frame 4 asks for the right.
+    "stage left": ({"ocstagesetting": r"\florasetup{stage=left}"}, "MMMHM"),
 }
 
 
@@ -119,6 +126,10 @@ def main():
         (base / "d.tex").write_text(source({}))
         compile_passes(base, env)
         base_pages = pages(base, "base")
+        # Frames 4 and 5 have the same text; the stage gives them different
+        # geometry, so their first overlay pages must differ.
+        if len(base_pages) != 10 or base_pages[6][2] == base_pages[8][2]:
+            sys.exit("the stage frame and the document-margin frame with the same text look alike")
         for name, (switches, expected) in VARIANTS.items():
             slug = re.sub(r"\W+", "-", name)
             out = Path(tmp) / slug
