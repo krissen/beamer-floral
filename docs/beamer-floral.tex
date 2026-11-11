@@ -233,24 +233,9 @@ setting, and an explicit \verb|[totalwidth=...]| still wins. With
 
 \section{File size}
 
-The table gives measured sizes for one document with a title page and ten
-frames of two overlays each (21 PDF pages), with identical content in every
-variant.
-
-\begin{center}
-\begin{tabular}{@{}lr@{}}
-  \toprule
-  Variant & PDF size \\
-  \midrule
-  Beamer without floral & 0.05\,MB \\
-  \texttt{growth=off} & 21.5\,MB \\
-  \texttt{growth=overlays} & 47.5\,MB \\
-  \texttt{growth=timed}, vector & 89.4\,MB \\
-  \texttt{growth=timed}, raster & 113.4\,MB \\
-  \bottomrule
-\end{tabular}
-\end{center}
-
+The measured PDF sizes per growth variant, the build times and how to repeat
+them are on
+\url{https://github.com/krissen/beamer-floral/blob/main/docs/performance.md}.
 Overlays of a static frame share one copy of the flora. Growing flora needs
 a separate drawing for each stage. Sizes depend on density, layout and page
 count.

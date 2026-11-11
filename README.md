@@ -307,27 +307,10 @@ What you give up:
 - With `title` in the list, the title page is much plainer than its usual
   full composition. `reuse=content` leaves title pages as they are.
 
-Measured with `tools/measure_reuse.py` on `test/reuse-benchmark.tex`
-(16:9, floral theme). A warm build is a second full `latexmk` compile of the
-unchanged document with the flora caches kept; a cold build starts from an
-empty output directory. The machine was shared, and its load average was
-3.3-26.7 at the start of the builds, so times carry some noise.
-
-| Deck | Adaptive | `reuse=content` | `reuse=all` |
-|---|---:|---:|---:|
-| Title and 10 frames of two overlays, 21 pages | 3.8-4.4 s, 21.5 MB | | 3.8-3.9 s, 3.3 MB |
-| Title and 40 one-overlay frames, 41 pages | 4.6-5.2 s, 62.0 MB | 4.2-4.4 s, 8.5 MB | 4.2-4.3 s, 3.3 MB |
-| Title and 30 frames of three overlays, 91 pages | 5.9-6.2 s, 48.8 MB | | 5.5-5.8 s, 3.3 MB |
-| As above with 6 section pages, 97 pages | 23.2-25.7 s, 57.0 MB | 12.5-30.7 s, 16.7 MB | 12.8-13.8 s, 4.6 MB |
-
-The 97-page `reuse=content` warm range is wide because one of its three
-runs (30.7 s) started as the load climbed.
-
-Warm builds; cold builds take 14.3-16.2 s, 36.6-42.3 s, 33.4-36.5 s and
-76.1-89.9 s adaptive against 5.4 s, 5.7-5.9 s, 7.1-7.8 s and 14.7-16.0 s with
-`reuse=all`. Beamer without floral takes 3.3-3.4 s on the 21-page deck, and
-the 97-page deck takes 12.4-13.8 s with flora off.
-Measured with TeX Live 2025 and tikz-flora `60a153d`.
+On a deck of 97 pages, a warm build takes 23.2-25.7 s adaptive and
+12.8-13.8 s with `reuse=all`, a cold one 76.1-89.9 s against 14.7-16.0 s, and
+the PDF shrinks from 57.0 MB to 4.6 MB. The tables, the method and how to repeat the
+measurements are in [docs/performance.md](docs/performance.md).
 
 ## Patterns
 
@@ -348,19 +331,10 @@ edge and `scale` sets the cell size. The catalogue of patterns, groups and
 values is in the [engine's README](https://github.com/krissen/tikz-flora#patterns)
 and is not repeated here. Without a `pattern` key the flora is unchanged.
 
-Measured with `tools/measure_reuse.py` on `test/reuse-benchmark.tex` (16:9,
-floral theme, `PATTERN=asanoha` for the pattern decks, no `reuse`). Cold
-builds, with the PDF size; the machine was shared and its load average
-was 5.1-26.7 at the start of the runs, so times carry some noise.
-
-| Deck | Flora | `pattern=asanoha` |
-|---|---:|---:|
-| Title and 10 frames of two overlays, 21 pages | 14.3-16.2 s, 21.5 MB | 4.4-4.5 s, 0.18 MB |
-| Title and 40 one-overlay frames, 41 pages | 36.6-42.3 s, 62.0 MB | 5.6 s, 0.65 MB |
-| Title and 30 frames of three overlays, 6 section pages, 97 pages | 76.1-89.9 s, 57.0 MB | 29.9-35.8 s, 0.72 MB |
-
 Pattern pages are small vector drawings, so the file stays small without
-`reuse`. Measured with TeX Live 2025 and tikz-flora `60a153d`.
+`reuse`: on the 97-page deck a cold build takes 29.9-35.8 s against 76.1-89.9 s
+for flora, and the PDF is 0.72 MB against 57.0 MB. The tables are in
+[docs/performance.md](docs/performance.md#build-times-flora-and-patterns).
 
 Patterns work with the rest of the theme:
 
@@ -370,31 +344,21 @@ Patterns work with the rest of the theme:
   rebuilds the samples.
 - Pattern frames keep their own drawing under `reuse`. A reused drawing keeps
   the whole text block clear, which leaves a pattern almost nothing to fill,
-  and a pattern is small and quick to draw without it (see the measurements
-  below). A frame with `\florathisframe{pattern=none}` is a flora frame and is
-  reused as usual.
+  and a pattern is small and quick to draw without it (see
+  [the measurements](docs/performance.md#build-times-flora-and-patterns)). A
+  frame with `\florathisframe{pattern=none}` is a flora frame and is reused
+  as usual.
 
 ## File size
 
 Flora is detailed artwork, so even a static deck is far larger than plain
 Beamer. Overlays of a static frame share one copy of the flora; growing flora
-needs a separate drawing for each stage. These figures come
-from `tools/measure_sizes.py`, which builds `test/size-benchmark.tex` with
-identical content in each variant: a title page and ten frames of two
-overlays, 21 PDF pages in all. Timed variants use the defaults of 8 seconds
-and 20 fps, and raster samples are 144 dpi.
-
-| Variant | PDF size |
-|---|---:|
-| Beamer without floral | 0.05 MB |
-| `growth=off` | 21.5 MB |
-| `growth=overlays` | 47.5 MB |
-| `growth=timed`, vector | 89.4 MB |
-| `growth=timed`, raster | 113.4 MB |
-
-Measured with TeX Live 2025 and tikz-flora `60a153d`. Your own figures will
-depend on the density, layout and number of pages. A raster build also keeps
-its sample cache on disk, 109 MB for this document. Share a talk with
+needs a separate drawing for each stage. A title page and ten frames of two
+overlays (21 pages) is 21.5 MB with `growth=off` and 47.5 MB with
+`growth=overlays`. Timed animation costs 89.4 MB as vector and 113.4 MB as
+raster, plus a 109 MB sample cache on disk for the raster build. The full
+table, the method and how to repeat it are in
+[docs/performance.md](docs/performance.md#file-size). Share a talk with
 `\florasetup{growth=off}` if size matters more than the animation.
 
 ## Standalone bundle
