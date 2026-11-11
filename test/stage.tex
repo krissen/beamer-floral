@@ -1,0 +1,51 @@
+% The stage layout: the text margins are assigned at the start of every frame.
+% test/check_stage.py compares the registers logged per frame ("STAGE n ...")
+% and the word positions in the PDF with the expected table for each frame.
+% \stageaspect is 169 or 43; test/stage-43.tex selects the latter.
+\providecommand\stageaspect{169}
+\documentclass[aspectratio=\stageaspect]{beamer}
+\usetheme{floral}
+% The document's own margins, which stage=off must return to.
+\setbeamersize{text margin left=2cm,text margin right=2cm}
+\florasetup{seed=4}
+\AtBeginSection[]{\begin{frame}[plain]\florapos\sectionpage\end{frame}}
+\title{Stage}\author{beamer-floral}\date{}
+\makeatletter
+\newcount\stagen
+\newcommand\florapos{\global\advance\stagen by 1
+  \typeout{STAGE \the\stagen\space textwidth=\the\textwidth\space left=\the\beamer@leftmargin\space right=\the\beamer@rightmargin}}
+\makeatother
+\newcommand\richcontent{%
+  \begin{block}{A block}A block with text long enough to wrap onto several lines in a narrow column of text.\end{block}
+  \begin{columns}[T,onlytextwidth]\column{.45\textwidth}Left column with a few words.\column{.45\textwidth}Right column with a few more words.\end{columns}
+  \begin{itemize}\item An item whose text runs on until it has to wrap at the right margin of the column.\item Another item.\end{itemize}
+  A closing paragraph with a footnote that sits at the foot of the page.\footnote{The footnote text is long enough to wrap onto a second line at the foot.}}
+\begin{document}
+% 1 document margins
+\begin{frame}{Document margins}\florapos\richcontent\end{frame}
+% 2 one frame on the stage, right
+\florathisframe{stage=right}
+\begin{frame}{A frame title so long that it has to wrap onto a second line in the narrow column}\florapos\richcontent\end{frame}
+% 3 the frame after returns exactly to the document margins
+\begin{frame}{After a stage frame}\florapos\richcontent\end{frame}
+\florasetup{stage=left}
+% 4 stage=left for the document
+\begin{frame}{A frame title so long that it has to wrap onto a second line in the narrow column}\florapos\richcontent\end{frame}
+% 5 title page: not staged by default
+\begin{frame}[plain]\florapos\titlepage\end{frame}
+% 6, 7 section page: not staged by default (the frame after it is)
+\section{Part}
+\begin{frame}{Back on the stage}\florapos\richcontent\end{frame}
+% 8 a title page that asks for the stage
+\florathisframe{stage=left}
+\begin{frame}[plain]\florapos\titlepage\end{frame}
+% 9 one content frame off the stage
+\florathisframe{stage=off}
+\begin{frame}{This frame is off the stage}\florapos\richcontent\end{frame}
+\florasetup{stage=right, stage width=50mm, stage margin=20mm}
+% 10 explicit width and margin
+\begin{frame}{Width and margin}\florapos\richcontent\end{frame}
+\florasetup{stage=off}
+% 11 off again
+\begin{frame}{Off again}\florapos\richcontent\end{frame}
+\end{document}

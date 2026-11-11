@@ -18,6 +18,12 @@ local expected={
     -- content: one-line titled, untitled, two-line titled, reserved strip.
     drawings={title=1, section=1, content=4},
   },
+  -- Stage: frames 3-4 share one drawing, the frame back on the document
+  -- margins reuses the first, and the other side has its own.
+  ['stage-reuse']={
+    decisions={'content yes','content yes','content yes','content yes','content yes','content yes'},
+    drawings={title=0, section=0, content=3},
+  },
   ['reuse-stock']={
     decisions={'title yes', 'section no (not listed)', 'content no (not listed)'},
     drawings={title=1, section=0, content=0},
