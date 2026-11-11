@@ -311,7 +311,7 @@ Measured with `tools/measure_reuse.py` on `test/reuse-benchmark.tex`
 (16:9, floral theme). A warm build is a second full `latexmk` compile of the
 unchanged document with the flora caches kept; a cold build starts from an
 empty output directory. The machine was shared, and its load average was
-4.6-26.7 at the start of the builds, so times carry some noise.
+3.3-26.7 at the start of the builds, so times carry some noise.
 
 | Deck | Adaptive | `reuse=content` | `reuse=all` |
 |---|---:|---:|---:|
@@ -319,6 +319,9 @@ empty output directory. The machine was shared, and its load average was
 | Title and 40 one-overlay frames, 41 pages | 4.6-5.2 s, 62.0 MB | 4.2-4.4 s, 8.5 MB | 4.2-4.3 s, 3.3 MB |
 | Title and 30 frames of three overlays, 91 pages | 5.9-6.2 s, 48.8 MB | | 5.5-5.8 s, 3.3 MB |
 | As above with 6 section pages, 97 pages | 23.2-25.7 s, 57.0 MB | 12.5-30.7 s, 16.7 MB | 12.8-13.8 s, 4.6 MB |
+
+The 97-page `reuse=content` warm range is wide because one of its three
+runs (30.7 s) started as the load climbed.
 
 Warm builds; cold builds take 14.3-16.2 s, 36.6-42.3 s, 33.4-36.5 s and
 76.1-89.9 s adaptive against 5.4 s, 5.7-5.9 s, 7.1-7.8 s and 14.7-16.0 s with
@@ -348,7 +351,7 @@ and is not repeated here. Without a `pattern` key the flora is unchanged.
 Measured with `tools/measure_reuse.py` on `test/reuse-benchmark.tex` (16:9,
 floral theme, `PATTERN=asanoha` for the pattern decks, no `reuse`). Cold
 builds, with the PDF size; the machine was shared and its load average
-was 4.6-26.7 at the start of the runs, so times carry some noise.
+was 5.1-26.7 at the start of the runs, so times carry some noise.
 
 | Deck | Flora | `pattern=asanoha` |
 |---|---:|---:|
@@ -391,7 +394,7 @@ and 20 fps, and raster samples are 144 dpi.
 
 Measured with TeX Live 2025 and tikz-flora `60a153d`. Your own figures will
 depend on the density, layout and number of pages. A raster build also keeps
-its sample cache on disk, 104 MB for this document. Share a talk with
+its sample cache on disk, 109 MB for this document. Share a talk with
 `\florasetup{growth=off}` if size matters more than the animation.
 
 ## Standalone bundle
