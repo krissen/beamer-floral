@@ -237,7 +237,8 @@ drawing per title height (one line, two lines), and frames without one share
 another. A different reservation, `\florathisframe` setting or page geometry
 gives that frame its own drawing, which later frames with the same settings
 reuse. Growing frames keep their own drawings, and so does a frame that an
-integration draws with its own `render_page` callback. The drawing is cached with the
+integration draws with its own `render_page` callback. Pattern frames keep
+their own drawings too (see [Patterns](#patterns)). The drawing is cached with the
 other flora, so later compiles do not draw it again.
 
 What you give up:
@@ -310,9 +311,11 @@ Patterns work with the rest of the theme:
   progression as flora, with `hero` growing ring by ring from its centre.
   Cached raster playback keys on every pattern setting, so changing one
   rebuilds the samples.
-- `reuse` draws one pattern page per page class; the pattern settings are part
-  of the drawing's key, so a frame with `\florathisframe{pattern=none}` gets
-  its own flora drawing and later frames with the same settings share it.
+- Pattern frames keep their own drawing under `reuse`. A reused drawing keeps
+  the whole text block clear, which leaves a pattern almost nothing to fill,
+  and a pattern is small and quick to draw without it (see the measurements
+  below). A frame with `\florathisframe{pattern=none}` is a flora frame and is
+  reused as usual.
 
 ## File size
 
