@@ -1,0 +1,18 @@
+% Section pages under reuse=section: pages drawn with the floral template
+% share one drawing, and a page with another template gets its own, since
+% the template's composition is part of the drawing's key.
+% test/check_reuse.lua counts the drawings.
+\documentclass[aspectratio=169]{beamer}
+\usetheme{floral}
+\florasetup{seed=3, reuse=section}
+\setbeamertemplate{section page}[floral]
+\AtBeginSection[]{\begin{frame}[plain]\sectionpage\end{frame}}
+\begin{document}
+\section{First}
+\section{Second}
+\begin{frame}[plain]
+  \setbeamertemplate{section page}[default]
+  \sectionpage
+\end{frame}
+\section{Third}
+\end{document}

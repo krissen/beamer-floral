@@ -42,6 +42,7 @@ jobs:
             test/stock.tex
             test/titles.tex
             test/title-defaults.tex
+            test/section-page.tex
             test/plain-frames.tex
             test/plain-frames-stock.tex
             test/titled-mark.tex
@@ -62,6 +63,7 @@ jobs:
             test/overlay-reuse.tex
             test/reuse.tex
             test/reuse-stock.tex
+            test/reuse-section-page.tex
             test/stage.tex
             test/stage-43.tex
             test/stage-onlytext.tex
@@ -100,7 +102,7 @@ jobs:
           post_compile: |
             set -e
             FLORAL_VERIFY_STABLE=1 latexmk -g -lualatex -interaction=nonstopmode -halt-on-error test/growth.tex
-            texlua test/check_reuse.lua reuse.log reuse-stock.log stage-reuse.log patterns.log
+            texlua test/check_reuse.lua reuse.log reuse-stock.log reuse-section-page.log stage-reuse.log patterns.log
             python3 test/check_patterns.py patterns.pdf
             python3 test/check_stage.py stage.log stage.pdf
             python3 test/check_stage.py stage-43.log stage-43.pdf

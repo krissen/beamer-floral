@@ -32,6 +32,12 @@ local expected={
       'content no (pattern)', 'content no (growing)'},
     drawings={title=0, section=0, content=1},
   },
+  -- The floral template's pages share one drawing; the default template's
+  -- page has the document composition and so its own.
+  ['reuse-section-page']={
+    decisions={'section yes', 'section yes', 'section yes', 'section yes'},
+    drawings={title=0, section=2, content=0},
+  },
   ['reuse-stock']={
     decisions={'title yes', 'section no (not listed)', 'content no (not listed)'},
     drawings={title=1, section=0, content=0},
