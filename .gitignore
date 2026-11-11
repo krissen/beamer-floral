@@ -26,3 +26,4 @@ build/
 *.floral-animation/
 __pycache__/
 *-flora/
+.venv/
