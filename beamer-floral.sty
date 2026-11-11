@@ -29,6 +29,51 @@
 \AddToHook{cmd/beamer@framenotesbegin/before}{\global\floraltitlepageflag=0\relax\global\floralpageclass=0\relax}
 \AddToHook{cmd/titlepage/before}{\global\floralpageclass=1\relax}
 \AddToHook{cmd/sectionpage/before}{\global\floralpageclass=2\relax}
+\AddToHook{cmd/titlepage/before}{\directlua{beamer_floral.stage_check()}}
+\AddToHook{cmd/sectionpage/before}{\directlua{beamer_floral.stage_check()}}
+
+% The stage layout (stage, stage width, stage margin; see the README). Beamer
+% reads the text margins when a frame starts and \setbeamersize works only in
+% the preamble, so the margin and width registers are assigned directly,
+% globally, at the start of every frame. \floralstagerestore returns to the
+% margins taken when the document began. Beamer's columns spread over the
+% whole slide unless onlytextwidth is on, which would run them into the stage,
+% so a stage frame turns it on and the restore puts the document's value back.
+\makeatletter
+\newif\iffloralenvframe
+\AddToHook{cmd/frame/before}{%
+  \ifx\@currenvir\beamer@frametext\global\floralenvframetrue\else\global\floralenvframefalse\fi}
+\AddToHook{cmd/beamer@framecommand/before}{%
+  \iffloralenvframe
+    \directlua{beamer_floral.stage_begin("\luaescapestring{\detokenize\expandafter{\the\beamer@envbody}}",
+      \iffloraon true\else false\fi)}%
+  \else
+    \directlua{beamer_floral.stage_begin(nil, \iffloraon true\else false\fi)}%
+  \fi}
+\newcommand\floralstagemargins[2]{%
+  \global\beamer@leftmargin=\dimexpr#1\relax
+  \global\beamer@rightmargin=\dimexpr#2\relax
+  \global\beamer@onlytextwidthtrue
+  \floral@stagegeometry}
+\newcommand\floralstagerestore{%
+  \global\beamer@leftmargin=\floral@baseleft
+  \global\beamer@rightmargin=\floral@baseright
+  \floral@baseonlytext
+  \floral@stagegeometry}
+\newdimen\floral@baseleft \newdimen\floral@baseright
+\let\floral@baseonlytext\relax
+\newcommand\floral@stagegeometry{%
+  \global\textwidth=\dimexpr\paperwidth-\beamer@leftmargin-\beamer@leftsidebar
+    -\beamer@rightmargin-\beamer@rightsidebar\relax
+  \global\oddsidemargin=\dimexpr\beamer@leftmargin+\beamer@leftsidebar-1in-\hoffset\relax
+  \global\evensidemargin=\oddsidemargin
+  % Beamer's page style draws the canvas, headline, footline and sidebars
+  % from \oddsidemargin back to the page edge with these geometry macros;
+  % they are derived from the margins, so a restore puts the document's back.
+  \xdef\Gm@lmargin{\the\dimexpr\beamer@leftmargin+\beamer@leftsidebar\relax}%
+  \xdef\Gm@rmargin{\the\dimexpr\beamer@rightmargin+\beamer@rightsidebar\relax}%
+  \global\columnwidth=\textwidth \global\linewidth=\textwidth \global\hsize=\textwidth}
+\makeatother
 
 \directlua{%
   if flora.prepare_spec_version ~= 1 then
@@ -174,6 +219,9 @@
 
 \AtBeginDocument{%
   \mode<handout>{\directlua{beamer_floral.handout=true}}%
+  \floral@baseleft=\beamer@leftmargin \floral@baseright=\beamer@rightmargin
+  \ifbeamer@onlytextwidth\gdef\floral@baseonlytext{\global\beamer@onlytextwidthtrue}%
+  \else\gdef\floral@baseonlytext{\global\beamer@onlytextwidthfalse}\fi
   \floratextblockx{\the\beamer@leftmargin}{\the\dimexpr\paperwidth-\beamer@rightmargin\relax}%
   \ifdim\beamer@leftsidebar>0pt
     \floral@sidebarwarning

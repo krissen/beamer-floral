@@ -1,0 +1,28 @@
+% The class option onlytextwidth: a stage frame keeps columns inside the text
+% block either way, and the frames after it keep the document's own setting,
+% so columns that fill the text block start at its left edge everywhere.
+% test/check_stage.py checks the words (kind "tight").
+\documentclass[aspectratio=169,onlytextwidth]{beamer}
+\usetheme{floral}
+\setbeamersize{text margin left=2cm,text margin right=2cm}
+\florasetup{seed=4}
+% A footline with a marker word: it must sit at the same x on every frame.
+\setbeamertemplate{footline}{\leavevmode FOOTMARK}
+\makeatletter
+\newcount\stagen
+\newcommand\florapos{\global\advance\stagen by 1
+  \typeout{STAGE \the\stagen\space textwidth=\the\textwidth\space left=\the\beamer@leftmargin\space right=\the\beamer@rightmargin}
+  \typeout{GM \the\stagen\space gl=\Gm@lmargin\space gr=\Gm@rmargin}}
+\makeatother
+\newcommand\tightcolumns{\begin{columns}[T]\column{.5\textwidth}Left column.\column{.5\textwidth}Right column.\end{columns}}
+\title{Stage}\author{beamer-floral}\date{}
+\begin{document}
+\begin{frame}{Document margins}\florapos\tightcolumns\end{frame}
+\florathisframe{stage=right}
+\begin{frame}{On the stage}\florapos\tightcolumns\end{frame}
+\begin{frame}{After a stage frame}\florapos\tightcolumns\end{frame}
+\florasetup{stage=left}
+\begin{frame}{The other side}\florapos\tightcolumns\end{frame}
+\florathisframe{stage=off}
+\begin{frame}{Off: onlytextwidth stays on}\florapos\tightcolumns\end{frame}
+\end{document}

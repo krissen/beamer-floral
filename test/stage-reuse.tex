@@ -1,0 +1,18 @@
+% The stage with reuse: a stage frame has its own page geometry, so it gets
+% its own shared drawing; frames in the same stage share it, and a frame back
+% on the document margins reuses the first drawing. test/check_reuse.lua
+% counts the drawings.
+\documentclass[aspectratio=169]{beamer}
+\usetheme{floral}
+\florasetup{seed=3, density=0.6, reuse=content}
+\begin{document}
+\begin{frame}{Document margins}Text\end{frame}
+\begin{frame}{Shares the drawing}Text\end{frame}
+\florathisframe{stage=right}
+\begin{frame}{On the stage}Text\end{frame}
+\florathisframe{stage=right}
+\begin{frame}{Shares the stage drawing}Text\end{frame}
+\begin{frame}{Back to the first drawing}Text\end{frame}
+\florathisframe{stage=left}
+\begin{frame}{The other side}Text\end{frame}
+\end{document}

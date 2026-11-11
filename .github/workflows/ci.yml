@@ -61,6 +61,11 @@ jobs:
             test/overlay-reuse.tex
             test/reuse.tex
             test/reuse-stock.tex
+            test/stage.tex
+            test/stage-43.tex
+            test/stage-onlytext.tex
+            test/stage-reuse.tex
+            test/stage-pattern.tex
             test/patterns.tex
             docs/src/tour.tex
             docs/src/showcase.tex
@@ -94,8 +99,12 @@ jobs:
           post_compile: |
             set -e
             FLORAL_VERIFY_STABLE=1 latexmk -g -lualatex -interaction=nonstopmode -halt-on-error test/growth.tex
-            texlua test/check_reuse.lua reuse.log reuse-stock.log patterns.log
+            texlua test/check_reuse.lua reuse.log reuse-stock.log stage-reuse.log patterns.log
             python3 test/check_patterns.py patterns.pdf
+            python3 test/check_stage.py stage.log stage.pdf
+            python3 test/check_stage.py stage-43.log stage-43.pdf
+            python3 test/check_stage.py stage-onlytext.log stage-onlytext.pdf
+            python3 test/check_stage_pattern.py stage-pattern.pdf
             texlua test/check_boxes.lua frametitle-wrap.log
             texlua test/check_boxes.lua headline.log
             texlua test/check_boxes.lua ornament-settings.log

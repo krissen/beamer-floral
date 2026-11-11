@@ -17,6 +17,29 @@ Settings.define('growth fps', function(v)
   if n and n>=1 and n<=60 and n%1==0 then return n end
   return nil, 'growth fps must be an integer from 1 to 60'
 end)
+-- The stage layout: text in a narrow column on one side, the decoration in a
+-- wide margin on the other. Beamer reads the text margins when a frame
+-- starts and \setbeamersize is preamble-only, so the margins are assigned
+-- at the start of each frame from that frame's own settings.
+local stage_units={pt=1,mm=1,cm=1,['in']=1,bp=1,pc=1,dd=1,cc=1,ex=1,em=1}
+local function stage_dimension(name)
+  return function(v)
+    v=tostring(v):gsub('^%s+',''):gsub('%s+$','')
+    local number,rest=v:match('^(%d*%.?%d+)%s*(.*)$')
+    if number and (stage_units[rest] or rest=='\\paperwidth' or rest=='\\paperheight') then
+      return number..rest
+    end
+    return nil,name..' must be a positive length such as 62mm or 0.39\\paperwidth'
+  end
+end
+Settings.define('stage', function(v)
+  if v=='off' or v=='right' or v=='left' then return v end
+  return nil,'stage must be off, right or left'
+end)
+Settings.define('stage width', stage_dimension('stage width'))
+Settings.define('stage margin', stage_dimension('stage margin'))
+local stage_defaults={['stage width']='0.39\\paperwidth',['stage margin']='12mm'}
+
 -- Page classes that reuse one drawing per document instead of adapting.
 local page_classes={title=1,section=2,content=3}
 -- The value is a canonical string, not a table: settings merge tables key
@@ -166,6 +189,40 @@ function M.init(path)
   end
 end
 
+-- Called at the start of every frame, before Beamer reads the margins.
+-- `body` is the collected frame body, or nil for a frame given as a command.
+-- Title and section pages keep their own composition unless the frame asks
+-- for the stage itself (\florathisframe{stage=...}); the body is scanned for
+-- \titlepage and \sectionpage, the commands that set the page class for reuse.
+function M.stage_begin(body,enabled)
+  local set=Settings.merge(flora.settings,flora.once or {})
+  local explicit=(flora.once or {}).stage~=nil
+  local kind=set.stage
+  M.stage_now=nil; M.stage_explicit=explicit
+  if enabled and (kind=='right' or kind=='left') then
+    local special=body and (body:find('\\titlepage%f[^%a]') or body:find('\\sectionpage%f[^%a]'))
+    if explicit or not special then M.stage_now=kind end
+  end
+  if M.stage_now then
+    local width=set['stage width'] or stage_defaults['stage width']
+    local margin=set['stage margin'] or stage_defaults['stage margin']
+    local left,right=margin,width
+    if kind=='left' then left,right=width,margin end
+    tex.sprint(string.format('\\floralstagemargins{%s}{%s}',left,right))
+    M.staged=true
+  elseif M.staged then
+    tex.sprint('\\floralstagerestore')
+    M.staged=false
+  end
+end
+-- A title or section page the body scan missed (a wrapped \titlepage, or a
+-- frame given as a command) was staged by default: say so.
+function M.stage_check()
+  if M.stage_now and not M.stage_explicit then
+    tex.sprint('\\PackageWarning{beamer-floral}{A title or section page got the stage layout; use \\string\\florathisframe{stage=off} before this frame}')
+  end
+end
+
 function M.context(start,continuation,enabled,plain)
   local key=tostring(start)..':'..tostring(continuation)
   if key ~= M.context_key then
@@ -177,6 +234,7 @@ function M.context(start,continuation,enabled,plain)
 end
 
 function M.prepare(spec)
+  if M.stage_now then spec.layout=M.stage_now end
   -- Untitled frames still have a running headline; plain frames do not.
   if spec.header=='body' and not M.plain and not spec.frametitle then
     spec.body_top=spec.body_top or spec.text.y1
