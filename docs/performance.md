@@ -112,8 +112,14 @@ git -C <tikz-flora> archive 60a153d | tar -x -C build/engine-60a153d
 git -C <tikz-flora> rev-parse 60a153d > build/engine-60a153d/engine-commit.txt
 ```
 
-The tools read `engine-commit.txt` for the revision they report, since the
-copy has no `.git` of its own.
+`tools/measure_sizes.py` and `tools/measure_raster_build.py` record the engine
+revision in their `results.json`. Both read `engine-commit.txt` first, since
+the copy has no `.git` of its own. Without it, `measure_sizes.py` asks git
+for the engine's `HEAD`, which fails on a copy without `.git`, and
+`measure_raster_build.py` falls back to git, then to the directory name with a
+warning. `tools/measure_reuse.py` takes the engine from `TIKZFLORA` but does
+not record its revision: note the revision yourself, for instance in the
+label or the name of the engine directory.
 
 ### Build times
 
@@ -149,11 +155,20 @@ labels.
 (`none`, `static`, `overlays`, `vector`, `raster`) and prints the page count,
 size and build time. `--variant` measures only the named variants and may be
 repeated, which gives one config per command. The tool rewrites `results.json`
-in its `--outdir` on every run, so give each run its own `--outdir` or the
-earlier rows are lost (the 60a153d figures were measured this way):
+in its `--outdir` on every run, so a per-variant run needs its own `--outdir`
+or the earlier rows are lost. Use one of these two alternatives, not both,
+since together they build every variant twice.
+
+All variants in one run, into the default `--outdir`:
 
 ```sh
 python3 tools/measure_sizes.py --engine build/engine-60a153d
+```
+
+Or one variant per run, each with its own `--outdir` (the 60a153d figures were
+measured this way):
+
+```sh
 for v in none static overlays vector raster; do
   python3 tools/measure_sizes.py --engine build/engine-60a153d \
     --variant $v --outdir build/size-60a153d/$v
@@ -163,8 +178,9 @@ done
 The `growth=off` row of the table is the `static` variant. Without `--outdir`, results go to
 `build/size-benchmark/results.json`, with the commit, the engine revision and
 the TeX version. The raster variant builds through `tools/build_animation.py`
-and is by far the slowest variant: it took 10-12 minutes on the loaded machine
-of these runs, which is not a typical figure.
+and, with the vector variant, is the slowest: both timed variants took about
+10-12 minutes on the loaded machine of these runs (605 s and 715 s), raster
+somewhat longer. That is not a typical figure.
 
 ### Raster builds
 
