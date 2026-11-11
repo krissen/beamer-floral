@@ -36,7 +36,9 @@
 % reads the text margins when a frame starts and \setbeamersize works only in
 % the preamble, so the margin and width registers are assigned directly,
 % globally, at the start of every frame. \floralstagerestore returns to the
-% margins taken when the document began.
+% margins taken when the document began. Beamer's columns spread over the
+% whole slide unless onlytextwidth is on, which would run them into the stage,
+% so a stage frame turns it on and the restore puts the document's value back.
 \makeatletter
 \newif\iffloralenvframe
 \AddToHook{cmd/frame/before}{%
@@ -51,12 +53,15 @@
 \newcommand\floralstagemargins[2]{%
   \global\beamer@leftmargin=\dimexpr#1\relax
   \global\beamer@rightmargin=\dimexpr#2\relax
+  \global\beamer@onlytextwidthtrue
   \floral@stagegeometry}
 \newcommand\floralstagerestore{%
   \global\beamer@leftmargin=\floral@baseleft
   \global\beamer@rightmargin=\floral@baseright
+  \floral@baseonlytext
   \floral@stagegeometry}
 \newdimen\floral@baseleft \newdimen\floral@baseright
+\let\floral@baseonlytext\relax
 \newcommand\floral@stagegeometry{%
   \global\textwidth=\dimexpr\paperwidth-\beamer@leftmargin-\beamer@leftsidebar
     -\beamer@rightmargin-\beamer@rightsidebar\relax
@@ -207,6 +212,8 @@
 \AtBeginDocument{%
   \mode<handout>{\directlua{beamer_floral.handout=true}}%
   \floral@baseleft=\beamer@leftmargin \floral@baseright=\beamer@rightmargin
+  \ifbeamer@onlytextwidth\gdef\floral@baseonlytext{\global\beamer@onlytextwidthtrue}%
+  \else\gdef\floral@baseonlytext{\global\beamer@onlytextwidthfalse}\fi
   \floratextblockx{\the\beamer@leftmargin}{\the\dimexpr\paperwidth-\beamer@rightmargin\relax}%
   \ifdim\beamer@leftsidebar>0pt
     \floral@sidebarwarning
