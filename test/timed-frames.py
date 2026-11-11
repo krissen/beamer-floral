@@ -1,6 +1,7 @@
 """The intermediate frames of a timed vector animation are well formed.
 
 Run: python3 test/timed-frames.py growth-timed.pdf [--self-test] [-v]
+     python3 test/timed-frames.py growth-timed.pdf --matrix [--keep DIR]
 
 A timed vector animation stores each frame as a Form XObject tied to its own
 optional content group (OCG), named "<anim>.<k>". The default configuration
@@ -19,9 +20,13 @@ reference images):
         every frame off, giving a per-pixel ink map |frame - blank|. Frames
         are cumulative, so between consecutive frames k and k+1:
           - the summed ink grows by at least INK_STEP;
-          - at most LOST_MAX pixels lose more than 32 grey levels of ink
-            (new petals lighten earlier ink a little; a frame drawn in the
-            wrong place or mirrored loses thousands, which a sum cannot see).
+          - the pixels that lose more than 32 grey levels of ink are at most
+            max(LOST_FLOOR, LOST_SHARE of the pixels inked in frame k): new
+            petals lighten earlier ink a little, while a frame drawn in the
+            wrong place or mirrored loses most of its ink, which a sum
+            cannot see. The bound is relative because the animations differ
+            in density by a factor of 6 and a pixel count calibrated on the
+            dense one lets the sparse one move anywhere.
         A fresh animation starts from nothing (frame 0 within INK_FLOOR) and
         every later frame carries ink above INK_FLOOR. The interval of a
         later overlay of a frame continues the flora of the one before: its
@@ -41,7 +46,9 @@ python3, qpdf and poppler-utils are needed.
 
 --self-test also runs every check on mutated copies of the PDF and demands
 that the check meant to catch the mutation fails: a check that never failed
-proves nothing.
+proves nothing. --matrix applies each of shift 1/3/15 pt, mirror and empty to
+the middle frame of every animation (frame box widened, nothing clipped) and
+demands that the ink check catches all cells; --keep saves the mutants.
 """
 
 import base64
@@ -49,6 +56,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -62,11 +70,18 @@ INK_FLOOR = 50
 # grows by 17337 at least (largest 179962). A frame that did not grow gives
 # a step near 0 or below.
 INK_STEP = 5000
-# Measured on growth-timed over all 40 consecutive pairs: at most 862 pixels
-# lose more than 32 grey levels (typically under 300). Frames drawn shifted
-# or mirrored lose 4897 and more; a blank frame loses the whole ink of its
-# neighbour.
-LOST_MAX = 2000
+# Lost pixels (more than 32 grey levels of ink gone from frame k to k+1) as a
+# share of the pixels inked in frame k, measured on growth-timed over all 40
+# consecutive pairs. Worst pair per animation: 0.106 (anim 0, 150 of 1421),
+# 0.009 (anim 1), 0.035 (anim 2); the share falls to 0.003-0.02 as frames
+# fill. A middle frame shifted by 1 pt loses 0.38 (anim 0), 0.61 (anim 1) and
+# 0.51 (anim 2) of its ink, by 3 pt 0.55 to 0.91, mirrored 0.68 to 0.83 (see
+# --matrix). 0.2 is 1.9 times the real worst and 1.6 times below the weakest
+# mutant.
+LOST_SHARE = 0.2
+# Near-empty frames make the share noisy; a few pixels are antialiasing.
+# The real count is under 30 wherever the share is under 0.01.
+LOST_FLOOR = 20
 # Measured: the frame-0 map of a continuing interval and the last-frame map
 # of the previous one differ in 0 pixels, one renderer on one document.
 CONT_PIXELS = 10
@@ -348,19 +363,23 @@ def check_ink(doc, work, log):
                 fails.append("animation %d: frame 0 differs from the end of animation "
                              "%d in %d pixels (tolerance %d)"
                              % (anim, before, differ, CONT_PIXELS))
+        inked = [sum(1 for v in m if v > 32) for m in maps]
         lost = [lost_pixels(maps[k], maps[k + 1]) for k in range(n - 1)]
         for k in range(n - 1):
             if ink[k + 1] - ink[k] < INK_STEP:
                 fails.append("animation %d: ink from frame %d to %d is %d to %d, "
                              "growth under %d" % (anim, k, k + 1, ink[k], ink[k + 1],
                                                   INK_STEP))
-            if lost[k] > LOST_MAX:
-                fails.append("animation %d: %d pixels lose ink from frame %d to %d "
-                             "(limit %d)" % (anim, lost[k], k, k + 1, LOST_MAX))
-        log("ink: animation %d page %d, %d frames, %s; min growth %d, max lost %d"
+            limit = max(LOST_FLOOR, LOST_SHARE * inked[k])
+            if lost[k] > limit:
+                fails.append("animation %d: %d of %d inked pixels lose ink from frame "
+                             "%d to %d (limit %d)" % (anim, lost[k], inked[k], k,
+                                                      k + 1, limit))
+        log("ink: animation %d page %d, %d frames, %s; min growth %d, max lost %d, max lost share %.3f"
             % (anim, number, n, "starts fresh" if before is None
                else "continues animation %d" % before,
-               min(ink[k + 1] - ink[k] for k in range(n - 1)), max(lost)))
+               min(ink[k + 1] - ink[k] for k in range(n - 1)), max(lost),
+               max(lost[k] / max(inked[k], 1) for k in range(n - 1))))
     return fails
 
 
@@ -531,6 +550,11 @@ def mut_empty_unsampled(doc, work):
     return dst, "content of frame 0.5 emptied (not one of four samples)"
 
 
+def mut_shift_sparse(doc, work):
+    return mut_wrapper(doc, work, 1, 3, b"1 0 0 1 1 -1 cm",
+                       "wrapper cm shifted (1, -1) pt, sparsest animation", widen=True)
+
+
 def mut_shift_continuation(doc, work):
     anim = next(a for a in sorted(doc.frames) if doc.previous_interval(a) is not None)
     return mut_wrapper(doc, work, anim, 0, b"1 0 0 1 0 -3 cm",
@@ -548,6 +572,7 @@ MUTATIONS = [
     ("ink", mut_mirror),
     ("ink", mut_empty_unsampled),
     ("ink", mut_shift_continuation),
+    ("ink", mut_shift_sparse),
     ("group", mut_frame_group),
     ("group", mut_nested_group),
 ]
@@ -569,25 +594,88 @@ def self_test(pdf, work, log):
     return ok
 
 
+SHIFTS = (1, 3, 15)
+
+
+def matrix_cell(doc, work, anim, name):
+    """Mutate the middle frame of an animation; return (what, ink failures)."""
+    os.makedirs(work, exist_ok=True)
+    k = amount(doc.frames[anim]) // 2
+    if name == "empty":
+        ref = frames_of(doc, anim)[k]
+        dst = os.path.join(work, "mut.pdf")
+        rewrite(doc.path, dst, {ref: stream_update(doc, ref, b" ")})
+    elif name == "mirror":
+        dst, _ = mut_wrapper(doc, work, anim, k, b"-1 0 0 1 453.539 0 cm", "", widen=True)
+    else:
+        s = int(name.split()[1])
+        dst, _ = mut_wrapper(doc, work, anim, k, b"1 0 0 1 %d %d cm" % (s, -s), "", widen=True)
+    return k, dst, run(dst, work, only={"ink"})["ink"]
+
+
+def matrix(pdf, work, keep):
+    """Every animation x every kind of misplaced middle frame must be caught."""
+    from concurrent.futures import ThreadPoolExecutor
+    doc = Doc(pdf)
+    names = ["shift %d pt" % s for s in SHIFTS] + ["mirror", "empty"]
+    cells = [(a, n) for a in sorted(doc.frames) for n in names]
+
+    def one(cell):
+        anim, name = cell
+        return matrix_cell(doc, os.path.join(work, "cell%d%s" % (anim, name.replace(" ", ""))),
+                           anim, name)
+    with ThreadPoolExecutor(max_workers=3) as pool:
+        done = list(pool.map(one, cells))
+    ok = True
+    print("%-12s" % "animation" + "".join("%-18s" % n for n in names))
+    for anim in sorted(doc.frames):
+        row = []
+        for (a, n), (k, dst, fails) in zip(cells, done):
+            if a == anim:
+                kinds = [w for w, m in (("lost", "lose ink"), ("growth", "growth under"),
+                                        ("noink", "no ink")) if any(m in f for f in fails)]
+                row.append("+".join(kinds) if fails else "FAILED TO CATCH")
+                ok &= bool(fails)
+        kind = "continues" if doc.previous_interval(anim) is not None else "fresh"
+        print("%-12s" % ("%d (%s)" % (anim, kind)) + "".join("%-18s" % c for c in row))
+    for (a, n), (k, dst, fails) in zip(cells, done):
+        shares = [int(m.group(1)) / int(m.group(2)) for f in fails
+                  for m in [re.search(r"(\d+) of (\d+) inked", f)] if m]
+        print("  anim %d frame %d, %s: %s; lowest lost share %s" % (
+            a, k, n, fails[0] if fails else "FAILED TO CATCH",
+            "%.3f" % min(shares) if shares else "-"))
+        if keep:
+            os.makedirs(keep, exist_ok=True)
+            shutil.copy(dst, os.path.join(keep, "anim%d-%s.pdf" % (a, n.replace(" ", ""))))
+    return ok
+
+
 def main(argv):
+    keep = None
+    if "--keep" in argv:
+        at = argv.index("--keep")
+        keep, argv = argv[at + 1], argv[:at] + argv[at + 2:]
     args = [a for a in argv if not a.startswith("-")]
     if len(args) != 1:
         sys.exit(__doc__)
     log = print if "-v" in argv else (lambda s: None)
     pdf = Path(args[0]).resolve()
     with tempfile.TemporaryDirectory() as work:
-        results = run(pdf, work, log=log)
         status = 0
-        for name, fails in results.items():
-            print("%s %s" % ("FAIL" if fails else "PASS", name))
-            for f in fails:
-                print("    " + f)
-            status |= bool(fails)
+        if "--matrix" not in argv:
+            results = run(pdf, work, log=log)
+            for name, fails in results.items():
+                print("%s %s" % ("FAIL" if fails else "PASS", name))
+                for f in fails:
+                    print("    " + f)
+                status |= bool(fails)
         if "--self-test" in argv:
             if status:
                 sys.exit("the real PDF fails; not running the mutations")
             if not self_test(pdf, work, log):
                 status = 1
+        if "--matrix" in argv and not matrix(pdf, work, keep):
+            status = 1
         sys.exit(status)
 
 
