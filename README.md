@@ -311,13 +311,16 @@ empty output directory.
 
 | Deck | Adaptive | `reuse=content` | `reuse=all` |
 |---|---:|---:|---:|
-| Title and 10 frames of two overlays, 21 pages | 19.4-19.8 s, 21.5 MB | | 3.8-3.9 s, 3.3 MB |
+| Title and 10 frames of two overlays, 21 pages | 4.6 s, 21.5 MB | | 3.8-3.9 s, 3.3 MB |
 | Title and 40 one-overlay frames, 41 pages | 4.7-5.1 s, 62.2 MB | 4.4-6.1 s, 8.6 MB | 4.2-4.3 s, 3.4 MB |
-| Title and 30 frames of three overlays, 91 pages | 60.3 s, 48.9 MB | | 5.5-5.6 s, 3.4 MB |
-| As above with 6 section pages, 97 pages | 92.6-95.5 s, 57.0 MB | 12.8-13.0 s, 16.6 MB | 12.7-12.8 s, 4.7 MB |
+| Title and 30 frames of three overlays, 91 pages | 6.9 s, 49.0 MB | | 5.5-5.6 s, 3.4 MB |
+| As above with 6 section pages, 97 pages | 92.6-95.5 s, 57.0 MB\* | 12.8-13.0 s, 16.6 MB | 12.7-12.8 s, 4.7 MB |
 
-Warm builds; cold builds take 30-34 s, 38-49 s, 77 s and 121-125 s adaptive
-against 5.5-5.6 s, 6.2-6.4 s, 7.5-7.8 s and 15.2-15.5 s with `reuse=all`. Beamer
+Warm builds; cold builds take 15 s, 38-49 s, 40 s and 121-125 s\* adaptive
+against 5.5-5.6 s, 6.2-6.4 s, 7.5-7.8 s and 15.2-15.5 s with `reuse=all`.
+Frames with several overlays have been read back from the cache since #36;
+the adaptive figures marked \* were measured before that and are remeasured in
+#27. Beamer
 without floral takes 3.2-3.6 s on the 21-page deck, and the 97-page deck
 takes about 12 s with flora off.
 Measured with TeX Live 2025 and tikz-flora `cc3fb48`.
@@ -353,10 +356,9 @@ was 6-10 during the runs, so times carry some noise.
 | Title and 30 frames of three overlays, 6 section pages, 97 pages | 173 s, 57.0 MB | 44.6 s, 0.72 MB |
 
 Pattern pages are small vector drawings, so the file stays small without
-`reuse`. A frame with overlays is painted again rather than
-taken from the engine's page cache, which is why the last deck takes longer
-than the second although it has fewer frames.
-Measured with TeX Live 2025 and tikz-flora `8123ec2`.
+`reuse`. Measured with TeX Live 2025 and tikz-flora `8123ec2`, before frames
+with overlays were taken from the page cache (#36); #27 remeasures the
+overlay decks.
 
 Patterns work with the rest of the theme:
 

@@ -43,6 +43,7 @@ jobs:
             test/titles.tex
             test/title-defaults.tex
             test/render-dispatch.tex
+            test/render-dispatch-handout.tex
             test/growth.tex
             test/growth-timed.tex
             test/growth-poster.tex
@@ -80,6 +81,7 @@ jobs:
             ln -sfn tikz-flora/lua lua
             texlua test/overlays.lua tikz-flora
             texlua test/growth.lua tikz-flora
+            python3 test/overlay-cache.py tikz-flora
             texlua test/raster-cache.lua tikz-flora
             texlua test/raster-worker.lua tikz-flora
             python3 test/raster-publication.py
