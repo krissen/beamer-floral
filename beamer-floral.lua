@@ -246,7 +246,7 @@ function M.prepare(spec)
   local dimensions=Serial.encode({width=spec.width,height=spec.height,text=spec.text,header_y=spec.header_y})
   if not M.frame then
     M.frame={document=document, dimensions=dimensions, input_signature=M.input_signature,
-      title_preset=M.page_title,
+      title_preset=M.page_title, section_preset=M.page_section,
       pending_signature=Serial.encode(M.pending or false), settings={}}
     for _,k in ipairs(setting_fields) do
       M.frame.settings[k]=copy(spec[k])
