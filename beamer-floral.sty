@@ -149,9 +149,9 @@
 \fi
 \directlua{%
   local ok, t = pcall(require, "flora.tune")
-  if not ok or not t.gesture or t.gesture.header_gap == nil then
+  if not ok or not t.gesture or t.gesture.mark_min == nil then
     tex.error("beamer-floral needs krissen/tikz-flora 60a153d or later "
-      .. "(gesture.header_gap missing)")
+      .. "(gesture.mark_min missing)")
   end
 }
 
