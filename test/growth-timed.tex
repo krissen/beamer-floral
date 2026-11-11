@@ -22,6 +22,10 @@
   \ifdefined\floralgifexternal
     \florasetup{growth duration=0.4,growth fps=10}
   \fi
+  \ifdefined\floralfast
+    % Effective rates above 50 fps: 3 steps in 0.05 s, then 2 steps in 0.025 s.
+    \florasetup{growth duration=0.05,growth fps=60}
+  \fi
 \fi
 \ifdefined\floralreserve
   % A footline band and a block inside the page: nothing may play over them.

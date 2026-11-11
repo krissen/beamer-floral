@@ -137,15 +137,37 @@ def rms_against_source(frame, sample, matte, spec=None):
     return [v ** 0.5 for v in squared], transparent
 
 
-def check_decoded(path, steps, folder, first_sample, spec=None):
-    """First and last frame of an interval GIF against their sample PNGs."""
+def expected_plan(steps, rate_milli):
+    """Samples and delays (centiseconds) an interval GIF must have, from the rule alone.
+
+    Written independently of the builder: GdkPixbuf plays a delay below 2 cs as 20 ms,
+    so a rate above 50 fps keeps every k-th sample, k = ceil(rate / 50 fps). Times are
+    exact fractions rounded half up; a final gap under 2 cs merges into the one before."""
+    from fractions import Fraction
+    from math import ceil, floor
+
+    def at(n):
+        return floor(Fraction(n * 100000, rate_milli) + Fraction(1, 2))
+
+    stride = max(1, ceil(Fraction(rate_milli, 50000)))
+    shown = [*range(0, steps, stride), steps]
+    if len(shown) > 2 and at(steps) - at(shown[-2]) < 2:
+        shown.pop(-2)
+    delays = [max(2, at(later) - at(earlier)) for earlier, later in zip(shown, shown[1:])]
+    return shown, [*delays, max(2, at(steps + 1) - at(steps))]
+
+
+def check_decoded(path, samples, folder, first_sample, spec=None):
+    """Every frame of an interval GIF against the sample it shows."""
     from PIL import Image
     matte = GIF_NAME.fullmatch(path.name)[3]
     with Image.open(path) as gif:
-        for index in (0, steps):
+        if gif.n_frames != len(samples):
+            raise RuntimeError(f'{path}: {gif.n_frames} frames, expected {len(samples)}')
+        for index, sample in enumerate(samples):
             gif.seek(index)
             rms, transparent = rms_against_source(
-                gif.copy(), folder / f'sample-{first_sample + index}.png', matte, spec)
+                gif.copy(), folder / f'sample-{first_sample + sample}.png', matte, spec)
             if max(rms) > RMS_LIMIT or not transparent:
                 raise RuntimeError(f'{path}: frame {index} does not match its sample '
                                    f'(RMS {max(rms):.1f}, limit {RMS_LIMIT}, transparent {transparent})')
@@ -281,13 +303,18 @@ def check(pdf, expected_pages=None, expected_mode=None, expect_reserved=False):
         steps = (samples - 1) // count
         for stage, path in stages.items():
             frames, looped = gif_facts(path)
-            if len(frames) != steps + 1:
-                raise RuntimeError(f'{path}: {len(frames)} frames, expected {steps + 1}')
+            shown, delays = expected_plan(steps, int(GIF_NAME.fullmatch(path.name)[2]))
+            if len(frames) != len(shown):
+                raise RuntimeError(f'{path}: {len(frames)} frames, expected {len(shown)}')
             if looped:
                 raise RuntimeError(f'{path}: loop extension; the GIF must play once')
-            check_decoded(path, steps, folder, (stage - 1) * steps, specs.get(folder))
-            if any(f is None or f[1] != 2 or f[2] != 255 or f[0] < 1 for f in frames):
-                raise RuntimeError(f'{path}: frames need disposal 2, transparent index 255 and a delay')
+            if any(f is None or f[1] != 2 or f[2] != 255 for f in frames):
+                raise RuntimeError(f'{path}: frames need disposal 2 and transparent index 255')
+            if any(f[0] < 2 for f in frames):
+                raise RuntimeError(f'{path}: a frame delay below 2 cs plays too slowly in pympress')
+            if [f[0] for f in frames] != delays:
+                raise RuntimeError(f'{path}: delays {[f[0] for f in frames]}, expected {delays}')
+            check_decoded(path, shown, folder, (stage - 1) * steps, specs.get(folder))
     print(f'GIF PDF checks passed ({timed} timed pages, {mode}, no JavaScript)')
 
 
