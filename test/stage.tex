@@ -56,4 +56,10 @@
 \begin{frame}{After the width}\florapos
   \begin{columns}[T]\column{.5\textwidth}Left column.\column{.5\textwidth}Right column.\end{columns}
 \end{frame}
+% 14 an explicit totalwidth on a stage frame wins over the stage's onlytextwidth
+% (the width and margin are still the 50 mm and 20 mm set at frame 10)
+\florathisframe{stage=right}
+\begin{frame}{An explicit total width}\florapos
+  \begin{columns}[T,totalwidth=1.4\textwidth]\column{.6\textwidth}Left column with a few words.\column{.6\textwidth}Right column with a few more words.\end{columns}
+\end{frame}
 \end{document}

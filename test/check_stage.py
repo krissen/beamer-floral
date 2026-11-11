@@ -38,6 +38,7 @@ EXPECTED = {
     11: (*DOC, "plain"),
     12: (20.0, 60.0, "content"),
     13: (*DOC, "spread"),
+    14: (20.0, 50.0, "wide"),
 }
 # The class option onlytextwidth: stage=off must keep it on.
 EXPECTED_ONLYTEXT = {
@@ -86,7 +87,7 @@ for n, (left, right, kind) in sorted(EXPECTED.items()):
     # "plain": a frame on the document margins with Beamer's default columns,
     # which spread over the slide and may leave the text block on either side:
     # only the registers are checked.
-    if kind != "plain" and (xmin < lo - 0.5 and kind != "spread" or xmax > hi + 0.5):
+    if kind not in ("plain", "wide") and (xmin < lo - 0.5 and kind != "spread" or xmax > hi + 0.5):
         fail(f"frame {n}: words span {xmin:.1f}..{xmax:.1f}bp, outside the text block {lo:.1f}..{hi:.1f}bp")
     if kind == "content":
         if not lo - 0.5 <= xmin <= lo + 1.5:
@@ -97,6 +98,11 @@ for n, (left, right, kind) in sorted(EXPECTED.items()):
         # Columns that fill the text block exactly start at its left edge.
         if not lo - 0.5 <= xmin <= lo + 1.5:
             fail(f"frame {n}: columns start at {xmin:.1f}bp, expected the left margin {lo:.1f}bp")
+    elif kind == "wide":
+        # An explicit [totalwidth=...] wins over the stage's onlytextwidth, so
+        # the columns run past the text block.
+        if xmax < hi + 5:
+            fail(f"frame {n}: columns end at {xmax:.1f}bp; the explicit totalwidth should reach beyond {hi:.1f}bp")
     elif kind == "spread":
         # Beamer's default: such columns spread over the whole slide, so the
         # left one starts left of the text block.
