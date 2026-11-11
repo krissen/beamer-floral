@@ -115,6 +115,7 @@ jobs:
             # Keep these checks in the TeX container: it owns the generated
             # PDFs and provides the matching LuaLaTeX/latexmk installation.
             python3 tools/check_growth_pdf.py growth-timed.pdf
+            python3 test/timed-frames.py growth-timed.pdf
             python3 tools/check_growth_pdf.py growth-patterns.pdf
             python3 tools/build_animation.py --engine tikz-flora --outdir build/raster test/growth-raster.tex
             python3 tools/check_growth_pdf.py build/raster/growth-raster.pdf
