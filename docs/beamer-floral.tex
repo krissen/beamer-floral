@@ -181,8 +181,9 @@ drawing is cached with the other flora.
 
 On a deck of a title page and 30 frames of three overlays (91 pages), a
 second full compile with the flora cache in place takes about 5.5\,s with
-\texttt{reuse=all} against about 60\,s, and the PDF is 3.4\,MB against
-48.9\,MB.
+\texttt{reuse=all} against about 7\,s adaptive, since adaptive frames are
+read back from the cache as well. A first compile takes about 8\,s against
+40\,s, and the PDF is 3.4\,MB against 49\,MB.
 
 What you give up:
 

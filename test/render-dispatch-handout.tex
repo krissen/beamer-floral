@@ -1,0 +1,40 @@
+% Handout pages keep the engine's own path, even for a frame that has
+% several handout pages.
+\documentclass[handout]{beamer}
+\usepackage{tikzflora}
+\directlua{
+  local page=flora.page
+  local cache_calls={}
+  local cache=require('flora.cache')
+  local cache_page=cache.page
+  cache.page=function(...)
+    local count=beamer_floral.count
+    cache_calls[count]=(cache_calls[count] or 0)+1
+    return cache_page(...)
+  end
+  local stages={}
+  flora.page=function(a)
+    local count=beamer_floral.count
+    local prepare=a.prepare_spec
+    a.prepare_spec=function(spec)
+      prepare(spec)
+      stages[count]=beamer_floral.stages
+      assert(a.render_page==nil,'handout pages must retain the engine cache path')
+    end
+    return page(a)
+  end
+  floral_check_handout=function()
+    assert(stages[2]==2,'the second frame has two handout pages')
+    assert(cache_calls[1]==1 and cache_calls[2]==2 and cache_calls[3]==1,
+      'each handout page consults the engine cache once')
+  end
+}
+\usetheme{floral}
+\AddToHook{enddocument/afterlastpage}{\directlua{floral_check_handout()}}
+\florasetup{density=0.05,seed=3}
+\begin{document}
+\begin{frame}{One handout page}First\pause\par Second\end{frame}
+\begin{frame}<handout:1-2>{Two handout pages}First\pause\par Second\end{frame}
+\florathisframe{growth=overlays}
+\begin{frame}{Growth in a handout}First\pause\par Second\end{frame}
+\end{document}

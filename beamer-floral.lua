@@ -425,21 +425,11 @@ local function draw_form(shared)
   return painter
 end
 
--- Overlays of a static frame show the same flora: paint it once as a form.
-function M.render_static(spec)
-  local frame=M.frame
-  local key=Serial.encode(spec)
-  if frame.static_key~=key then
-    frame.static={}; form_painter(frame.static,spec)
-    frame.static_key=key
-  end
-  return draw_form(frame.static)
-end
-
--- A reused drawing is one PDF object per class, title state, settings and
--- page geometry. It goes through the engine's page cache, so later LaTeX
--- passes embed the cached file instead of composing it again, and the file
--- is written to this PDF once and drawn on every page that uses it.
+-- A drawing from the engine's page cache: the cached one-page PDF is
+-- written to this PDF once and drawn on every page that uses it, and later
+-- compiles embed the file instead of composing it again. The key is the
+-- engine's own: the prepared spec, the active settings, tune and the engine
+-- code.
 local function cached_image(spec)
   local ok,Cache=pcall(require,'flora.cache')
   if not ok or type(Cache.page)~='function' or not (img and img.scan and img.immediatewrite) then return nil end
@@ -449,31 +439,59 @@ local function cached_image(spec)
   if not file then return nil end
   local image=img.scan({filename=file})
   img.immediatewrite(image)
-  return {objnum=image.objnum,count=e.count or 0,coverage=e.coverage or 0,hit=hit}
+  return {objnum=image.objnum,count=e.count or 0,coverage=e.coverage or 0,hit=hit,
+    name='flreuse'..image.objnum}
 end
+-- The cached drawing, or a form painted in this run when the cache is off
+-- or unavailable.
+local function cached_or_form(spec)
+  local drawing=cached_image(spec)
+  if not drawing then drawing={}; form_painter(drawing,spec) end
+  return drawing
+end
+local function draw_drawing(drawing)
+  if not drawing.objnum then return draw_form(drawing) end
+  local painter=require('flora.paint').new{backend='pdf'}
+  painter.xobjects={}
+  painter.pdf_resources='/XObject << /'..drawing.name..' '..drawing.objnum..' 0 R >>'
+  painter.coverage=drawing.coverage
+  painter.count=drawing.count
+  painter:emit('/'..drawing.name..' Do')
+  return painter
+end
+
+-- Overlays of a static frame show the same flora: one drawing per frame,
+-- from the page cache, drawn on each overlay page. The prepared spec carries
+-- the frame's merged geometry, frame settings, seed and page. Neither the
+-- overlay step nor the overlay count is keyed: every overlay of a converged
+-- frame gets the same spec, and a count change that leaves the merged
+-- geometry unchanged leaves the drawing unchanged. Any change that alters
+-- the drawing changes the spec or the settings and misses the cache.
+function M.render_static(spec)
+  local frame=M.frame
+  local key=Serial.encode(spec)
+  if frame.static_key~=key then
+    frame.static=cached_or_form(spec)
+    frame.static_key=key
+    texio.write_nl('log',string.format('beamer-floral: frame %d static flora %s',M.count,
+      frame.static.hit and 'from the cache' or frame.static.objnum and 'grown and cached' or 'painted'))
+  end
+  return draw_drawing(frame.static)
+end
+
+-- A reused drawing is one PDF object per class, title state, settings and
+-- page geometry.
 function M.render_reused(spec)
   M.reused=M.reused or {}
   local key=Serial.encode(spec)
   local reused=M.reused[key]
   if not reused then
-    reused=cached_image(spec)
-    if reused then
-      reused.name='flreuse'..reused.objnum
-    else
-      reused={}; form_painter(reused,spec)
-    end
+    reused=cached_or_form(spec)
     M.reused[key]=reused
     texio.write_nl('log','beamer-floral: drew reused flora for class '..M.frame.class
       ..(reused.hit and ' from the cache' or ''))
   end
-  if not reused.objnum then return draw_form(reused) end
-  local painter=require('flora.paint').new{backend='pdf'}
-  painter.xobjects={}
-  painter.pdf_resources='/XObject << /'..reused.name..' '..reused.objnum..' 0 R >>'
-  painter.coverage=reused.coverage
-  painter.count=reused.count
-  painter:emit('/'..reused.name..' Do')
-  return painter
+  return draw_drawing(reused)
 end
 
 function M.paint_animation(i)
