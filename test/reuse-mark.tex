@@ -2,30 +2,17 @@
 % and each page's mark is placed by that page's own title, as on the adaptive
 % page. test/reuse-mark-adaptive.tex builds the same frames without reuse;
 % test/check_reuse_mark.lua compares the marks the two logs record. The page
-% cache is off, so every run paints the marks it records.
+% cache is off, so every run paints the marks it records. The reserved
+% frames check that a reserve never cuts a mark or its rule: the mark moves
+% down its band, shrinks or is left out, on both builds.
 \providecommand\floralmarkreuse{all}
 \documentclass[aspectratio=169]{beamer}
 \usetheme{floral}
 \edef\next{\noexpand\florasetup{seed=3, density=0.25, cache=false, reuse={\floralmarkreuse}}}\next
 \AtBeginSection[]{\begin{frame}[plain]\sectionpage\end{frame}}
 \title{Reused marks}\author{beamer-floral}\date{}
-% Every header-slot ornament painted, with its frame, overlay and page box.
-\directlua{
-  local Orn=require('flora.ornaments')
-  local draw=Orn.draw
-  Orn.draw=function(kind,pt,rng,box,o)
-    local k=type(kind)=='string' and Orn.kinds[kind] or kind
-    if k and k.slot=='header' then
-      local pj=pt:_pj()
-      local x0,y0,x1,y1=box[1],box[2],box[3],box[4]
-      if pj then x0,y0=pj(x0,y0); x1,y1=pj(x1,y1) end
-      texio.write_nl('log',string.format('bf test: frame '..beamer_floral.count..' stage '
-        ..beamer_floral.stage..' mark '..k.name..' '..string.rep(' \csstring\%.3f',4),
-        math.min(x0,x1),math.min(y0,y1),math.max(x0,x1),math.max(y0,y1)))
-    end
-    return draw(kind,pt,rng,box,o)
-  end
-}
+% The marks, rules and reserves each frame paints, for the check.
+\directlua{dofile('test/reuse-mark.lua')}
 \begin{document}
 \begin{frame}[plain]\titlepage\end{frame}
 \section{First}
@@ -44,4 +31,10 @@
 \begin{frame}{Reserved corner}Body text.\end{frame}
 \floraclearreserve
 \begin{frame}{A short title again}Body text on the frame.\end{frame}
+\florareserve{0pt}{\the\dimexpr\paperheight-1.2cm\relax}{\the\dimexpr 3cm\relax}{\the\paperheight}
+\begin{frame}Untitled: the mark moves down under the reserved corner.\end{frame}
+\floraclearreserve
+\florareserve{\the\dimexpr 5cm\relax}{\the\dimexpr\paperheight-2cm\relax}{\the\dimexpr 6cm\relax}{\the\paperheight}
+\begin{frame}{A reserve across the rule}Body text.\end{frame}
+\floraclearreserve
 \end{document}

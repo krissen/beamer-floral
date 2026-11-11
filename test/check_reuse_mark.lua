@@ -3,8 +3,8 @@
 -- test/reuse-mark.tex, the marks every reused page logs ("reused page
 -- marks") must match, in size and height, the marks the adaptive build
 -- paints for the same frame; every overlay of a frame logs the same marks;
--- the pages of one class show one kind; and no mark is under the 10 pt
--- minimum. A stock-theme log, when given, must show reused pages without a
+-- the pages of one class show one kind; no mark is under the 10 pt
+-- minimum; and beside a reserve each mark and rule is whole or absent. A stock-theme log, when given, must show reused pages without a
 -- mark, as stock themes have none.
 local function read(path)
   local f=assert(io.open(path,'r')); local text=f:read('a'); f:close()
@@ -97,7 +97,7 @@ local adaptive=painted_marks(adaptive_lines)
 local class=classes(reuse_lines)
 local frames=0
 for n in pairs(class) do frames=math.max(frames,n) end
-if frames<13 then fail('FAIL %s: %d frames, expected 13',reuse_log,frames) end
+if frames<15 then fail('FAIL %s: %d frames, expected 15',reuse_log,frames) end
 for n=1,frames do
   if not class[n].reused then fail('FAIL frame %d: not reused',n) end
   local r=reused[n] and reused[n].list
@@ -132,6 +132,47 @@ for c,set in pairs(kinds) do
   for k in pairs(set) do names[#names+1]=k end
   if #names~=1 then table.sort(names); fail('FAIL class %s: kinds %s, expected one',c,table.concat(names,', ')) end
 end
+-- Whole or absent beside a reserve, on both builds: no mark's ink box (its
+-- box widened by its kind's reach) and no rule meets a frame's reserved
+-- box, and no ink leaves the paper. At least one reserved frame must show a
+-- mark, so the check is not passed by leaving every mark out.
+local function reserved(lines,log)
+  local boxes,inks,rules={},{},{}
+  local function add(t,n,v) t[n]=t[n] or {}; table.insert(t[n],v) end
+  for _,line in ipairs(lines) do
+    local n,a,b,c,d=line:match('bf reserve: frame (%d+) ([%d.-]+) ([%d.-]+) ([%d.-]+) ([%d.-]+)')
+    if n then add(boxes,tonumber(n),{tonumber(a),tonumber(b),tonumber(c),tonumber(d)}) end
+    n,a,b,c,d=line:match('bf ink: frame (%d+) ([%d.-]+) ([%d.-]+) ([%d.-]+) ([%d.-]+)')
+    if n then add(inks,tonumber(n),{tonumber(a),tonumber(b),tonumber(c),tonumber(d)}) end
+    n,a,b,c=line:match('bf rule: frame (%d+) ([%d.-]+) ([%d.-]+) ([%d.-]+)')
+    if n then add(rules,tonumber(n),{tonumber(a),tonumber(b),tonumber(c)}) end
+  end
+  local shown=0
+  for n,list in pairs(boxes) do
+    -- A frame logs its reserves once per page; one copy of each suffices.
+    for _,ink in ipairs(inks[n] or {}) do
+      shown=shown+1
+      if ink[1]<0 then fail('FAIL %s frame %d: a mark leaves the paper',log,n) end
+      for _,r in ipairs(list) do
+        if ink[3]>r[1] and ink[1]<r[3] and ink[4]>r[2] and ink[2]<r[4] then
+          fail('FAIL %s frame %d: a mark (%.2f %.2f %.2f %.2f) meets the reserve %.2f %.2f %.2f %.2f',
+            log,n,ink[1],ink[2],ink[3],ink[4],r[1],r[2],r[3],r[4])
+        end
+      end
+    end
+    for _,rule in ipairs(rules[n] or {}) do
+      for _,r in ipairs(list) do
+        if rule[2]>r[1] and rule[1]<r[3] and rule[3]>r[2] and rule[3]<r[4] then
+          fail('FAIL %s frame %d: the rule at %.2f crosses the reserve %.2f %.2f %.2f %.2f',log,n,rule[3],r[1],r[2],r[3],r[4])
+        end
+      end
+    end
+  end
+  if next(boxes)==nil then fail('FAIL %s: no reserved frame logged',log)
+  elseif shown==0 then fail('FAIL %s: no reserved frame shows a mark',log) end
+end
+reserved(reuse_lines,reuse_log)
+reserved(adaptive_lines,adaptive_log)
 if stock_log then
   local stock=reused_marks(read(stock_log))
   local any=false
