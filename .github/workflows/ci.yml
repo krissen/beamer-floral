@@ -90,6 +90,7 @@ jobs:
             set -e
             FLORAL_VERIFY_STABLE=1 latexmk -g -lualatex -interaction=nonstopmode -halt-on-error test/growth.tex
             texlua test/check_reuse.lua reuse.log reuse-stock.log patterns.log
+            python3 test/check_patterns.py patterns.pdf
             texlua test/check_boxes.lua frametitle-wrap.log
             texlua test/check_boxes.lua headline.log
             texlua test/check_boxes.lua ornament-settings.log

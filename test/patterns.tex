@@ -1,11 +1,12 @@
-% Geometric patterns: a static pattern frame, overlay growth, a reused
-% drawing and flora on one frame. test/check_reuse.lua checks the decisions.
+% Geometric patterns under reuse=content: pattern frames keep their own
+% drawings, pattern=none is flora and is reused. test/check_reuse.lua checks the
+% decisions and test/check_patterns.py that the pages are painted.
 \documentclass[aspectratio=169]{beamer}
 \usetheme{floral}
 \florasetup{seed=3, density=0.6, pattern=asanoha, edge=fade, scale=1.5, reuse=content}
 \title{Patterns}\author{beamer-floral}\date{}
 \begin{document}
-\begin{frame}{A pattern frame}Static pattern, reused drawing.\end{frame}
+\begin{frame}{A pattern frame}Static pattern, own drawing.\end{frame}
 \begin{frame}{Same pattern again}Text\end{frame}
 \florathisframe{pattern=none}
 \begin{frame}{Flora on this frame}Text\end{frame}
