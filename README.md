@@ -356,10 +356,9 @@ was 6-10 during the runs, so times carry some noise.
 | Title and 30 frames of three overlays, 6 section pages, 97 pages | 173 s, 57.0 MB | 44.6 s, 0.72 MB |
 
 Pattern pages are small vector drawings, so the file stays small without
-`reuse`. A frame with overlays is painted again rather than
-taken from the engine's page cache, which is why the last deck takes longer
-than the second although it has fewer frames.
-Measured with TeX Live 2025 and tikz-flora `8123ec2`.
+`reuse`. Measured with TeX Live 2025 and tikz-flora `8123ec2`, before frames
+with overlays were taken from the page cache (#36); #27 remeasures the
+overlay decks.
 
 Patterns work with the rest of the theme:
 
