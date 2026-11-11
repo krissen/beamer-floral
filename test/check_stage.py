@@ -53,6 +53,7 @@ if "onlytext" in log.name:
 TITLE_OFFSET_MM = 18.0  # \floratitleoffset
 
 errors = []
+chrome = {}  # marker word -> {frame: x of its left edge}
 
 
 def fail(message):
@@ -62,6 +63,10 @@ def fail(message):
 registers = {}
 for m in re.finditer(r"STAGE (\d+) textwidth=([\d.]+)pt left=([\d.]+)pt right=([\d.]+)pt", log.read_text(errors="replace")):
     registers[int(m[1])] = tuple(float(m[i]) for i in (2, 3, 4))
+gm = {int(m[1]): (float(m[2]), float(m[3])) for m in
+      re.finditer(r"GM (\d+) gl=([\d.]+)pt gr=([\d.]+)pt", log.read_text(errors="replace"))}
+if sorted(gm) != sorted(EXPECTED):
+    fail(f"Gm@ margins logged for frames {sorted(gm)}, expected {sorted(EXPECTED)}")
 if sorted(registers) != sorted(EXPECTED):
     fail(f"frames logged {sorted(registers)}, expected {sorted(EXPECTED)}")
 
@@ -69,15 +74,27 @@ for n, (left, right, kind) in sorted(EXPECTED.items()):
     if n not in registers:
         continue
     text_pt, left_pt, right_pt = registers[n]
+    gl_pt, gr_pt = gm.get(n, (float('nan'), float('nan')))
+    # geometry's \\Gm@lmargin and \\Gm@rmargin place Beamer's headline, footline,
+    # canvas and sidebars: they must follow the margins (there are no sidebars).
+    for name, got, want in (("Gm@lmargin", gl_pt, left_pt), ("Gm@rmargin", gr_pt, right_pt)):
+        if abs(got - want) > 0.1:
+            fail(f"frame {n}: {name} is {got:.2f}pt, expected {want:.2f}pt")
     page_pt = width_mm * TEXPT
     for name, got, want in (("left", left_pt, left * TEXPT), ("right", right_pt, right * TEXPT),
                             ("textwidth", text_pt, page_pt - (left + right) * TEXPT)):
         if abs(got - want) > 0.1:
             fail(f"frame {n}: {name} register {got:.2f}pt, expected {want:.2f}pt")
     words = subprocess.check_output(["pdftotext", "-f", str(n), "-l", str(n), "-bbox", str(pdf), "-"], text=True)
+    allwords = re.findall(r'xMin="([-\d.]+)" yMin="([-\d.]+)" xMax="[-\d.]+" yMax="[-\d.]+">([^<]*)</word>', words)
+    for mark in ("FOOTMARK", "Part"):  # footline marker, headline section name
+        for x, y, w in allwords:
+            # "Part" is also the title of the section page: the headline is the top strip.
+            if w == mark and (mark == "FOOTMARK" or float(y) < 20):
+                chrome.setdefault(mark, {})[n] = float(x)
     boxes = [(float(a), float(b), float(c), float(d), w) for a, b, c, d, w in
              re.findall(r'xMin="([-\d.]+)" yMin="([-\d.]+)" xMax="([-\d.]+)" yMax="([-\d.]+)">([^<]*)</word>', words)
-             if float(b) >= 20]  # a stray glyph above the page is not text
+             if float(b) >= 20 and w != "FOOTMARK"]  # a stray glyph above the page is not text
     if not boxes:
         fail(f"frame {n}: no words on page {n}")
         continue
@@ -117,6 +134,18 @@ for n, (left, right, kind) in sorted(EXPECTED.items()):
             want = lo + (TITLE_OFFSET_MM * BP + (hi - lo)) / 2
             if abs(centre - want) > 2:
                 fail(f"frame {n}: title centred at {centre:.1f}bp, expected {want:.1f}bp")
+
+# The headline and the footline are drawn from the page edge, outside the text
+# block: wherever a frame puts the stage, they stay where the frames on the
+# document margins have them.
+for mark, where in sorted(chrome.items()):
+    ref = [x for n, x in where.items() if EXPECTED[n][:2] == DOC and EXPECTED[n][2] != "plain"]
+    if not ref or len(where) < 3:
+        fail(f"{mark} found on {sorted(where)}; needs a frame on the document margins and several frames")
+        continue
+    for n, x in sorted(where.items()):
+        if abs(x - ref[0]) > 1.0:
+            fail(f"frame {n}: {mark} at {x:.1f}bp, {ref[0]:.1f}bp on the document margins")
 
 if errors:
     raise SystemExit("\n".join(errors))

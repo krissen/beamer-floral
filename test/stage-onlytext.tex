@@ -6,10 +6,13 @@
 \usetheme{floral}
 \setbeamersize{text margin left=2cm,text margin right=2cm}
 \florasetup{seed=4}
+% A footline with a marker word: it must sit at the same x on every frame.
+\setbeamertemplate{footline}{\leavevmode FOOTMARK}
 \makeatletter
 \newcount\stagen
 \newcommand\florapos{\global\advance\stagen by 1
-  \typeout{STAGE \the\stagen\space textwidth=\the\textwidth\space left=\the\beamer@leftmargin\space right=\the\beamer@rightmargin}}
+  \typeout{STAGE \the\stagen\space textwidth=\the\textwidth\space left=\the\beamer@leftmargin\space right=\the\beamer@rightmargin}
+  \typeout{GM \the\stagen\space gl=\Gm@lmargin\space gr=\Gm@rmargin}}
 \makeatother
 \newcommand\tightcolumns{\begin{columns}[T]\column{.5\textwidth}Left column.\column{.5\textwidth}Right column.\end{columns}}
 \title{Stage}\author{beamer-floral}\date{}

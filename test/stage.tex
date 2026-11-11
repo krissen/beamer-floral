@@ -8,12 +8,15 @@
 % The document's own margins, which stage=off must return to.
 \setbeamersize{text margin left=2cm,text margin right=2cm}
 \florasetup{seed=4}
+% A footline with a marker word: it must sit at the same x on every frame.
+\setbeamertemplate{footline}{\leavevmode FOOTMARK}
 \AtBeginSection[]{\begin{frame}[plain]\florapos\sectionpage\end{frame}}
 \title{Stage}\author{beamer-floral}\date{}
 \makeatletter
 \newcount\stagen
 \newcommand\florapos{\global\advance\stagen by 1
-  \typeout{STAGE \the\stagen\space textwidth=\the\textwidth\space left=\the\beamer@leftmargin\space right=\the\beamer@rightmargin}}
+  \typeout{STAGE \the\stagen\space textwidth=\the\textwidth\space left=\the\beamer@leftmargin\space right=\the\beamer@rightmargin}
+  \typeout{GM \the\stagen\space gl=\Gm@lmargin\space gr=\Gm@rmargin}}
 \makeatother
 \newcommand\richcontent{%
   \begin{block}{A block}A block with text long enough to wrap onto several lines in a narrow column of text.\end{block}
