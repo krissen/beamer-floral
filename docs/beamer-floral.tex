@@ -45,7 +45,7 @@ checkout, set the environment variable \texttt{TIKZFLORA} to its path.
 
 Timed growth also needs the \pkg{animate} package. Raster playback needs
 Python 3.9 or later and Poppler's \texttt{pdftocairo} when its cache is
-built.
+built. GIF playback also needs the Python package Pillow at that step.
 
 \section{Getting started}
 
@@ -161,6 +161,23 @@ the package option \texttt{raster} and build with the supplied script:
 \begin{lstlisting}
 python3 build_animation.py --outdir build slides.tex
 \end{lstlisting}
+
+For viewers that cannot run the JavaScript of \pkg{animate}, such as
+pympress, select GIF playback with the package option \texttt{gif}
+(\texttt{gif-external} keeps the GIFs beside the PDF instead of embedding
+them):
+
+\begin{lstlisting}[language={[LaTeX]TeX}]
+\usepackage[gif]{beamer-floral-animation}
+\floralgifmatte{FFFFFF}  % the page colour, six hex digits
+\end{lstlisting}
+
+Each timed interval then plays as a GIF built from the raster cache, so the
+build is the one above, and the page needs no \pkg{animate} environment and
+no JavaScript. The frames are matted against \cmd{floralgifmatte} (default
+\texttt{FFFFFF}), reservations stay transparent, and each interval plays
+once. The limits are listed in the README at
+\url{https://github.com/krissen/beamer-floral#gif-playback-for-viewers-without-javascript}.
 
 Playback has been checked in desktop Acrobat Reader. The final stage of each
 interval is the static poster, so viewers that cannot play the animation
