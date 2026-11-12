@@ -108,3 +108,29 @@ python3 tools/ctan.py --engine /path/to/tikz-flora --test
 ```
 
 The output is `build/ctan/beamer-floral.zip` (`--output` changes it).
+
+## Releasing
+
+A release is a version bump, a tag and three attached files. The steps below
+follow `v0.1.0`; `tools/` builds the files.
+
+1. **Version bump**, in one commit. The version and date stand in the three
+   `\ProvidesPackage` lines (`beamer-floral.sty`, `beamerthemefloral.sty`,
+   `beamer-floral-animation.sty`), in the title and date of
+   `docs/beamer-floral.tex`, and in the archive name in the README's "From the
+   release archive". `tools/ctan.py` reads the version from `beamer-floral.sty`.
+   Search the repository for the old version to find any other place.
+2. **Tag** the merged commit on `main` as `vX.Y.Z` (`v0.1.0` is a tag on the
+   commit that prepared the announcement).
+3. **Attach** to the GitHub release the three files `v0.1.0` carried. The README
+   links to `beamer-floral-tour.pdf` through `releases/latest/download/`, so keep
+   that name.
+
+   | File | Built with |
+   |---|---|
+   | `beamer-floral-vX.Y.Z.zip` | `python3 tools/dist.py --engine /path/to/tikz-flora --output build/beamer-floral-vX.Y.Z.zip --test`; `--test` unpacks it without development paths and builds its examples, including the raster one (about 5 minutes) |
+   | `beamer-floral-tour.pdf` | `latexmk -lualatex -outdir=build/tour docs/src/tour.tex` from the repository root (the build command stated in the tour's header); copy `build/tour/tour.pdf` under this name |
+   | `growth-title.gif` | the README's image, `docs/img/growth-title.gif`: `python3 tools/build_animation.py --outdir build/title docs/src/growth-title.tex`, then `python3 tools/make_growth_gif.py --engine /path/to/tikz-flora --cache build/title/growth-title.floral-animation` (needs `magick` and `gifski`) |
+
+   The engine revision of the archive is the one in `engine-ref.txt`. The
+   CTAN archive (`tools/ctan.py`, above) is a separate step.
