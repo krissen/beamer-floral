@@ -86,7 +86,7 @@ playback uses vector graphics and only adds the TeX package `animate`.
 The explicit `[raster]` option needs Python 3.9+ and Poppler's `pdftocairo`
 when creating/updating its cache; the final PDF and subsequent TeX builds
 with a valid cache do not need those tools. This is an opt-in portability
-tradeoff, particularly for Overleaf. See the README build instructions.
+tradeoff, particularly for Overleaf. See docs/user/growth.md.
 
 The user confirmed that `revisit-prepared.pdf` works after the other-family
 preparation fix. Both participants navigated during the recording, so its page
