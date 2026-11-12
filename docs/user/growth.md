@@ -69,13 +69,49 @@ it with the document when moving to another machine. Cold builds need extra
 time and temporary disk space, and cached samples consume disk space. Moving
 flora is rasterized at 144 dpi by default (`--dpi` changes this),
 including interval boundaries and static posters. Text and links remain
-ordinary vector PDF content. The static and printed floral endpoint uses the
-same raster image as playback, avoiding a vector redraw when playback stops.
+ordinary vector PDF content. With `[raster]`, the static and printed floral
+endpoint uses the same raster image as playback, avoiding a vector redraw when playback stops.
 Handout mode always uses complete static flora and needs no render cache.
 
 `\usepackage[vector]{beamer-floral-animation}` explicitly selects the default
 vector path. Neither this path nor manual overlay reveals need the external
 raster tools.
+
+Overleaf can compile static flora, manual reveals and vector playback directly.
+For cached timed playback, build the cache locally first and upload it with
+the document; rebuild locally after changes that invalidate it. The external
+raster builder is not part of an ordinary Overleaf LaTeX compile.
+
+Each overlay plays its own growth interval, starts automatically on page
+entry, plays once and stops at its endpoint. With `animate` playback, returning to
+a page restarts that interval; GIF playback does not replay it (see below). Advancing early starts the next page at its nominal starting
+stage. Duration is the total active growth time across the frame, divided
+equally among its displayed overlays; time waiting between clicks is excluded.
+A single title page animates the whole plant. **Text is visible from the start**;
+only the background flora plays an animation.
+
+`growth` accepts `off` (default), `overlays` or `timed`. `growth duration`
+is a positive finite number of seconds (default 8). `growth fps` is an integer
+from 1 to 60 (default 20); the frame count is rounded and the playback rate
+adjusted so each interval contains both endpoints. Playback follows elapsed
+time and skips late samples when a viewer cannot keep up.
+Document settings are inherited; `\florathisframe` applies to the whole frame
+and does not affect the next one. Use `\florathisframe{growth=off}` for a
+complete static decoration.
+
+Animation uses `animate` with `method=ocg` behind ordinary Beamer text,
+links and numbering, with no mouse controls. With this path, vector or raster,
+the interval's final stage is the static poster, including in viewers without
+JavaScript. Handout mode
+always paints complete static flora and needs no animation support package.
+Ordinary documents do not load `animate`.
+
+The [animate manual](https://tug.ctan.org/macros/latex/contrib/animate/animate.pdf)
+documents OCG playback in desktop Acrobat Reader and Okular. We have checked
+playback in desktop Acrobat Reader; Okular is untested. With the vector and
+raster paths, viewers that cannot play the animation show the finished flora;
+with GIF playback they show each interval's start state (see below). See [the timed example](../src/growth.tex)
+and [the acceptance checklist](../../test/acceptance/growth.md).
 
 ## GIF playback for viewers without JavaScript
 
@@ -128,42 +164,8 @@ Limits:
 - Playback is verified in pympress 1.8.6. Viewers that do not play these
   annotations show each interval's start state, not the finished flora.
 - Each interval plays once. Returning to a page does not replay it.
-- The document name and the output directory must not contain `%`, `{`,
-  `}`, `#` or `^`, and with `[gif-external]` the document name must also
-  avoid `(`, `)` and a backslash. The build stops with an error that says
-  to rename.
+- The path of the cache (the output directory included) must not contain `%`,
+  `{` or `}`. With `[gif]` it must not contain `#` or `^` either. With
+  `[gif-external]` the document name must not contain `#`, `^`, `(`, `)` or a
+  backslash. The build stops with an error that says to rename.
 - Print or export from handout mode (it paints complete static flora).
-
-Overleaf can compile static flora, manual reveals and vector playback directly.
-For cached timed playback, build the cache locally first and upload it with
-the document; rebuild locally after changes that invalidate it. The external
-raster builder is not part of an ordinary Overleaf LaTeX compile.
-
-Each overlay plays its own growth interval, starts automatically on page
-entry, plays once and stops at its endpoint. With `animate` playback, returning to
-a page restarts that interval; GIF playback does not replay it (see above). Advancing early starts the next page at its nominal starting
-stage. Duration is the total active growth time across the frame, divided
-equally among its displayed overlays; time waiting between clicks is excluded.
-A single title page animates the whole plant. **Text is visible from the start**;
-only the background flora plays an animation.
-
-`growth` accepts `off` (default), `overlays` or `timed`. `growth duration`
-is a positive finite number of seconds (default 8). `growth fps` is an integer
-from 1 to 60 (default 20); the frame count is rounded and the playback rate
-adjusted so each interval contains both endpoints. Playback follows elapsed
-time and skips late samples when a viewer cannot keep up.
-Document settings are inherited; `\florathisframe` applies to the whole frame
-and does not affect the next one. Use `\florathisframe{growth=off}` for a
-complete static decoration.
-
-Animation uses `animate` with `method=ocg` behind ordinary Beamer text,
-links and numbering, with no mouse controls. The interval's final stage is
-the static poster, including in viewers without JavaScript. Handout mode
-always paints complete static flora and needs no animation support package.
-Ordinary documents do not load `animate`.
-
-The [animate manual](https://tug.ctan.org/macros/latex/contrib/animate/animate.pdf)
-documents OCG playback in desktop Acrobat Reader and Okular. We have checked
-playback in desktop Acrobat Reader; Okular is untested. Viewers that cannot
-play the animation show the finished flora. See [the timed example](../src/growth.tex)
-and [the acceptance checklist](../../test/acceptance/growth.md).
