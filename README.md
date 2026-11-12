@@ -220,8 +220,9 @@ python3 tools/build_animation.py --outdir build/slides slides.tex
 ```
 
 By default the GIFs are **embedded in the PDF**, which is then
-self-contained. That costs about 1 MB per second of animation at 20 fps and
-144 dpi (8 s measured: 8.5 MB). With `[gif-external]` the PDF stays small and
+self-contained. A title page of 8 s at 20 fps and 144 dpi, with
+`seed=3` and the default density, measured 9.6 MB (tikz-flora 39cfd26),
+about 1.2 MB per second; the size depends on the composition. With `[gif-external]` the PDF stays small and
 plays the GIFs from files instead, in a Movie annotation. Keep
 `<job>.floral-animation/` beside the PDF then, and move them together; a PDF
 without them plays nothing.
