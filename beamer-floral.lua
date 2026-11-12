@@ -250,13 +250,6 @@ local function reused_geometry(spec)
   -- Alternating layouts need one drawing for each side.
   spec.page=spec.layout=='split' and 2-M.count%2 or 1
 end
--- Whether the engine places and paints a page's running-head marks on
--- their own (compose.mark_layout); an older engine leaves reused pages
--- without a mark.
-local function page_marks_supported()
-  local ok,C=pcall(require,'flora.compose')
-  return ok and type(C.mark_layout)=='function'
-end
 -- The engine's mark layout for a page spec, shared by every page whose spec
 -- differs only in its measured lines (one per class and title state), and
 -- its key.
@@ -337,17 +330,13 @@ function M.prepare(spec)
   if M.frame.reuse then
     local h=observed.frametitle and observed.frametitle_height
     local rounded=h and h>0 and math.ceil(h/8)*8 or nil
-    local marks=page_marks_supported()
-    local lines,body_top={},nil
-    if marks then
-      local page=copy(spec)
-      for _,k in ipairs(setting_fields) do page[k]=copy(M.frame.settings[k]) end
-      page.frametitle_height=rounded
-      reused_geometry(page)
-      if page.body_top then body_top=observed.body_top or page.body_top; page.body_top=body_top end
-      local _,cut=mark_layout(page):place(observed.lines or {})
-      lines=cut
-    end
+    local page=copy(spec)
+    for _,k in ipairs(setting_fields) do page[k]=copy(M.frame.settings[k]) end
+    page.frametitle_height=rounded
+    reused_geometry(page)
+    local body_top
+    if page.body_top then body_top=observed.body_top or page.body_top; page.body_top=body_top end
+    local _,lines=mark_layout(page):place(observed.lines or {})
     observed={lines=lines,text=observed.text,frametitle=observed.frametitle and true or false,
       frametitle_height=rounded,body_top=body_top}
   end
@@ -562,10 +551,10 @@ end
 -- foot runs, clips and settings, as the adaptive page would place them. The mark's kind comes from the
 -- drawing's seed, so every page of a class shows the same kind. Pages
 -- whose marks fall alike share one drawing of them, cached as the flora is.
--- nil when the page holds no mark or the engine cannot paint marks alone.
+-- nil when the page holds no mark.
 local function reused_marks(spec)
   local geometry=M.mark_geometry
-  if not geometry or not page_marks_supported() then return nil end
+  if not geometry then return nil end
   local page=copy(spec)
   if geometry.body_top and page.body_top then page.body_top=geometry.body_top end
   local layout,key=mark_layout(page)
