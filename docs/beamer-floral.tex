@@ -244,6 +244,24 @@ frames keep \texttt{columns} inside the text block, as the class option
 setting, and an explicit \verb|[totalwidth=...]| still wins. With
 \texttt{reuse}, a staged frame has its own shared drawing.
 
+\section{Patterns}
+
+\textbf{Experimental.} Patterns are new in this package. Their appearance,
+keys and values may change in a later version.
+
+The engine can fill a page with a geometric pattern instead of flora. The keys
+\texttt{pattern}, \texttt{edge}, \texttt{hero}, \texttt{outer} and
+\texttt{scale} go in \cmd{florasetup} or \cmd{florathisframe}, and
+\texttt{pattern=none} gives a frame flora again:
+
+\begin{lstlisting}[language={[LaTeX]TeX}]
+\florasetup{pattern=asanoha, edge=fade, hero=rosette}
+\florathisframe{pattern=none}   % flora on this frame
+\end{lstlisting}
+
+The catalogue of patterns and values is in the README of \pkg{tikz-flora} and
+is not repeated here. Without a \texttt{pattern} key the flora is unchanged.
+
 \section{File size}
 
 The measured PDF sizes per growth variant, the build times and how to repeat
