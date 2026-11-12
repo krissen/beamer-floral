@@ -109,6 +109,13 @@ own. Split-layout parity follows those logical frame invocations rather than
 the overlay page counter. Settings queued while flora is off remain pending
 until a frame is painted.
 
+A build leaves up to three caches beside the PDF. `<job>.floral-cache` holds
+the measurements above. `<job>-flora/` is the engine's page cache: later
+compiles embed each frame's flora from it instead of composing it again, also
+for static frames with several overlays, and `\florasetup{cache=false}` turns
+it off. `<job>.floral-animation/` holds the samples and GIFs of raster and GIF
+playback (see [Growing flora](#growing-flora)).
+
 ## Growing flora
 
 Opt in to growth across overlays:
@@ -157,6 +164,10 @@ usual LuaLaTeX, `latexmk` and `animate`. They must be on `PATH`. Build with:
 python3 tools/build_animation.py --outdir build/slides slides.tex
 ```
 
+`--dpi` (36 to 600, default 144) sets the sample resolution, `--jobs` (1 to
+8, default 2) the number of concurrent raster jobs, and `--engine` a
+development checkout of tikz-flora (otherwise `TIKZFLORA` is read).
+
 The builder runs LaTeX to measure the document, renders missing background
 samples and builds the final PDF. It reuses existing samples on later builds.
 There is no shell escape. The external tools are needed **when creating or updating
@@ -174,7 +185,7 @@ sample grid invalidates the affected cache.
 The cache lives beside the build outputs in `<job>.floral-animation/`; keep
 it with the document when moving to another machine. Cold builds need extra
 time and temporary disk space, and cached samples consume disk space. Moving
-flora is rasterized at 144 dpi by default (`--dpi 36..600` changes this),
+flora is rasterized at 144 dpi by default (`--dpi` changes this),
 including interval boundaries and static posters. Text and links remain
 ordinary vector PDF content. The static and printed floral endpoint uses the
 same raster image as playback, avoiding a vector redraw when playback stops.
@@ -235,6 +246,10 @@ Limits:
 - Playback is verified in pympress 1.8.6. Viewers that do not play these
   annotations show each interval's start state, not the finished flora.
 - Each interval plays once. Returning to a page does not replay it.
+- The document name and the output directory must not contain `%`, `{`,
+  `}`, `#` or `^`, and with `[gif-external]` the document name must also
+  avoid `(`, `)` and a backslash. The build stops with an error that says
+  to rename.
 - Print or export from handout mode (it paints complete static flora).
 
 Overleaf can compile static flora, manual reveals and vector playback directly.
