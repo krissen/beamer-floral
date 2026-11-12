@@ -26,7 +26,7 @@ You need LuaLaTeX and the engine,
 [tikz-flora](https://github.com/krissen/tikz-flora). This package uses
 integration hooks that are not in the upstream engine yet; they are
 [proposed upstream](https://github.com/wn-mitch/tikz-flora/issues/2). Until
-they land, use the `beamer-floral` branch of the fork, commit `60a153d` or
+they land, use the `beamer-floral` branch of the fork, commit `39cfd26` or
 later. The options below all take care of that.
 
 ### From the release archive
@@ -296,6 +296,14 @@ integration draws with its own `render_page` callback. Pattern frames keep
 their own drawings too (see [Patterns](#patterns)). The drawing is cached with the
 other flora, so later compiles do not draw it again.
 
+Each reused page still carries its own running-head mark, sized and placed
+by that page's title as on an adaptive page. Its kind comes with the class
+drawing, so the pages of a class show one kind, and its rule stops where
+the shared drawing's stems run. Between runs a reused frame keeps only its
+marks, so an edit asks for another run only when it changes a mark (adds
+one, removes it, or changes its size or place) or the frame's overlay
+count; a title or body line that only grows wider asks for none.
+
 What you give up:
 
 - Flora no longer fills the empty space inside short frames; it stays in the
@@ -303,13 +311,12 @@ What you give up:
 - Every page of a class looks the same.
 - On titled frames the top edge carries no flora, since the title's width is
   not measured.
-- Reused pages carry no running-head mark.
 - With `title` in the list, the title page is much plainer than its usual
   full composition. `reuse=content` leaves title pages as they are.
 
 On a deck of 97 pages, a warm build takes 23.2-25.7 s adaptive and
-12.8-13.8 s with `reuse=all`, a cold one 76.1-89.9 s against 14.7-16.0 s, and
-the PDF shrinks from 57.0 MB to 4.6 MB. The tables, the method and how to repeat the
+12.5-14.8 s with `reuse=all`, a cold one 76.1-89.9 s against 14.9-17.3 s, and
+the PDF shrinks from 57.0 MB to 4.7 MB. The tables, the method and how to repeat the
 measurements are in [docs/performance.md](docs/performance.md).
 
 ## Patterns
@@ -414,7 +421,12 @@ ornament at the top of the left margin. On a titled frame it sits above the
 title, in a size that follows the room there: 20 to 22 pt over a one-line
 title, 12 to 14 pt with a subtitle or over two lines.
 `\florasetup{tune={gesture={mark_min=10}}}` sets the smallest mark drawn
-(10 pt by default); with less room the mark is left out.
+(10 pt by default); with less room the mark is left out. The mark is drawn
+whole or not at all: no kind, the compass with its crosshair included,
+reaches above or below its square, so the top of the page never cuts it,
+and beside a reservation (see [Reserving space](#reserving-space)) it takes
+the largest whole mark that fits, lower down or smaller, or is left out.
+Pattern pages carry no mark.
 
 ### Layout and density
 
@@ -729,6 +741,8 @@ at the lower-left corner:
 This is useful for a footline, a logo or a caption. Reservations persist
 until `\floraclearreserve`; set and clear them between frames, not between
 overlays. They clip the flora and preserve the underlying background.
+The running-head mark is never cut by one: it moves down or gets smaller
+beside it, or is left out, and its rule stops short of it.
 `\florabackground[bottom]{blue!10}{1cm}` adds a band before the flora;
 use height `0pt` to disable it. A reservation protects content over that band.
 Neither command measures a logo automatically.

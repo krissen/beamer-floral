@@ -12,7 +12,11 @@ per-stage drawings). The tables below show by how much.
 ## Method
 
 All figures were measured with TeX Live 2025 and tikz-flora `60a153d`, the
-engine pin of the theme at the time. The machine was shared, so times carry
+engine pin of the theme at the time, except the `reuse` columns of the
+adaptive and `reuse` tables. Those were measured again with tikz-flora
+`39cfd26` (measured on `5c6a5a3`, whose tree it shares), the pin with which
+each reused page carries its own running-head mark, painted over the shared
+drawing. The machine was shared, so times carry
 some noise; file sizes do not depend on load.
 
 **Warm and cold.** A cold build starts from an empty output directory. A warm
@@ -37,9 +41,8 @@ a warm adaptive build is much closer to a warm `reuse` build than a cold one.
 
 **Each figure is a range** over two passes of the builds. The 1-minute load
 average at the start of the builds was 3.3-26.7 (5.1-26.7 for the pattern
-table), even with the other heavy jobs paused. The 97-page `reuse=content`
-warm range is wide because one of its three runs (30.7 s) started as the
-load climbed; the three runs gave 30.7 s, 12.5 s and 17.9 s.
+table, 4.9-14.5 for the remeasured `reuse` columns), even with the other
+heavy jobs paused.
 
 ## Build times: adaptive and `reuse`
 
@@ -51,19 +54,19 @@ Warm builds:
 
 | Deck | Adaptive | `reuse=content` | `reuse=all` |
 |---|---:|---:|---:|
-| Title and 10 frames of two overlays, 21 pages | 3.8-4.4 s, 21.5 MB | | 3.8-3.9 s, 3.3 MB |
-| Title and 40 one-overlay frames, 41 pages | 4.6-5.2 s, 62.0 MB | 4.2-4.4 s, 8.5 MB | 4.2-4.3 s, 3.3 MB |
-| Title and 30 frames of three overlays, 91 pages | 5.9-6.2 s, 48.8 MB | | 5.5-5.8 s, 3.3 MB |
-| As above with 6 section pages, 97 pages | 23.2-25.7 s, 57.0 MB | 12.5-30.7 s, 16.7 MB | 12.8-13.8 s, 4.6 MB |
+| Title and 10 frames of two overlays, 21 pages | 3.8-4.4 s, 21.5 MB | | 3.8-4.6 s, 3.4 MB |
+| Title and 40 one-overlay frames, 41 pages | 4.6-5.2 s, 62.0 MB | 4.3-4.7 s, 8.6 MB | 4.3-4.7 s, 3.4 MB |
+| Title and 30 frames of three overlays, 91 pages | 5.9-6.2 s, 48.8 MB | | 5.7-6.3 s, 3.4 MB |
+| As above with 6 section pages, 97 pages | 23.2-25.7 s, 57.0 MB | 12.4-15.6 s, 16.7 MB | 12.5-14.8 s, 4.7 MB |
 
 Cold builds, adaptive against `reuse=all`:
 
 | Deck | Adaptive | `reuse=all` |
 |---|---:|---:|
-| 21 pages | 14.3-16.2 s | 5.4 s |
-| 41 pages | 36.6-42.3 s | 5.7-5.9 s |
-| 91 pages | 33.4-36.5 s | 7.1-7.8 s |
-| 97 pages | 76.1-89.9 s | 14.7-16.0 s |
+| 21 pages | 14.3-16.2 s | 5.7-6.1 s |
+| 41 pages | 36.6-42.3 s | 5.9-6.4 s |
+| 91 pages | 33.4-36.5 s | 7.2-8.2 s |
+| 97 pages | 76.1-89.9 s | 14.9-17.3 s |
 
 Baselines: Beamer without floral takes 3.3-3.4 s on the 21-page deck, and the
 97-page deck takes 12.4-13.8 s with flora off.

@@ -1,0 +1,46 @@
+% Reused pages carry their own running-head mark: the class drawing is shared,
+% and each page's mark is placed by that page's own title, as on the adaptive
+% page. test/reuse-mark-adaptive.tex builds the same frames without reuse,
+% test/reuse-mark-content.tex under reuse=content; test/check_reuse_mark.lua
+% compares the marks the logs record. The page
+% cache is off, so every run paints the marks it records. The reserved
+% frames check that a reserve never cuts a mark or its rule: the mark moves
+% down its band, shrinks or is left out, on both builds.
+\providecommand\floralmarkreuse{all}
+\documentclass[aspectratio=169]{beamer}
+\usetheme{floral}
+\edef\next{\noexpand\florasetup{seed=3, density=0.25, cache=false, reuse={\floralmarkreuse}}}\next
+\AtBeginSection[]{\begin{frame}[plain]\sectionpage\end{frame}}
+\title{Reused marks}\author{beamer-floral}\date{}
+% The marks, rules and reserves each frame paints, for the check.
+\directlua{dofile('test/reuse-mark.lua')}
+\begin{document}
+\begin{frame}[plain]\titlepage\end{frame}
+\section{First}
+\begin{frame}{A short title}Body text on the frame.\end{frame}
+\begin{frame}{A title with a subtitle}{The subtitle sits underneath}Body text.\end{frame}
+\begin{frame}{A title long enough that it has to wrap onto a second line of the frame title}Body.\end{frame}
+\begin{frame}Untitled body text on the frame.\end{frame}
+\begin{frame}{Paused}First\pause\par Second\pause\par Third\end{frame}
+\begin{frame}{Only}\only<1>{One line}\only<2>{Two\par lines}\end{frame}
+\begin{frame}[plain]A plain frame without its running head.\end{frame}
+\florathisframe{layout=centered}
+\begin{frame}{Centred: a mark in each margin}Body text.\end{frame}
+\florathisframe{header=body}
+\begin{frame}{Body mode}Body text close under the title.\end{frame}
+\florareserve{0pt}{\the\dimexpr\paperheight-1.2cm\relax}{\the\dimexpr 3cm\relax}{\the\paperheight}
+\begin{frame}{Reserved corner}Body text.\end{frame}
+\floraclearreserve
+\begin{frame}{A short title again}Body text on the frame.\end{frame}
+\florareserve{0pt}{\the\dimexpr\paperheight-1.2cm\relax}{\the\dimexpr 3cm\relax}{\the\paperheight}
+\begin{frame}Untitled: the mark moves down under the reserved corner.\end{frame}
+\floraclearreserve
+\florareserve{\the\dimexpr 5cm\relax}{\the\dimexpr\paperheight-2cm\relax}{\the\dimexpr 6cm\relax}{\the\paperheight}
+\begin{frame}{A reserve across the rule}Body text.\end{frame}
+\floraclearreserve
+% The theme's optional section page: from here on \sectionpage uses the
+% floral template, a plain frame with the section composition.
+\setbeamertemplate{section page}[floral]
+\section{Second}
+\begin{frame}{After the floral section page}Body text.\end{frame}
+\end{document}

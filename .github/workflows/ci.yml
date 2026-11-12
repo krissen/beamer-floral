@@ -64,6 +64,9 @@ jobs:
             test/reuse.tex
             test/reuse-stock.tex
             test/reuse-section-page.tex
+            test/reuse-mark.tex
+            test/reuse-mark-adaptive.tex
+            test/reuse-mark-content.tex
             test/stage.tex
             test/stage-43.tex
             test/stage-onlytext.tex
@@ -103,6 +106,8 @@ jobs:
             set -e
             FLORAL_VERIFY_STABLE=1 latexmk -g -lualatex -interaction=nonstopmode -halt-on-error test/growth.tex
             texlua test/check_reuse.lua reuse.log reuse-stock.log reuse-section-page.log stage-reuse.log patterns.log
+            texlua test/check_reuse_mark.lua reuse-mark.log reuse-mark-adaptive.log reuse-stock.log reuse-mark-content.log
+            python3 test/rerun-marks.py --reuse all
             python3 test/check_patterns.py patterns.pdf
             pdftotext section-page.pdf - | grep -q 'The full section name'
             python3 test/check_stage.py stage.log stage.pdf
