@@ -299,7 +299,8 @@ other flora, so later compiles do not draw it again.
 Each reused page still carries its own running-head mark, sized and placed
 by that page's title as on an adaptive page. Its kind comes with the class
 drawing, so the pages of a class show one kind, and its rule stops where
-the shared drawing's stems run. Between runs a reused frame keeps only its
+the shared drawing's stems run, so it can be longer than on an adaptive
+page. In body mode the mark lies over the hero bloom, not under it. Between runs a reused frame keeps only its
 marks, so an edit asks for another run only when it changes a mark (adds
 one, removes it, or changes its size or place) or the frame's overlay
 count; a title or body line that only grows wider asks for none.
@@ -428,8 +429,11 @@ title, 12 to 14 pt with a subtitle or over two lines.
 whole or not at all: no kind, the compass with its crosshair included,
 reaches above or below its square, so the top of the page never cuts it,
 and beside a reservation (see [Reserving space](#reserving-space)) it takes
-the largest whole mark that fits, lower down or smaller, or is left out.
-Pattern pages carry no mark.
+the largest whole mark that fits, lower down or smaller, or is left out. The
+compass star is drawn at about 77 % of its earlier size, so that its
+crosshair fits inside the square. A plain frame has no running head, so
+there the border and the mark start at the paper's top, as on the title
+page. Pattern pages carry no mark.
 
 ### Layout and density
 
@@ -756,7 +760,9 @@ This is useful for a footline, a logo or a caption. Reservations persist
 until `\floraclearreserve`; set and clear them between frames, not between
 overlays. They clip the flora and preserve the underlying background.
 The running-head mark is never cut by one: it moves down or gets smaller
-beside it, or is left out, and its rule stops short of it.
+beside it, or is left out, and its rule stops short of it. One known limit:
+on an untitled frame under a reservation in the top-left corner, the mark
+moves down whole and can then lie over the bloom.
 `\florabackground[bottom]{blue!10}{1cm}` adds a band before the flora;
 use height `0pt` to disable it. A reservation protects content over that band.
 Neither command measures a logo automatically.
