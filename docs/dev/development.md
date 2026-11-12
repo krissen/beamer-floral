@@ -10,7 +10,7 @@ latexmk -lualatex test/smoke.tex
 ```
 
 CI checks out the pinned engine and builds the test documents, executable
-documentation and integration fixtures with LuaLaTeX. The engine's own tests run in its
+documentation, integration fixtures and the manual with LuaLaTeX. The engine's own tests run in its
 repository. The `tune` keys are validated by the engine against its tuner
 index, so a typo names the key and its valid siblings.
 
@@ -46,17 +46,19 @@ writes step times, memory and disk use to
 
 ## Checks
 
-`.github/workflows/ci.yml` is the list of what is built and checked, and a
-pull request must pass it. It checks out the engine at the revision in
+`.github/workflows/ci.yml` is the list of what is built and checked; it runs
+on pull requests. It checks out the engine at the revision in
 `engine-ref.txt`; the `pre_compile` step runs the Lua and Python unit checks
 in `test/` (after linking the engine's `lua/` directory as `./lua`), then every
-document in `root_file` is compiled with LuaLaTeX, and the `post_compile`
+document in `root_file` (the test documents, `docs/src/` and the manual
+`docs/beamer-floral.tex`) is compiled with LuaLaTeX, and the `post_compile`
 step checks the logs and PDFs and builds the raster and GIF animations through
 `tools/build_animation.py`. Run the same commands against your own engine
 checkout, for example `TIKZFLORA=../tikz-flora latexmk -lualatex
-test/smoke.tex`. CI skips changes that touch only `.md`, `.png` and `.jpg` files, and
-does not build the manual: after changing `docs/beamer-floral.tex`, run
-`latexmk -lualatex beamer-floral.tex` in `docs/`.
+test/smoke.tex`. The manual builds the same way locally, from `docs/` with
+`latexmk -lualatex beamer-floral.tex` or from the repository root with
+`latexmk -lualatex docs/beamer-floral.tex`. CI skips changes that touch only
+`.md`, `.png` and `.jpg` files.
 
 ## Engine pin
 
