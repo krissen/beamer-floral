@@ -14,8 +14,9 @@ per-stage drawings). The tables below show by how much.
 All figures were measured with TeX Live 2025 and tikz-flora `60a153d`, the
 engine pin of the theme at the time, except the `reuse` columns of the
 adaptive and `reuse` tables. Those were measured again with tikz-flora
-`5c6a5a3`, with which each reused page carries its own running-head mark,
-painted over the shared drawing. The machine was shared, so times carry
+`39cfd26` (measured on `5c6a5a3`, whose tree it shares), the pin with which
+each reused page carries its own running-head mark, painted over the shared
+drawing. The machine was shared, so times carry
 some noise; file sizes do not depend on load.
 
 **Warm and cold.** A cold build starts from an empty output directory. A warm

@@ -299,8 +299,7 @@ other flora, so later compiles do not draw it again.
 Each reused page still carries its own running-head mark, sized and placed
 by that page's title as on an adaptive page. Its kind comes with the class
 drawing, so the pages of a class show one kind, and its rule stops where
-the shared drawing's stems run. Reused marks need tikz-flora with
-`compose.mark_layout`; with an older engine reused pages have no mark.
+the shared drawing's stems run.
 
 What you give up:
 
