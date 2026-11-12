@@ -115,7 +115,7 @@ tikz-flora `39cfd26`:
 | Samples | 161 |
 | The interval's GIF | 9.8 MB |
 | PDF size | 9.6 MB, about 1.2 MB per second |
-| Cold build | 4 min 37 s, on a shared machine under load |
+| Cold build | 4 min 0 s, on a shared machine under load |
 
 The size depends on the composition. The build is
 `python3 tools/build_animation.py --engine <tikz-flora> --outdir <dir> <deck>.tex`
