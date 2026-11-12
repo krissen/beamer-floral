@@ -321,6 +321,9 @@ measurements are in [docs/performance.md](docs/performance.md).
 
 ## Patterns
 
+**Experimental.** Patterns are new in this package. Their appearance, keys
+and values may change in a later version.
+
 The engine can fill a page with a geometric pattern instead of flora. The
 keys go in `\florasetup` or `\florathisframe`, like any other setting:
 
