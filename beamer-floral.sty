@@ -35,8 +35,8 @@
 \AddToHook{cmd/titlepage/before}{\directlua{beamer_floral.stage_check()}}
 \AddToHook{cmd/sectionpage/before}{\directlua{beamer_floral.stage_check()}}
 
-% The stage layout (stage, stage width, stage margin; see docs/user/layout.md). Beamer
-% reads the text margins when a frame starts and \setbeamersize works only in
+% The stage layout (stage, stage width, stage margin; see the manual).
+% Beamer reads the text margins when a frame starts and \setbeamersize works only in
 % the preamble, so the margin and width registers are assigned directly,
 % globally, at the start of every frame. \floralstagerestore returns to the
 % margins taken when the document began. Beamer's columns spread over the
@@ -251,7 +251,7 @@
   \fi\fi
 }
 \newcommand\floral@sidebarwarning{%
-  \PackageWarningNoLine{beamer-floral}{Sidebar theme detected. The sidebar and flora share margin space; this combination is not visually supported. See docs/user/themes.md}}
+  \PackageWarningNoLine{beamer-floral}{Sidebar theme detected. The sidebar and flora share margin space; this combination is not visually supported. See Limitations in the manual}}
 \makeatother
 
 \endinput
