@@ -299,7 +299,10 @@ other flora, so later compiles do not draw it again.
 Each reused page still carries its own running-head mark, sized and placed
 by that page's title as on an adaptive page. Its kind comes with the class
 drawing, so the pages of a class show one kind, and its rule stops where
-the shared drawing's stems run.
+the shared drawing's stems run. Between runs a reused frame keeps only its
+marks, so an edit asks for another run only when it changes a mark (adds
+one, removes it, or changes its size or place) or the frame's overlay
+count; a title or body line that only grows wider asks for none.
 
 What you give up:
 
