@@ -96,6 +96,18 @@ Keep the generated .floral-animation folder with the document. PDF readers
 need none of these build tools. Handout is fully static. In Overleaf, the
 raster option needs a cache prebuilt locally and uploaded with the document;
 ordinary static, overlay and vector modes compile directly.
+
+growth-title.tex is a title page with eight seconds of raster growth; build
+it the same way (python3 tools/build_animation.py growth-title.tex). It
+renders 160 samples, so expect minutes and a PDF of about 30 MB.
+
+For viewers that cannot run animate's JavaScript, load
+\\usepackage[gif]{beamer-floral-animation} to embed each interval as a GIF
+in the PDF, or [gif-external] to leave the GIFs beside it and play them from
+Movie annotations (keep the .floral-animation folder next to the PDF). Both
+are built with the same python3 tools/build_animation.py command and need
+Pillow (python3 -m pip install pillow) as well as Python and pdftocairo.
+
 Duration defaults to 8 seconds per frame, with a requested 20 fps. Slow
 viewers skip samples to keep the selected duration. Desktop Acrobat Reader
 and Okular support the OCG method; playback quality depends on the viewer.
