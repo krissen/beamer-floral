@@ -167,5 +167,7 @@ Limits:
 - The path of the cache (the output directory included) must not contain `%`,
   `{` or `}`. With `[gif]` it must not contain `#` or `^` either. With
   `[gif-external]` the document name must not contain `#`, `^`, `(`, `)` or a
-  backslash. The build stops with an error that says to rename.
+  backslash. The build stops with an error about the unsupported characters;
+  with `[gif-external]` it also says to rename the document or its output
+  directory.
 - Print or export from handout mode (it paints complete static flora).
