@@ -16,10 +16,11 @@ PIN = (ROOT / "engine-ref.txt").read_text().strip()
 SUFFIXES = {".sty", ".tex", ".lua", ".py", ".md", ".yml", ".txt", ".cjs"}
 REQUIREMENT = re.compile(r"\b([0-9a-f]{7,40})\b[`}\s]*\s+or\s+(?:later|newer)")
 FEATURE_FLOORS = {
-    ("README.md", "28c394a"),  # optional ornament templates
+    ("docs/user/ornaments.md", "28c394a"),  # optional ornament templates
 }
 EXPECTED = Counter({
-    "README.md": 2,
+    "README.md": 1,
+    "docs/user/ornaments.md": 1,
     "beamer-floral.sty": 3,
     "docs/beamer-floral.tex": 1,
     "tools/ctan.py": 1,
