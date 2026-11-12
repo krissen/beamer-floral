@@ -1,8 +1,8 @@
 # Performance
 
 Build times and file sizes for beamer-floral, with the method that produced
-them and the commands to repeat each table. The headline figures in the
-[README](../README.md) link here.
+them and the commands to repeat each table. The [user guides](../user/) link
+here for the figures.
 
 Flora is detailed artwork, so a deck with flora is slower to build and far
 larger than plain Beamer. Three things bring that down: `reuse` (one drawing
@@ -47,7 +47,7 @@ heavy jobs paused.
 ## Build times: adaptive and `reuse`
 
 Flora normally adapts to each frame; `reuse` draws one picture per page class
-(see [Reusing one drawing](../README.md#reusing-one-drawing)). Each cell is
+(see [Reusing one drawing](../user/reuse.md)). Each cell is
 the build time and the PDF size.
 
 Warm builds:
@@ -74,7 +74,7 @@ Baselines: Beamer without floral takes 3.3-3.4 s on the 21-page deck, and the
 ## Build times: flora and patterns
 
 A pattern page is a small vector drawing, so the file stays small without
-`reuse` (see [Patterns](../README.md#patterns)). Cold builds, with the PDF
+`reuse` (see [Patterns](../user/patterns.md)). Cold builds, with the PDF
 size:
 
 | Deck | Flora | `pattern=asanoha` |
@@ -101,6 +101,26 @@ Your own figures will depend on the density, layout and number of pages. A
 raster build also keeps its sample cache on disk, 109 MB for this document.
 Share a talk with `\florasetup{growth=off}` if size matters more than the
 animation.
+
+### Embedded GIF playback
+
+`\usepackage[gif]{beamer-floral-animation}` embeds each interval's GIF in the
+PDF (see [GIF playback](../user/growth.md#gif-playback-for-viewers-without-javascript)).
+A single title page with `growth=timed` at the defaults of 8 seconds and
+20 fps, `seed=3`, the default density and 144 dpi samples, built with
+tikz-flora `39cfd26`:
+
+| Measure | Value |
+|---|---:|
+| Samples | 161 |
+| The interval's GIF | 9.8 MB |
+| PDF size | 9.6 MB, about 1.2 MB per second |
+| Cold build | 4 min 37 s, on a shared machine under load |
+
+The size depends on the composition. The build is
+`python3 tools/build_animation.py --engine <tikz-flora> --outdir <dir> <deck>.tex`
+and `python3 tools/check_gif_pdf.py <dir>/<deck>.pdf --pages 1 --mode embedded`
+passed on the result.
 
 ## Repeating the measurements
 
