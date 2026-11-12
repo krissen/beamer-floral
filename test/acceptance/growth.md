@@ -20,7 +20,8 @@ Manual viewer acceptance (pending; do not infer from build success):
 - Advance early; the next page begins at its nominal starting stage.
 - Revisit a page; its interval starts again.
 - Text and page numbering remain crisp; the example link is clickable.
-- Print/export without playback; each page shows its interval's endpoint.
+- Print/export without playback; each page shows its interval's endpoint
+  (with GIF playback, its start state; see the known limit below).
 - Repeat in Okular when available.
 
 For an eight-second dense animation, measure elapsed build time, peak memory
