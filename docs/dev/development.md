@@ -131,8 +131,24 @@ follow `v0.1.0`; `tools/` builds the files.
    | File | Built with |
    |---|---|
    | `beamer-floral-vX.Y.Z.zip` | `python3 tools/dist.py --engine /path/to/tikz-flora --output build/beamer-floral-vX.Y.Z.zip --test`; `--test` unpacks it without development paths and builds its examples, including the raster one (about 5 minutes) |
-   | `beamer-floral-tour.pdf` | `latexmk -lualatex -outdir=build/tour docs/src/tour.tex` from the repository root (the build command stated in the tour's header); copy `build/tour/tour.pdf` under this name |
-   | `growth-title.gif` | the README's image, `docs/img/growth-title.gif`: `python3 tools/build_animation.py --outdir build/title docs/src/growth-title.tex`, then `python3 tools/make_growth_gif.py --engine /path/to/tikz-flora --cache build/title/growth-title.floral-animation` (needs `magick` and `gifski`) |
+   | `beamer-floral-tour.pdf` | `TIKZFLORA=/path/to/tikz-flora latexmk -lualatex -outdir=build/tour docs/src/tour.tex` from the repository root (the build command stated in the tour's header); copy `build/tour/tour.pdf` under this name |
+   | `growth-title.gif` | the README's image, `docs/img/growth-title.gif`, uploaded as it is (the `v0.1.0` asset is the same file) |
 
-   The engine revision of the archive is the one in `engine-ref.txt`. The
-   CTAN archive (`tools/ctan.py`, above) is a separate step.
+   The zip's engine is the revision in `engine-ref.txt` (`dist.py` archives
+   that revision). The tour is built against the checkout that `TIKZFLORA`
+   (or `.env`) names, so build it against the engine at the revision in
+   `engine-ref.txt`; the same goes for the GIF.
+
+   The GIF is rebuilt only when the image itself should change, in a commit of
+   its own: `python3 tools/build_animation.py --engine /path/to/tikz-flora
+   --outdir build/title docs/src/growth-title.tex`, then `python3
+   tools/make_growth_gif.py --engine /path/to/tikz-flora --cache
+   build/title/growth-title.floral-animation` (needs `magick` and `gifski`).
+   By default `make_growth_gif.py` overwrites the tracked
+   `docs/img/growth-title.gif`; `--output` writes elsewhere.
+4. **Create the release** from the tag with the three files, as `v0.1.0` was:
+   `gh release create vX.Y.Z --title <title> --notes <notes>
+   beamer-floral-vX.Y.Z.zip beamer-floral-tour.pdf growth-title.gif`. `v0.1.0`
+   has release notes naming the zip and the tour, and the engine revision.
+
+   The CTAN archive (`tools/ctan.py`, above) is a separate step.
