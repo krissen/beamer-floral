@@ -17,7 +17,7 @@ keys go in `\florasetup` or `\florathisframe`, like any other setting:
 `pattern` names a pattern or a group, `edge` how the pattern meets the text,
 `hero` adds one large motif in a top corner, `outer` how it meets the paper's
 edge and `scale` sets the cell size. The catalogue of patterns, groups and
-values is in the [engine's README](https://github.com/krissen/tikz-flora#patterns)
+values is in the [engine's README](https://github.com/krissen/tikz-flora/blob/beamer-floral/README.md#patterns)
 and is not repeated here. Without a `pattern` key the flora is unchanged.
 
 Pattern pages are small vector drawings, so the file stays small without

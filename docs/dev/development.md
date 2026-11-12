@@ -54,7 +54,7 @@ document in `root_file` is compiled with LuaLaTeX, and the `post_compile`
 step checks the logs and PDFs and builds the raster and GIF animations through
 `tools/build_animation.py`. Run the same commands against your own engine
 checkout, for example `TIKZFLORA=../tikz-flora latexmk -lualatex
-test/smoke.tex`. CI skips changes that touch only `.md` and image files, and
+test/smoke.tex`. CI skips changes that touch only `.md`, `.png` and `.jpg` files, and
 does not build the manual: after changing `docs/beamer-floral.tex`, run
 `latexmk -lualatex beamer-floral.tex` in `docs/`.
 

@@ -9,7 +9,7 @@ beside the PDF.
 `\florasetup{...}` sets the document; `\florathisframe{...}` the next painted
 frame, including all its overlays. `\florathispage` is an alias with the same
 frame semantics in Beamer. The engine's article API keeps its page semantics.
-`\floraon` and `\floraoff` switch the painting off or on before a frame; a
+`\floraon` and `\floraoff` switch the painting on or off before a frame; a
 theme may also switch margins with them, which is how title and section
 pages keep plain margins.
 
@@ -36,7 +36,7 @@ own. Split-layout parity follows those logical frame invocations rather than
 the overlay page counter. Settings queued while flora is off remain pending
 until a frame is painted.
 
-A build leaves up to three caches beside the PDF. `<job>.floral-cache` holds
+A build leaves up to three caches beside the PDF (raster and GIF playback also write `<job>.floral-animation-manifest`). `<job>.floral-cache` holds
 the measurements above. `<job>-flora/` is the engine's page cache: later
 compiles embed each frame's flora from it instead of composing it again, also
 for static frames with several overlays, and `\florasetup{cache=false}` turns
@@ -47,7 +47,7 @@ playback (see [Growing flora](growth.md)).
 
 | Key | Values |
 |---|---|
-| `layout` | `left`, `right`, `centered`, `split`, `title`, `surround`, `flank`, `wreath`, `bouquet`, `scrollwork` (the last four are described in the [engine's README](https://github.com/krissen/tikz-flora#readme)) |
+| `layout` | `left`, `right`, `centered`, `split`, `title`, `surround`, `flank`, `wreath`, `bouquet`, `scrollwork` (see [Layouts](#layouts)) |
 | `header` | `body`, `margin` |
 | `seed` | a number, or `random` |
 | `density` | `0`–`10` |
@@ -113,7 +113,7 @@ The last four are for title pages. The oval of `wreath` and `scrollwork`
 spans the page's width and keeps to the room between the title and the
 nearest lines above and below it. Each of the four frames the lines in
 `floratitle`, or the first block of lines without it. The
-[engine's README](https://github.com/krissen/tikz-flora#layouts) describes them
+[engine's README](https://github.com/krissen/tikz-flora/blob/beamer-floral/README.md#layouts) describes them
 in full.
 
 ## Choosing the composition

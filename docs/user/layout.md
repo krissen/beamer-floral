@@ -91,8 +91,8 @@ whole or not at all: no kind, the compass with its crosshair included,
 reaches above or below its square, so the top of the page never cuts it,
 and beside a reservation (see [Reserving space](#reserving-space)) it takes
 the largest whole mark that fits, lower down or smaller, or is left out. The
-compass star is drawn at about 77 % of its earlier size, so that its
-crosshair fits inside the square. A plain frame has no running head, so
+compass star is sized so that its crosshair, which reaches 1.3 times the
+star's radius, ends inside the square. A plain frame has no running head, so
 there the border and the mark start at the paper's top, as on the title
 page. Pattern pages carry no mark.
 
