@@ -511,7 +511,7 @@ page comes from the same English visual template used for acceptance tests.*
 
 | Key | Values |
 |---|---|
-| `layout` | `left`, `right`, `centered`, `split`, `title`, `surround` |
+| `layout` | `left`, `right`, `centered`, `split`, `title`, `surround`, `flank`, `wreath`, `bouquet`, `scrollwork` (the last four are described in the [engine's README](https://github.com/krissen/tikz-flora#readme)) |
 | `header` | `body`, `margin` |
 | `seed` | a number, or `random` |
 | `density` | `0`–`10` |
@@ -522,10 +522,20 @@ page comes from the same English visual template used for acceptance tests.*
 | `spin` | re-pick random inks |
 | `ornaments` | `{moon=2, night=0, ...}` |
 | `tune` | engine overrides, e.g. `{compose={hero=0.295}}` |
-| `reuse` | `none`, `all`, or a list of `title`, `section`, `content` |
+| `backdrop` | `light` (default), `dark`, or a dark `#rrggbb` |
+| `cache` | `true` (default), `false`: keep each page's flora in `<job>-flora/` |
+| `growth` | `off` (default), `overlays`, `timed` |
+| `growth duration` | seconds, default `8` |
+| `growth fps` | an integer from 1 to 60, default `20` |
+| `reuse` | `none` (default), `all`, or a list of `title`, `section`, `content` |
 | `stage` | `off` (default), `right`, `left` |
-| `stage width` | a length, default `0.39\paperwidth` |
-| `stage margin` | a length, default `12mm` |
+| `stage width` | a positive length, default `0.39\paperwidth` |
+| `stage margin` | a positive length, default `12mm` |
+| `pattern`, `edge`, `hero`, `outer`, `scale` | experimental; see [Patterns](#patterns) |
+
+`stage width` and `stage margin` take a number with one of the units `pt`,
+`mm`, `cm`, `in`, `bp`, `pc`, `dd`, `cc`, `ex` or `em`, or a multiple of
+`\paperwidth` or `\paperheight`.
 
 Named palettes:
 
@@ -566,7 +576,8 @@ margins and `layout=right` or `layout=left` in one step:
 
 `stage width` is the margin on the decorated side (default `0.39\paperwidth`,
 62 mm on 16:9 and 50 mm on 4:3), `stage margin` the text margin on the other
-side (default `12mm`). Both take any length, such as `55mm` or `0.3\paperwidth`.
+side (default `12mm`). Both take a positive length such as `55mm` or
+`0.3\paperwidth` (the accepted units are listed under [Settings](#settings)).
 
 - `stage=off` returns to the margins the document had when it began, including
   your own `\setbeamersize`.
