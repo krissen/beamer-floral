@@ -98,17 +98,24 @@ and \texttt{itemize subsubitem}, and an optional section page,
 \verb|\setbeamertemplate{section page}[floral]|: the section name beside the
 flora with a divider below it, on a lighter version of the title page's
 composition. It is not selected by default, and the theme adds no
-\cmd{AtBeginSection} hook; \texttt{docs/user/layout.md} in the repository shows the one-line hook. Every frame of the theme carries a
-running-head mark at the top of the left margin; on a titled frame it sits
+\cmd{AtBeginSection} hook; a document that wants a page for every section
+adds its own:
+
+\begin{lstlisting}[language={[LaTeX]TeX}]
+\setbeamertemplate{section page}[floral]
+\AtBeginSection[]{\begin{frame}[plain]\sectionpage\end{frame}}
+\end{lstlisting}
+
+Every frame of the theme carries a running-head mark at the top of the left margin; on a titled frame it sits
 above the title, in a size that follows the room there.
-\verb|tune={gesture={mark_min=10}}| sets the smallest mark drawn (10\,pt by
-default); with less room the mark is left out. The mark is drawn whole or not
+The smallest mark drawn (10\,pt by default) is set with
+\verb|tune={gesture={mark_min=10}}|; with less room the mark is left out. The mark is drawn whole or not
 at all: no kind reaches above or below its square, and beside a reservation
 the mark takes the largest whole size that fits, lower down or smaller, or is
 left out; its rule stops short of the reservation. One known limit: on an
 untitled frame under a reservation in the top-left corner, the mark moves
-down whole and can then lie over the bloom. The compass star is drawn at about
-77\,\% of its earlier size, so that its crosshair fits inside the square.
+down whole and can then lie over the bloom. The compass star is sized so that its
+crosshair, which reaches 1.3 times the star's radius, ends inside the square.
 A plain frame has no running head, so there the border and the mark start at
 the paper's top, as on the title page. Pattern pages carry no mark.
 
@@ -199,12 +206,15 @@ Each timed interval then plays as a GIF built from the raster cache, so the
 build is the one above, and the page needs no \pkg{animate} environment and
 no JavaScript. The frames are matted against \cmd{floralgifmatte} (default
 \texttt{FFFFFF}), reservations stay transparent, and each interval plays
-once. The limits are listed at
-\url{https://github.com/krissen/beamer-floral/blob/main/docs/user/growth.md#gif-playback-for-viewers-without-javascript}.
+once. Frames are thinned above 50 fps, the GIF plays above all page content
+(so reserve areas that hold a logo or footline), and a path with certain
+special characters is refused; the full list is in the repository's
+\texttt{docs/user/growth.md}.
 
-Playback has been checked in desktop Acrobat Reader. The final stage of each
-interval is the static poster, so viewers that cannot play the animation
-show the finished flora. Handout mode always shows complete static flora.
+Playback has been checked in desktop Acrobat Reader. With vector and raster
+playback the final stage of each interval is the static poster, so viewers
+that cannot play the animation show the finished flora; with GIF playback they
+show each interval's start state. Handout mode always shows complete static flora.
 
 \section{Reusing one drawing}
 
@@ -300,8 +310,8 @@ The engine can fill a page with a geometric pattern instead of flora. The keys
 \florathisframe{pattern=none}   % flora on this frame
 \end{lstlisting}
 
-The catalogue of patterns and values is in the README of \pkg{tikz-flora} and
-is not repeated here. Without a \texttt{pattern} key the flora is unchanged.
+The catalogue of patterns and values is in the README of the
+\texttt{beamer-floral} branch of \pkg{tikz-flora} and is not repeated here. Without a \texttt{pattern} key the flora is unchanged.
 
 \section{File size}
 
