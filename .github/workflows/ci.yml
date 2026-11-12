@@ -79,6 +79,7 @@ jobs:
             docs/src/stock-Madrid.tex
             docs/src/pattern-example.tex
             docs/src/stock-Berlin.tex
+            docs/beamer-floral.tex
             test/acceptance/matrix-43.tex
             test/acceptance/matrix-169.tex
             test/acceptance/coverage.tex
