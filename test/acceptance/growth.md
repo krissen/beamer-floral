@@ -20,7 +20,8 @@ Manual viewer acceptance (pending; do not infer from build success):
 - Advance early; the next page begins at its nominal starting stage.
 - Revisit a page; its interval starts again.
 - Text and page numbering remain crisp; the example link is clickable.
-- Print/export without playback; each page shows its interval's endpoint.
+- Print/export without playback; each page shows its interval's endpoint
+  (with GIF playback, its start state; see the known limit below).
 - Repeat in Okular when available.
 
 For an eight-second dense animation, measure elapsed build time, peak memory
@@ -86,7 +87,7 @@ playback uses vector graphics and only adds the TeX package `animate`.
 The explicit `[raster]` option needs Python 3.9+ and Poppler's `pdftocairo`
 when creating/updating its cache; the final PDF and subsequent TeX builds
 with a valid cache do not need those tools. This is an opt-in portability
-tradeoff, particularly for Overleaf. See the README build instructions.
+tradeoff, particularly for Overleaf. See docs/user/growth.md.
 
 The user confirmed that `revisit-prepared.pdf` works after the other-family
 preparation fix. Both participants navigated during the recording, so its page

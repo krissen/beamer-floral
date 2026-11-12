@@ -1,6 +1,7 @@
 # Contributing
 
-See the [README](README.md#development) for build requirements and checks.
+See [docs/dev/development.md](docs/dev/development.md) for build requirements,
+checks, the engine pin and the tools.
 
 ## Commit messages
 

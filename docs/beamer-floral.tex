@@ -45,7 +45,7 @@ checkout, set the environment variable \texttt{TIKZFLORA} to its path.
 
 Timed growth also needs the \pkg{animate} package. Raster playback needs
 Python 3.9 or later and Poppler's \texttt{pdftocairo} when its cache is
-built.
+built. GIF playback also needs the Python package Pillow at that step.
 
 \section{Getting started}
 
@@ -98,14 +98,30 @@ and \texttt{itemize subsubitem}, and an optional section page,
 \verb|\setbeamertemplate{section page}[floral]|: the section name beside the
 flora with a divider below it, on a lighter version of the title page's
 composition. It is not selected by default, and the theme adds no
-\cmd{AtBeginSection} hook; the README shows the one-line hook. Every frame of the theme carries a
-running-head mark at the top of the left margin; on a titled frame it sits
+\cmd{AtBeginSection} hook; a document that wants a page for every section
+adds its own:
+
+\begin{lstlisting}[language={[LaTeX]TeX}]
+\setbeamertemplate{section page}[floral]
+\AtBeginSection[]{\begin{frame}[plain]\sectionpage\end{frame}}
+\end{lstlisting}
+
+Every frame of the theme carries a running-head mark at the top of the left margin; on a titled frame it sits
 above the title, in a size that follows the room there.
-\verb|tune={gesture={mark_min=10}}| sets the smallest mark drawn (10\,pt by
-default); with less room the mark is left out. The mark is drawn whole or not
+The smallest mark drawn (10\,pt by default) is set with
+\verb|tune={gesture={mark_min=10}}|; with less room the mark is left out. The mark is drawn whole or not
 at all: no kind reaches above or below its square, and beside a reservation
 the mark takes the largest whole size that fits, lower down or smaller, or is
-left out; its rule stops short of the reservation. Pattern pages carry no mark.
+left out; its rule stops short of the reservation. One known limit: on an
+untitled frame under a reservation in the top-left corner, the mark moves
+down whole and can then lie over the bloom. The compass star is sized so that its
+crosshair, which reaches 1.3 times the star's radius, ends inside the square.
+A plain frame has no running head, so there the border and the mark start at
+the paper's top, as on the title page. Pattern pages carry no mark.
+
+The heading of the floral section page is offset from the left like the title
+block, by \cmd{floratitleoffset} (1.8\,cm by default; \cmd{renewcommand}
+changes both).
 
 \section{Options}
 
@@ -115,7 +131,9 @@ left out; its rule stops short of the reservation. Pattern pages carry no mark.
   Key & Values \\
   \midrule
   \texttt{layout} & \texttt{left}, \texttt{right}, \texttt{centered},
-    \texttt{split}, \texttt{title}, \texttt{surround} \\
+    \texttt{split}, \texttt{title}, \texttt{surround}, \texttt{flank},
+    \texttt{wreath}, \texttt{bouquet}, \texttt{scrollwork} (the last four
+    are described in the engine's README) \\
   \texttt{header} & \texttt{body}, \texttt{margin} \\
   \texttt{seed} & a number, or \texttt{random} \\
   \texttt{density} & 0 to 10 \\
@@ -128,17 +146,29 @@ left out; its rule stops short of the reservation. Pattern pages carry no mark.
   \texttt{spin} & re-picks random inks \\
   \texttt{ornaments} & weights of registered ornament kinds \\
   \texttt{tune} & engine overrides \\
+  \texttt{backdrop} & \texttt{light} (default), \texttt{dark}, or a dark
+    \texttt{\#rrggbb} \\
+  \texttt{cache} & \texttt{true} (default) or \texttt{false}: keep each
+    page's flora in \texttt{<job>-flora/} \\
   \texttt{growth} & \texttt{off}, \texttt{overlays}, \texttt{timed} \\
   \texttt{growth duration} & seconds, default 8 \\
   \texttt{growth fps} & an integer from 1 to 60, default 20 \\
-  \texttt{reuse} & \texttt{none}, \texttt{all}, or a list of \texttt{title},
+  \texttt{reuse} & \texttt{none} (default), \texttt{all}, or a list of \texttt{title},
     \texttt{section}, \texttt{content} \\
   \texttt{stage} & \texttt{off} (default), \texttt{right}, \texttt{left} \\
-  \texttt{stage width} & a length, default \texttt{0.39\textbackslash paperwidth} \\
-  \texttt{stage margin} & a length, default \texttt{12mm} \\
+  \texttt{stage width} & a positive length, default
+    \texttt{0.39\textbackslash paperwidth} \\
+  \texttt{stage margin} & a positive length, default \texttt{12mm} \\
+  \texttt{pattern} & experimental, with \texttt{edge}, \texttt{hero},
+    \texttt{outer} and \texttt{scale}; see Patterns \\
   \bottomrule
 \end{tabular}
 \end{center}
+
+\texttt{stage width} and \texttt{stage margin} take a number with one of the
+units \texttt{pt}, \texttt{mm}, \texttt{cm}, \texttt{in}, \texttt{bp},
+\texttt{pc}, \texttt{dd}, \texttt{cc}, \texttt{ex} or \texttt{em}, or a
+multiple of \verb|\paperwidth| or \verb|\paperheight|.
 
 Keep floral settings, reservations and margins constant within one frame.
 Change them between frames.
@@ -162,9 +192,29 @@ the package option \texttt{raster} and build with the supplied script:
 python3 build_animation.py --outdir build slides.tex
 \end{lstlisting}
 
-Playback has been checked in desktop Acrobat Reader. The final stage of each
-interval is the static poster, so viewers that cannot play the animation
-show the finished flora. Handout mode always shows complete static flora.
+For viewers that cannot run the JavaScript of \pkg{animate}, such as
+pympress, select GIF playback with the package option \texttt{gif}
+(\texttt{gif-external} keeps the GIFs beside the PDF instead of embedding
+them):
+
+\begin{lstlisting}[language={[LaTeX]TeX}]
+\usepackage[gif]{beamer-floral-animation}
+\floralgifmatte{FFFFFF}  % the page colour, six hex digits
+\end{lstlisting}
+
+Each timed interval then plays as a GIF built from the raster cache, so the
+build is the one above, and the page needs no \pkg{animate} environment and
+no JavaScript. The frames are matted against \cmd{floralgifmatte} (default
+\texttt{FFFFFF}), reservations stay transparent, and each interval plays
+once. Frames are thinned above 50 fps, the GIF plays above all page content
+(so reserve areas that hold a logo or footline), and a path with certain
+special characters is refused; the full list is in the repository's
+\texttt{docs/user/growth.md}.
+
+Playback has been checked in desktop Acrobat Reader. With vector and raster
+playback the final stage of each interval is the static poster, so viewers
+that cannot play the animation show the finished flora; with GIF playback they
+show each interval's start state. Handout mode always shows complete static flora.
 
 \section{Reusing one drawing}
 
@@ -193,7 +243,8 @@ drawing is cached with the other flora.
 Each reused page still carries its own running-head mark, sized and placed
 by that page's title as on an adaptive page. Its kind comes with the class
 drawing, so the pages of a class show one kind, and its rule stops where the
-shared drawing's stems run. Between runs a reused frame keeps only its marks,
+shared drawing's stems run, so it can be longer than on an adaptive page. In
+body mode the mark lies over the hero bloom, not under it. Between runs a reused frame keeps only its marks,
 so an edit asks for another run only when it changes a mark or the frame's
 overlay count; a line that only grows wider asks for none.
 
@@ -244,11 +295,29 @@ frames keep \texttt{columns} inside the text block, as the class option
 setting, and an explicit \verb|[totalwidth=...]| still wins. With
 \texttt{reuse}, a staged frame has its own shared drawing.
 
+\section{Patterns}
+
+\textbf{Experimental.} Patterns are new in this package. Their appearance,
+keys and values may change in a later version.
+
+The engine can fill a page with a geometric pattern instead of flora. The keys
+\texttt{pattern}, \texttt{edge}, \texttt{hero}, \texttt{outer} and
+\texttt{scale} go in \cmd{florasetup} or \cmd{florathisframe}, and
+\texttt{pattern=none} gives a frame flora again:
+
+\begin{lstlisting}[language={[LaTeX]TeX}]
+\florasetup{pattern=asanoha, edge=fade, hero=rosette}
+\florathisframe{pattern=none}   % flora on this frame
+\end{lstlisting}
+
+The catalogue of patterns and values is in the README of the
+\texttt{beamer-floral} branch of \pkg{tikz-flora} and is not repeated here. Without a \texttt{pattern} key the flora is unchanged.
+
 \section{File size}
 
 The measured PDF sizes per growth variant, the build times and how to repeat
 them are on
-\url{https://github.com/krissen/beamer-floral/blob/main/docs/performance.md}.
+\url{https://github.com/krissen/beamer-floral/blob/main/docs/dev/performance.md}.
 Overlays of a static frame share one copy of the flora. Growing flora needs
 a separate drawing for each stage. Sizes depend on density, layout and page
 count.

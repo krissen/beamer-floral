@@ -72,7 +72,7 @@ These are opt-in review candidates; the generic package does not replace
 stock-theme templates. Export comparison images from these PDFs. Inspect
 projected-size readability and diagnostics before adopting the templates.
 
-The optional ornament README screenshots come from pages 2 and 9 of the
+The optional ornament screenshots of `docs/user/ornaments.md` come from pages 2 and 9 of the
 16:9 ornament comparison, after rebuilding with current settings:
 
 ```sh
@@ -85,7 +85,7 @@ suite's `--screenshots` matrix.
 
 ## Configuration catalogue
 
-`ornament-catalogue.tex` supplies the three README option images, showing
+`ornament-catalogue.tex` supplies the three option images of `docs/user/ornaments.md`, showing
 list shapes, per-depth selection and divider styles. Background flora is
 disabled to isolate the ornaments. Build and export from repository root:
 
