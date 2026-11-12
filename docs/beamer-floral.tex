@@ -98,7 +98,7 @@ and \texttt{itemize subsubitem}, and an optional section page,
 \verb|\setbeamertemplate{section page}[floral]|: the section name beside the
 flora with a divider below it, on a lighter version of the title page's
 composition. It is not selected by default, and the theme adds no
-\cmd{AtBeginSection} hook; the README shows the one-line hook. Every frame of the theme carries a
+\cmd{AtBeginSection} hook; \texttt{docs/user/layout.md} in the repository shows the one-line hook. Every frame of the theme carries a
 running-head mark at the top of the left margin; on a titled frame it sits
 above the title, in a size that follows the room there.
 \verb|tune={gesture={mark_min=10}}| sets the smallest mark drawn (10\,pt by
@@ -199,8 +199,8 @@ Each timed interval then plays as a GIF built from the raster cache, so the
 build is the one above, and the page needs no \pkg{animate} environment and
 no JavaScript. The frames are matted against \cmd{floralgifmatte} (default
 \texttt{FFFFFF}), reservations stay transparent, and each interval plays
-once. The limits are listed in the README at
-\url{https://github.com/krissen/beamer-floral#gif-playback-for-viewers-without-javascript}.
+once. The limits are listed at
+\url{https://github.com/krissen/beamer-floral/blob/main/docs/user/growth.md#gif-playback-for-viewers-without-javascript}.
 
 Playback has been checked in desktop Acrobat Reader. The final stage of each
 interval is the static poster, so viewers that cannot play the animation
@@ -307,7 +307,7 @@ is not repeated here. Without a \texttt{pattern} key the flora is unchanged.
 
 The measured PDF sizes per growth variant, the build times and how to repeat
 them are on
-\url{https://github.com/krissen/beamer-floral/blob/main/docs/performance.md}.
+\url{https://github.com/krissen/beamer-floral/blob/main/docs/dev/performance.md}.
 Overlays of a static frame share one copy of the flora. Growing flora needs
 a separate drawing for each stage. Sizes depend on density, layout and page
 count.
