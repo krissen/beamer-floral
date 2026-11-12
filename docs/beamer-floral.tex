@@ -115,7 +115,9 @@ left out; its rule stops short of the reservation. Pattern pages carry no mark.
   Key & Values \\
   \midrule
   \texttt{layout} & \texttt{left}, \texttt{right}, \texttt{centered},
-    \texttt{split}, \texttt{title}, \texttt{surround} \\
+    \texttt{split}, \texttt{title}, \texttt{surround}, \texttt{flank},
+    \texttt{wreath}, \texttt{bouquet}, \texttt{scrollwork} (the last four
+    are described in the engine's README) \\
   \texttt{header} & \texttt{body}, \texttt{margin} \\
   \texttt{seed} & a number, or \texttt{random} \\
   \texttt{density} & 0 to 10 \\
@@ -128,17 +130,29 @@ left out; its rule stops short of the reservation. Pattern pages carry no mark.
   \texttt{spin} & re-picks random inks \\
   \texttt{ornaments} & weights of registered ornament kinds \\
   \texttt{tune} & engine overrides \\
+  \texttt{backdrop} & \texttt{light} (default), \texttt{dark}, or a dark
+    \texttt{\#rrggbb} \\
+  \texttt{cache} & \texttt{true} (default) or \texttt{false}: keep each
+    page's flora in \texttt{<job>-flora/} \\
   \texttt{growth} & \texttt{off}, \texttt{overlays}, \texttt{timed} \\
   \texttt{growth duration} & seconds, default 8 \\
   \texttt{growth fps} & an integer from 1 to 60, default 20 \\
-  \texttt{reuse} & \texttt{none}, \texttt{all}, or a list of \texttt{title},
+  \texttt{reuse} & \texttt{none} (default), \texttt{all}, or a list of \texttt{title},
     \texttt{section}, \texttt{content} \\
   \texttt{stage} & \texttt{off} (default), \texttt{right}, \texttt{left} \\
-  \texttt{stage width} & a length, default \texttt{0.39\textbackslash paperwidth} \\
-  \texttt{stage margin} & a length, default \texttt{12mm} \\
+  \texttt{stage width} & a positive length, default
+    \texttt{0.39\textbackslash paperwidth} \\
+  \texttt{stage margin} & a positive length, default \texttt{12mm} \\
+  \texttt{pattern} & experimental, with \texttt{edge}, \texttt{hero},
+    \texttt{outer} and \texttt{scale}; see Patterns \\
   \bottomrule
 \end{tabular}
 \end{center}
+
+\texttt{stage width} and \texttt{stage margin} take a number with one of the
+units \texttt{pt}, \texttt{mm}, \texttt{cm}, \texttt{in}, \texttt{bp},
+\texttt{pc}, \texttt{dd}, \texttt{cc}, \texttt{ex} or \texttt{em}, or a
+multiple of \verb|\paperwidth| or \verb|\paperheight|.
 
 Keep floral settings, reservations and margins constant within one frame.
 Change them between frames.
