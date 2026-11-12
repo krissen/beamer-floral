@@ -31,7 +31,7 @@ later. The options below all take care of that.
 
 ### From the release archive
 
-The simplest way. Download `beamer-floral-v0.1.0.zip` from the
+The simplest way. Download `beamer-floral-v0.2.0.zip` from the
 [latest release](https://github.com/krissen/beamer-floral/releases/latest),
 which includes a matching engine. Unzip it, put your document in the
 `beamer-floral` folder and compile:
