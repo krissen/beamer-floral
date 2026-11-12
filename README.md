@@ -70,6 +70,9 @@ gitignored `.env`; the repository's `latexmkrc` reads it.
 - [Choosing the composition](#choosing-the-composition): recipes for common looks
 - [Growing flora](#growing-flora): growth across overlays and timed playback
 - [Reusing one drawing](#reusing-one-drawing): faster builds and smaller PDFs for long decks
+- [The stage](#the-stage): text in a narrow column, flora in the wide margin
+- [Section pages](#section-pages): the optional floral section page
+- [Patterns](#patterns): geometric patterns instead of flora (experimental)
 - [With a stock theme](#with-a-stock-theme): keep Madrid, Berlin or your own theme
 - [Reserving space](#reserving-space): keep flora away from a logo or footline
 - [File size](#file-size): what to expect before you email a PDF
@@ -258,8 +261,8 @@ the document; rebuild locally after changes that invalidate it. The external
 raster builder is not part of an ordinary Overleaf LaTeX compile.
 
 Each overlay plays its own growth interval, starts automatically on page
-entry, plays once and stops at its endpoint. Returning to a page restarts
-that interval. Advancing early starts the next page at its nominal starting
+entry, plays once and stops at its endpoint. With `animate` playback, returning to
+a page restarts that interval; GIF playback does not replay it (see above). Advancing early starts the next page at its nominal starting
 stage. Duration is the total active growth time across the frame, divided
 equally among its displayed overlays; time waiting between clicks is excluded.
 A single title page animates the whole plant. **Text is visible from the start**;
@@ -756,7 +759,9 @@ it, and takes a lighter version of the title page's composition:
   paper's top like the title page; a frame with a running head keeps it.
 - The heading uses the font `floral section title`, which is `section title`
   at `\LARGE`, in the `section title` colour. `\floralornamentsetup` changes
-  the divider, as anywhere else.
+  the divider, as anywhere else. The heading is offset from the left like the
+  title block, by `\floratitleoffset` (1.8 cm by default; `\renewcommand`
+  changes both).
 - `\florathisframe` settings still win, and section pages keep the document
   margins under `stage` and share a drawing under `reuse=section`, as other
   section pages do.
