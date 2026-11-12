@@ -1,8 +1,11 @@
 % The user manual. Build from this directory: latexmk -lualatex beamer-floral.tex
+% or from the repository root: latexmk -lualatex docs/beamer-floral.tex
 \documentclass[a4paper,11pt]{article}
 \usepackage{fontspec}
 \usepackage[margin=30mm]{geometry}
 \usepackage{graphicx,booktabs,xcolor}
+% Found from docs/ and from the repository root, where CI compiles it.
+\graphicspath{{./}{docs/}}
 \usepackage{listings}
 \usepackage{hyperref}
 \hypersetup{colorlinks,linkcolor=black,urlcolor=blue!50!black,
@@ -14,9 +17,9 @@
 \setlength\parskip{.6em}
 \newcommand\pkg[1]{\textsf{#1}}
 \newcommand\cmd[1]{\texttt{\textbackslash #1}}
-\title{The \pkg{beamer-floral} package\\[.3em]\large Version 0.1.0}
+\title{The \pkg{beamer-floral} package\\[.3em]\large Version 0.2.0}
 \author{Kristian Niemi}
-\date{8 November 2026}
+\date{12 November 2026}
 
 \begin{document}
 \maketitle

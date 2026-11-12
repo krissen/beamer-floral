@@ -10,7 +10,7 @@ latexmk -lualatex test/smoke.tex
 ```
 
 CI checks out the pinned engine and builds the test documents, executable
-documentation and integration fixtures with LuaLaTeX. The engine's own tests run in its
+documentation, integration fixtures and the manual with LuaLaTeX. The engine's own tests run in its
 repository. The `tune` keys are validated by the engine against its tuner
 index, so a typo names the key and its valid siblings.
 
@@ -46,17 +46,19 @@ writes step times, memory and disk use to
 
 ## Checks
 
-`.github/workflows/ci.yml` is the list of what is built and checked, and a
-pull request must pass it. It checks out the engine at the revision in
+`.github/workflows/ci.yml` is the list of what is built and checked; it runs
+on pull requests. It checks out the engine at the revision in
 `engine-ref.txt`; the `pre_compile` step runs the Lua and Python unit checks
 in `test/` (after linking the engine's `lua/` directory as `./lua`), then every
-document in `root_file` is compiled with LuaLaTeX, and the `post_compile`
+document in `root_file` (the test documents, `docs/src/` and the manual
+`docs/beamer-floral.tex`) is compiled with LuaLaTeX, and the `post_compile`
 step checks the logs and PDFs and builds the raster and GIF animations through
 `tools/build_animation.py`. Run the same commands against your own engine
 checkout, for example `TIKZFLORA=../tikz-flora latexmk -lualatex
-test/smoke.tex`. CI skips changes that touch only `.md`, `.png` and `.jpg` files, and
-does not build the manual: after changing `docs/beamer-floral.tex`, run
-`latexmk -lualatex beamer-floral.tex` in `docs/`.
+test/smoke.tex`. The manual builds the same way locally, from `docs/` with
+`latexmk -lualatex beamer-floral.tex` or from the repository root with
+`latexmk -lualatex docs/beamer-floral.tex`. CI skips changes that touch only
+`.md`, `.png` and `.jpg` files.
 
 ## Engine pin
 
@@ -108,3 +110,45 @@ python3 tools/ctan.py --engine /path/to/tikz-flora --test
 ```
 
 The output is `build/ctan/beamer-floral.zip` (`--output` changes it).
+
+## Releasing
+
+A release is a version bump, a tag and three attached files. The steps below
+follow `v0.1.0`; `tools/` builds the files.
+
+1. **Version bump**, in one commit. The version and date stand in the three
+   `\ProvidesPackage` lines (`beamer-floral.sty`, `beamerthemefloral.sty`,
+   `beamer-floral-animation.sty`), in the title and date of
+   `docs/beamer-floral.tex`, and in the archive name in the README's "From the
+   release archive". `tools/ctan.py` reads the version from `beamer-floral.sty`.
+   Search the repository for the old version to find any other place.
+2. **Tag** the merged commit on `main` as `vX.Y.Z` (`v0.1.0` is a tag on the
+   commit that prepared the announcement).
+3. **Attach** to the GitHub release the three files `v0.1.0` carried. The README
+   links to `beamer-floral-tour.pdf` through `releases/latest/download/`, so keep
+   that name.
+
+   | File | Built with |
+   |---|---|
+   | `beamer-floral-vX.Y.Z.zip` | `python3 tools/dist.py --engine /path/to/tikz-flora --output build/beamer-floral-vX.Y.Z.zip --test`; `--test` unpacks it without development paths and builds its examples, including the raster one (about 5 minutes) |
+   | `beamer-floral-tour.pdf` | `TIKZFLORA=/path/to/tikz-flora latexmk -lualatex -outdir=build/tour docs/src/tour.tex` from the repository root (the build command stated in the tour's header); copy `build/tour/tour.pdf` under this name |
+   | `growth-title.gif` | the README's image, `docs/img/growth-title.gif`, uploaded as it is (the `v0.1.0` asset is the same file) |
+
+   The zip's engine is the revision in `engine-ref.txt` (`dist.py` archives
+   that revision). The tour is built against the checkout that `TIKZFLORA`
+   (or `.env`) names, so build it against the engine at the revision in
+   `engine-ref.txt`; the same goes for the GIF.
+
+   The GIF is rebuilt only when the image itself should change, in a commit of
+   its own: `python3 tools/build_animation.py --engine /path/to/tikz-flora
+   --outdir build/title docs/src/growth-title.tex`, then `python3
+   tools/make_growth_gif.py --engine /path/to/tikz-flora --cache
+   build/title/growth-title.floral-animation` (needs `magick` and `gifski`).
+   By default `make_growth_gif.py` overwrites the tracked
+   `docs/img/growth-title.gif`; `--output` writes elsewhere.
+4. **Create the release** from the tag with the three files, as `v0.1.0` was:
+   `gh release create vX.Y.Z --title <title> --notes <notes>
+   beamer-floral-vX.Y.Z.zip beamer-floral-tour.pdf growth-title.gif`. `v0.1.0`
+   has release notes naming the zip and the tour, and the engine revision.
+
+   The CTAN archive (`tools/ctan.py`, above) is a separate step.
