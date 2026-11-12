@@ -26,7 +26,7 @@ You need LuaLaTeX and the engine,
 [tikz-flora](https://github.com/krissen/tikz-flora). This package uses
 integration hooks that are not in the upstream engine yet; they are
 [proposed upstream](https://github.com/wn-mitch/tikz-flora/issues/2). Until
-they land, use the `beamer-floral` branch of the fork, commit `60a153d` or
+they land, use the `beamer-floral` branch of the fork, commit `39cfd26` or
 later. The options below all take care of that.
 
 ### From the release archive
