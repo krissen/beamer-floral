@@ -6,7 +6,10 @@ edit at a time and compiles once. That compile must ask for a rerun
 marks of the edited deck (each mark's kind, box and rule, as
 test/reuse-mark.lua logs them) differ from the original deck's, or the
 edit adds an overlay, whose count asks for a rerun of its own. After the
-edited deck converges, one more compile must ask for nothing.
+edited deck converges, one more compile must ask for nothing. Edits go both
+ways: some make a mark worse, others better (a subtitle removed, a reserve
+removed); the rule is the same, and a better-mark edit that leaves the marks
+alone fails, as it would test nothing.
 
     python3 test/rerun-marks.py [--reuse all,content] [--header margin,body]
         [--outdir DIR] [--tree DIR] [--table]
@@ -39,6 +42,7 @@ DECK = r"""
 \providecommand\TopA{The first line of a frame set at the top.}
 \providecommand\BesideA{A line beside the reserve.}
 \providecommand\PauseA{}
+\providecommand\ReserveA{\florareserve{0pt}{\the\dimexpr\paperheight-1.2cm\relax}{\the\dimexpr 3cm\relax}{\the\paperheight}}
 \documentclass[aspectratio=169]{beamer}
 \usetheme{floral}
 \edef\next{\noexpand\florasetup{seed=3, density=0.25, cache=false,
@@ -47,7 +51,7 @@ DECK = r"""
 \begin{document}
 \begin{frame}{\TitleA}\SubA\BodyA\BelowA\end{frame}
 \begin{frame}[t]\TopA\par More body text.\end{frame}
-\florareserve{0pt}{\the\dimexpr\paperheight-1.2cm\relax}{\the\dimexpr 3cm\relax}{\the\paperheight}
+\ReserveA
 \begin{frame}\BesideA\end{frame}
 \floraclearreserve
 \begin{frame}{Overlays}First\PauseA\end{frame}
@@ -57,6 +61,14 @@ DECK = r"""
 # Each edit redefines one macro of the deck. An added overlay changes the
 # frame's overlay count, which asks for a rerun of its own (as on main).
 OVERLAY_EDITS = {"overlay added"}
+# An edit that makes a mark better (larger, or back where it was missing)
+# starts from a deck that already has the worse state, set by this prefix.
+# The rule is the same: a rerun if and only if the converged marks change.
+BASES = {
+    "subtitled": r"\def\SubA{\framesubtitle{A subtitle under the title}}",
+}
+# Better-mark edits must change the marks, or the cell would test nothing.
+BETTER_EDITS = {"subtitle removed", "reserve removed"}
 EDITS = [
     # The same letters again: a wider title whose ink is as tall.
     ("title longer on one line", r"\def\TitleA{A title A title A title}"),
@@ -69,6 +81,8 @@ EDITS = [
     ("line beside a reserve longer", r"\def\BesideA{A line beside the reserve, now running a good deal longer.}"),
     ("overlay added", r"\def\PauseA{\pause\par Second}"),
     ("title ink top moved (accent)", r"\def\TitleA{\'Etude title}"),
+    ("subtitle removed", r"\def\SubA{}", "subtitled"),
+    ("reserve removed", r"\def\ReserveA{}"),
 ]
 
 MARK = re.compile(r"bf test: frame (\d+) stage \d+ mark (\S+) +(\S+) +(\S+) +(\S+) +(\S+)")
@@ -138,17 +152,21 @@ def main():
         for header in args.header.split(","):
             config = f"reuse={reuse}, {header}"
             prefix = f"\\def\\floralreuse{{{reuse}}}\\def\\floralheader{{{header}}}"
-            base_src = work / f"base-{reuse}-{header}.tex"
-            base_src.write_text(f"{prefix}\n\\input{{{deck}}}\n")
-            base_dir = work / f"base-{reuse}-{header}"
-            base_dir.mkdir()
-            base_text, loud = converge(tree, base_dir, base_src)
-            if loud:
-                failures.append(f"{config}: the unedited deck does not converge")
-            before = marks(base_text)
-            for n, (name, edit) in enumerate(EDITS, 1):
+            bases = {}
+            for key, extra in [(None, "")] + list(BASES.items()):
+                label = f"{reuse}-{header}" + (f"-{key}" if key else "")
+                base_src = work / f"base-{label}.tex"
+                base_src.write_text(f"{prefix}{extra}\n\\input{{{deck}}}\n")
+                base_dir = work / f"base-{label}"
+                base_dir.mkdir()
+                base_text, loud = converge(tree, base_dir, base_src)
+                if loud:
+                    failures.append(f"{config}: the unedited deck{f' ({key})' if key else ''} does not converge")
+                bases[key] = (extra, base_dir, marks(base_text))
+            for n, (name, edit, *base) in enumerate(EDITS, 1):
+                extra, base_dir, before = bases[base[0] if base else None]
                 src = work / f"edit{n}-{reuse}-{header}.tex"
-                src.write_text(f"{prefix}{edit}\n\\input{{{deck}}}\n")
+                src.write_text(f"{prefix}{extra}{edit}\n\\input{{{deck}}}\n")
                 out = work / f"edit{n}-{reuse}-{header}"
                 shutil.copytree(base_dir, out)
                 # The edited source keeps the base job's name, cache and aux files.
@@ -160,6 +178,8 @@ def main():
                 expected = changed or name in OVERLAY_EDITS
                 if rerun != expected:
                     failures.append(f"{config}, {name}: rerun requested {rerun}, marks changed {changed}")
+                if name in BETTER_EDITS and not changed:
+                    failures.append(f"{config}, {name}: the edit leaves the marks alone, so it tests nothing")
                 if still:
                     failures.append(f"{config}, {name}: still asks for a rerun after converging")
     width = max(len(r[1]) for r in rows)

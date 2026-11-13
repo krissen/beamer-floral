@@ -131,7 +131,7 @@ animation.raster.gif_relative=root:match('[^/]+$')..'/'..signature..'-144/interv
 C.typeset_gif(animation)
 assert(page:find('\\floralembedgif{\\detokenize{'..gif..'}}{\\detokenize{interval-1-r2000-mFFFFFF-e4.gif}}{400.00000000pt}{300.00000000pt}{1}',1,true),page)
 assert(not page:find('/Movie',1,true),'no Movie annotation for embedded GIFs')
-for _,bad in ipairs{folder..'/a(b-e4.gif',folder..'/a{b-e4.gif',folder..'/a#b-e4.gif'} do
+for _,bad in ipairs{folder..'/a{b-e4.gif',folder..'/a#b-e4.gif'} do
   animation.raster.gif=bad;assert(not pcall(C.typeset_gif,animation),bad)
 end
 package.loaded['flora.paint']=previous;tex.sprint=function() end

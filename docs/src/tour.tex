@@ -256,17 +256,20 @@
 
 \section{Closing}
 
-\begin{frame}[label=garden]{Requirements and limits}
+% The same page twice. \againframe would give both copies the label `garden'
+% and LaTeX would warn that it is multiply defined; nothing refers to it.
+\newcommand\requirements{%
   \begin{itemize}
     \item LuaLaTeX only.
     \item Keep floral settings constant within one frame.
     \item Timed growth needs a PDF viewer that plays it, such as Acrobat Reader.
     \item Files are large: a 21-page test deck is 22~MB static and 68~MB with
       vector growth.
-  \end{itemize}
-\end{frame}
+  \end{itemize}}
 
-\againframe{garden}
+\begin{frame}{Requirements and limits}\requirements\end{frame}
+
+\begin{frame}{Requirements and limits}\requirements\end{frame}
 
 \florathisframe{layout=left, density=2}
 \begin{frame}{Plant your own}

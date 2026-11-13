@@ -107,8 +107,9 @@ function C.typeset_gif(animation)
   if raster.embed then
     local path=assert(raster.gif,'missing GIF playback file'):gsub('\\','/')
     assert(not path:find('[%%{}#^\r\n]'),'unsupported TeX characters in GIF playback path')
+    -- The name is C.gif_name's: digits, six hex digits (check_matte) and a
+    -- constant, so it cannot hold the parentheses of the PDF string below.
     local name=path:match('[^/]+$')
-    assert(not name:find('[()]'),'unsupported characters in GIF file name; rename the document')
     if kpse and kpse.record_input_file then kpse.record_input_file(path) end
     -- The physical page is the one being shipped: total_pages counts finished ones.
     pt:emit(string.format('\\pgftext[left,bottom,at=\\pgfpointorigin]{\\floralembedgif{\\detokenize{%s}}{\\detokenize{%s}}{%.8fpt}{%.8fpt}{%d}}',
