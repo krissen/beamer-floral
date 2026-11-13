@@ -99,7 +99,8 @@ ordinary static, overlay and vector modes compile directly.
 
 growth-title.tex is a title page with eight seconds of raster growth; build
 it the same way (python3 tools/build_animation.py growth-title.tex). It
-renders 160 samples, so expect minutes and a PDF of about 30 MB.
+renders 161 samples (8 s at 20 fps is 160 steps, plus the last), so expect
+minutes and a PDF of about 30 MB.
 
 For viewers that cannot run animate's JavaScript, load
 \\usepackage[gif]{beamer-floral-animation} to embed each interval as a GIF
